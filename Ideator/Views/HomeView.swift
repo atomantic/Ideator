@@ -149,7 +149,7 @@ struct HomeView: View {
                 .font(.headline)
             
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                ForEach(Array(Category.allCases.prefix(6)), id: \.self) { category in
+                ForEach(Category.allCases, id: \.self) { category in
                     CategoryCard(
                         category: category,
                         count: promptViewModel.getUnusedPromptsCount(for: category)
