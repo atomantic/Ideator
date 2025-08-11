@@ -19,7 +19,7 @@ class IdeaListViewModel {
             currentIdeaList = draft
             ideas = draft.ideas
         } else {
-            ideas = Array(repeating: "", count: prompt.suggestedCount)
+            ideas = []  // Start with empty array instead of pre-filled
             currentIdeaList = IdeaList(
                 prompt: prompt,
                 ideas: ideas
@@ -27,6 +27,17 @@ class IdeaListViewModel {
         }
         
         isComplete = false
+    }
+    
+    func addIdea(_ text: String) {
+        ideas.append(text)
+        saveDraft()
+    }
+    
+    func removeIdea(at index: Int) {
+        guard index < ideas.count else { return }
+        ideas.remove(at: index)
+        saveDraft()
     }
     
     func updateIdea(at index: Int, with text: String) {
@@ -45,8 +56,8 @@ class IdeaListViewModel {
     }
     
     func checkIfComplete() -> Bool {
-        let filledIdeas = ideas.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-        return filledIdeas.count >= (currentIdeaList?.prompt.suggestedCount ?? 10)
+        // All ideas in the array are now filled (no empty placeholders)
+        return ideas.count >= (currentIdeaList?.prompt.suggestedCount ?? 10)
     }
     
     func markAsComplete() {
@@ -71,7 +82,7 @@ class IdeaListViewModel {
     }
     
     func getProgress() -> Double {
-        let filledIdeas = ideas.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-        return Double(filledIdeas.count) / Double(currentIdeaList?.prompt.suggestedCount ?? 10)
+        // Since we're now using a dynamic list, count all ideas (they're all filled)
+        return Double(ideas.count) / Double(currentIdeaList?.prompt.suggestedCount ?? 10)
     }
 }

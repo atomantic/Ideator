@@ -3,7 +3,8 @@ import SwiftUI
 struct IdeaInputView: View {
     @Bindable var viewModel: IdeaListViewModel
     @Environment(\.dismiss) private var dismiss
-    @FocusState private var focusedField: Int?
+    @FocusState private var isInputFocused: Bool
+    @State private var currentInput = ""
     @State private var showingExportSheet = false
     
     var body: some View {
@@ -11,38 +12,70 @@ struct IdeaInputView: View {
             VStack(spacing: 0) {
                 progressHeader
                 
-                ScrollViewReader { proxy in
-                    ScrollView {
-                        VStack(spacing: 16) {
-                            promptCard
-                            
-                            ForEach(0..<viewModel.ideas.count, id: \.self) { index in
-                                IdeaField(
-                                    index: index,
-                                    text: $viewModel.ideas[index],
-                                    focusedField: $focusedField,
-                                    onSubmit: {
-                                        if index < viewModel.ideas.count - 1 {
-                                            focusedField = index + 1
-                                        }
-                                        viewModel.saveDraft()
-                                    }
-                                )
-                                .id(index)
+                VStack(spacing: 16) {
+                    promptCard
+                    
+                    // Single input field at the top
+                    HStack(spacing: 12) {
+                        TextField("Enter an idea...", text: $currentInput, axis: .vertical)
+                            .font(.body)
+                            .focused($isInputFocused)
+                            .onSubmit {
+                                addIdea()
                             }
+                            .submitLabel(.done)
+                            .textFieldStyle(PlainTextFieldStyle())
+                            .padding(12)
+                            .background(Color(UIColor.systemBackground))
+                            .cornerRadius(8)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(
+                                        isInputFocused ? Color.blue : Color(UIColor.separator),
+                                        lineWidth: isInputFocused ? 2 : 1
+                                    )
+                            )
+                        
+                        Button(action: addIdea) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.title2)
+                                .foregroundColor(.blue)
                         }
-                        .padding()
+                        .disabled(currentInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
-                    .onChange(of: focusedField) { _, newValue in
-                        if let newValue = newValue {
-                            withAnimation {
-                                proxy.scrollTo(newValue, anchor: .center)
+                    .padding(.horizontal)
+                    
+                    // List of added ideas below
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 8) {
+                            ForEach(Array(viewModel.ideas.enumerated()), id: \.offset) { index, idea in
+                                if !idea.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                    IdeaRow(
+                                        index: index,
+                                        text: idea,
+                                        onDelete: {
+                                            viewModel.removeIdea(at: index)
+                                        }
+                                    )
+                                    .transition(.asymmetric(
+                                        insertion: .move(edge: .top).combined(with: .opacity),
+                                        removal: .move(edge: .leading).combined(with: .opacity)
+                                    ))
+                                }
+                            }
+                            
+                            if viewModel.ideas.filter({ !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }).isEmpty {
+                                Text("Your ideas will appear here...")
+                                    .font(.body)
+                                    .foregroundColor(.secondary)
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
                             }
                         }
+                        .padding(.horizontal)
                     }
                 }
-                
-                bottomToolbar
+                .padding(.top)
             }
             .navigationTitle("Add Your Ideas")
             .navigationBarTitleDisplayMode(.inline)
@@ -62,6 +95,16 @@ struct IdeaInputView: View {
                     .disabled(viewModel.getProgress() < 1.0)
                 }
             }
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Add") {
+                        addIdea()
+                    }
+                    .fontWeight(.bold)
+                    .disabled(currentInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
         }
         .sheet(isPresented: $showingExportSheet) {
             if let ideaList = viewModel.currentIdeaList {
@@ -71,8 +114,20 @@ struct IdeaInputView: View {
             }
         }
         .onAppear {
-            focusedField = viewModel.ideas.firstIndex(where: { $0.isEmpty }) ?? 0
+            isInputFocused = true
         }
+    }
+    
+    private func addIdea() {
+        let trimmedInput = currentInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedInput.isEmpty else { return }
+        
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+            viewModel.addIdea(trimmedInput)
+        }
+        
+        currentInput = ""
+        isInputFocused = true
     }
     
     private var progressHeader: some View {
@@ -112,40 +167,6 @@ struct IdeaInputView: View {
         .cornerRadius(12)
     }
     
-    private var bottomToolbar: some View {
-        HStack(spacing: 16) {
-            Button(action: {
-                if let current = focusedField, current > 0 {
-                    focusedField = current - 1
-                }
-            }) {
-                Image(systemName: "chevron.up")
-                    .font(.title3)
-            }
-            .disabled(focusedField == nil || focusedField == 0)
-            
-            Button(action: {
-                if let current = focusedField, current < viewModel.ideas.count - 1 {
-                    focusedField = current + 1
-                }
-            }) {
-                Image(systemName: "chevron.down")
-                    .font(.title3)
-            }
-            .disabled(focusedField == nil || focusedField == viewModel.ideas.count - 1)
-            
-            Spacer()
-            
-            Button(action: {
-                focusedField = nil
-            }) {
-                Text("Done")
-                    .fontWeight(.medium)
-            }
-        }
-        .padding()
-        .background(Color(UIColor.systemGroupedBackground))
-    }
     
     private func completeList() {
         viewModel.markAsComplete()
@@ -153,11 +174,10 @@ struct IdeaInputView: View {
     }
 }
 
-struct IdeaField: View {
+struct IdeaRow: View {
     let index: Int
-    @Binding var text: String
-    @FocusState.Binding var focusedField: Int?
-    let onSubmit: () -> Void
+    let text: String
+    let onDelete: () -> Void
     
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -167,22 +187,19 @@ struct IdeaField: View {
                 .frame(width: 30, alignment: .trailing)
                 .padding(.top, 8)
             
-            TextField("Enter your idea...", text: $text, axis: .vertical)
+            Text(text)
                 .font(.body)
-                .focused($focusedField, equals: index)
-                .onSubmit(onSubmit)
-                .submitLabel(.next)
-                .textFieldStyle(PlainTextFieldStyle())
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(12)
-                .background(Color(UIColor.systemBackground))
+                .background(Color(UIColor.secondarySystemBackground))
                 .cornerRadius(8)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(
-                            focusedField == index ? Color.blue : Color(UIColor.separator),
-                            lineWidth: focusedField == index ? 2 : 1
-                        )
-                )
+            
+            Button(action: onDelete) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.title3)
+                    .foregroundColor(.gray)
+            }
+            .padding(.top, 8)
         }
     }
 }
