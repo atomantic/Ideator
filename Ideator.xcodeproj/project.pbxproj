@@ -400,6 +400,7 @@
 				DEVELOPMENT_TEAM = TYQ32QCF6K;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Ideator/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Idea Loom";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
@@ -431,6 +432,7 @@
 				DEVELOPMENT_TEAM = TYQ32QCF6K;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Ideator/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Idea Loom";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
