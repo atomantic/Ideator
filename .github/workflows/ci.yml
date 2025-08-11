@@ -27,38 +27,47 @@ jobs:
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '16.2'
+          xcode-version: 'latest-stable'
 
-      - name: Verify iOS 18.2 runtime
+      - name: Install xcbeautify
         run: |
-          if ! xcrun simctl list runtimes | grep -q "com.apple.CoreSimulator.SimRuntime.iOS-18-2"; then
-            echo "❌ iOS 18.2 runtime not installed"
-            exit 1
+          brew install xcbeautify
+
+      - name: List available simulators and runtimes
+        run: |
+          echo "=== Available Runtimes ==="
+          xcrun simctl list runtimes
+          echo "=== Available Device Types ==="
+          xcrun simctl list devicetypes
+          echo "=== Available Devices ==="
+          xcrun simctl list devices available
+
+      - name: Run unit tests
+        run: |
+          # Try to find the best available simulator
+          if xcrun simctl list devices available | grep -q "iPhone 16"; then
+            DESTINATION="platform=iOS Simulator,name=iPhone 16"
+          elif xcrun simctl list devices available | grep -q "iPhone 15"; then
+            DESTINATION="platform=iOS Simulator,name=iPhone 15"
+          else
+            # Fallback to any available iOS Simulator
+            DESTINATION="platform=iOS Simulator,name=iPhone 14"
           fi
-
-      - name: Create & boot iOS 18.2 simulator
-        run: |
-          SIM_UDID=$(xcrun simctl create "test-sim" \
-            com.apple.CoreSimulator.SimDeviceType.iPhone-16 \
-            com.apple.CoreSimulator.SimRuntime.iOS-18-2)
-          echo "SIM_UDID=$SIM_UDID" >> $GITHUB_ENV
-
-          # Boot it and wait for it to fully start
-          xcrun simctl boot "$SIM_UDID"
-          xcrun simctl bootstatus "$SIM_UDID" -b
-
-      - name: Run unit tests on simulator
-        run: |
+          
+          echo "Using destination: $DESTINATION"
+          
           xcodebuild test \
             -project Ideator.xcodeproj \
             -scheme Ideator \
-            -destination "id=$SIM_UDID" \
+            -destination "$DESTINATION" \
             -destination-timeout 60 \
             -configuration Debug \
             -derivedDataPath build \
-            IPHONEOS_DEPLOYMENT_TARGET=18.2 \
             CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO
+            CODE_SIGNING_REQUIRED=NO \
+            -skipPackagePluginValidation \
+            -skipMacroValidation \
+            | xcbeautify
 
   cd:
     runs-on: macos-latest
@@ -83,13 +92,20 @@ jobs:
 
       - name: Archive iOS App (unsigned)
         run: |
+          # Use deployment target from vars if set, otherwise use project default
+          if [ -n "$IPHONEOS_DEPLOYMENT_TARGET" ]; then
+            DEPLOYMENT_TARGET="IPHONEOS_DEPLOYMENT_TARGET=$IPHONEOS_DEPLOYMENT_TARGET"
+          else
+            DEPLOYMENT_TARGET=""
+          fi
+          
           xcodebuild \
             -project Ideator.xcodeproj \
             -scheme Ideator \
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath build/Ideator.xcarchive \
-            IPHONEOS_DEPLOYMENT_TARGET="$IPHONEOS_DEPLOYMENT_TARGET" \
+            $DEPLOYMENT_TARGET \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
