@@ -17,7 +17,7 @@ struct IdeaInputView: View {
                     
                     // Single input field at the top
                     HStack(spacing: 12) {
-                        TextField("Enter an idea...", text: $currentInput, axis: .vertical)
+                        TextField("Enter an idea...", text: $currentInput)
                             .font(.body)
                             .focused($isInputFocused)
                             .onSubmit {
