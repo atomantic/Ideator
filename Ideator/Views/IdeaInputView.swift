@@ -48,7 +48,7 @@ struct IdeaInputView: View {
                     // List of added ideas below
                     ScrollView {
                         VStack(alignment: .leading, spacing: 8) {
-                            ForEach(Array(viewModel.ideas.enumerated()), id: \.offset) { index, idea in
+                            ForEach(Array(viewModel.ideas.enumerated().reversed()), id: \.offset) { index, idea in
                                 if !idea.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                                     IdeaRow(
                                         index: index,
