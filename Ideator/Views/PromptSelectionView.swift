@@ -26,8 +26,7 @@ struct PromptSelectionView: View {
             return prompts
         } else {
             return prompts.filter { 
-                $0.text.localizedCaseInsensitiveContains(searchText) ||
-                $0.tags.contains { $0.localizedCaseInsensitiveContains(searchText) }
+                $0.text.localizedCaseInsensitiveContains(searchText)
             }
         }
     }
