@@ -39,26 +39,42 @@ class PackManager: ObservableObject {
         try? FileManager.default.createDirectory(at: corePackDir,
                                                 withIntermediateDirectories: true)
         
-        // Write manifest
-        if let manifestData = CorePackData.manifest.data(using: .utf8) {
-            try? manifestData.write(to: manifestPath)
+        // Copy manifest.json from bundle
+        guard let manifestBundlePath = Bundle.main.path(forResource: "manifest", ofType: "json") else {
+            print("Core pack manifest not found in bundle")
+            return
         }
         
-        // Parse manifest to get categories
-        if let manifestData = CorePackData.manifest.data(using: .utf8),
-           let manifest = try? JSONDecoder().decode(PromptPack.self, from: manifestData) {
+        do {
+            let fileManager = FileManager.default
             
-            // Write each TSV file
+            // Copy manifest
+            let manifestSourceURL = URL(fileURLWithPath: manifestBundlePath)
+            let manifestDestURL = corePackDir.appendingPathComponent("manifest.json")
+            try fileManager.copyItem(at: manifestSourceURL, to: manifestDestURL)
+            
+            // Parse manifest to get list of TSV files
+            let manifestData = try Data(contentsOf: manifestSourceURL)
+            let manifest = try JSONDecoder().decode(PromptPack.self, from: manifestData)
+            
+            // Copy each TSV file
             for category in manifest.categories {
-                if let tsvContent = CorePackData.getTSVContent(for: category.file),
-                   let tsvData = tsvContent.data(using: .utf8) {
-                    let tsvPath = corePackDir.appendingPathComponent(category.file)
-                    try? tsvData.write(to: tsvPath)
+                let tsvName = category.file.replacingOccurrences(of: ".tsv", with: "")
+                guard let tsvPath = Bundle.main.path(forResource: tsvName, ofType: "tsv") else {
+                    print("TSV file not found in bundle: \(category.file)")
+                    continue
                 }
+                
+                let tsvSourceURL = URL(fileURLWithPath: tsvPath)
+                let tsvDestURL = corePackDir.appendingPathComponent(category.file)
+                try fileManager.copyItem(at: tsvSourceURL, to: tsvDestURL)
+                print("Copied \(category.file) to documents")
             }
+            
+            print("Successfully installed Core pack from bundle")
+        } catch {
+            print("Failed to install Core pack from bundle: \(error)")
         }
-        
-        print("Installed embedded Core pack")
     }
     
     func loadInstalledPacks() {
