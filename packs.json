@@ -1,0 +1,35 @@
+[
+  {
+    "id": "tech-startup",
+    "name": "Tech Startup Pack",
+    "version": "1.0.0",
+    "description": "Prompts for entrepreneurs and startup founders",
+    "author": "Ideator Community",
+    "downloadUrl": "https://github.com/yourusername/ideator-packs/releases/download/v1.0.0/tech-startup.zip",
+    "size": 15360,
+    "promptCount": 120,
+    "categories": ["startup", "product", "marketing", "growth"]
+  },
+  {
+    "id": "creative-writing",
+    "name": "Creative Writing Pack",
+    "version": "1.0.0",
+    "description": "Advanced prompts for writers and storytellers",
+    "author": "Ideator Community",
+    "downloadUrl": "https://github.com/yourusername/ideator-packs/releases/download/v1.0.0/creative-writing.zip",
+    "size": 20480,
+    "promptCount": 150,
+    "categories": ["characters", "plots", "worldbuilding", "dialogue"]
+  },
+  {
+    "id": "wellness",
+    "name": "Wellness & Mindfulness Pack",
+    "version": "1.0.0",
+    "description": "Prompts for mental health and personal wellness",
+    "author": "Ideator Community",
+    "downloadUrl": "https://github.com/yourusername/ideator-packs/releases/download/v1.0.0/wellness.zip",
+    "size": 12288,
+    "promptCount": 80,
+    "categories": ["meditation", "selfcare", "mindfulness", "health"]
+  }
+]

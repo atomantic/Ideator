@@ -1,0 +1,355 @@
+import Foundation
+
+class PackManager: ObservableObject {
+    static let shared = PackManager()
+    
+    @Published var installedPacks: [PromptPack] = []
+    @Published var availablePacks: [RemotePackInfo] = []
+    @Published var isLoading = false
+    
+    private let packsDirectory: URL
+    private let githubRepo = "https://raw.githubusercontent.com/atomantic/IdeatorPromptPacks/main"
+    
+    private init() {
+        // Get documents directory for downloaded packs
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, 
+                                                     in: .userDomainMask).first!
+        self.packsDirectory = documentsPath.appendingPathComponent("PromptPacks")
+        
+        // Create directory if it doesn't exist
+        try? FileManager.default.createDirectory(at: packsDirectory, 
+                                                withIntermediateDirectories: true)
+        
+        loadInstalledPacks()
+    }
+    
+    func loadInstalledPacks() {
+        var packs: [PromptPack] = []
+        
+        // Load downloaded packs from documents (including updated Core pack if present)
+        if let downloadedPacks = loadDownloadedPacks() {
+            packs.append(contentsOf: downloadedPacks)
+        }
+        
+        // Only load bundled Core pack if not already downloaded
+        let hasDownloadedCore = packs.contains { $0.id == "core" }
+        if !hasDownloadedCore, let corePack = loadBundledPack() {
+            packs.append(corePack)
+        }
+        
+        // Load enabled state from UserDefaults
+        let enabledPacks = UserDefaults.standard.dictionary(forKey: "enabledPacks") as? [String: Bool] ?? [:]
+        for i in packs.indices {
+            packs[i].isEnabled = enabledPacks[packs[i].id] ?? true
+        }
+        
+        installedPacks = packs
+    }
+    
+    private func loadBundledPack() -> PromptPack? {
+        guard let url = Bundle.main.url(forResource: "manifest", 
+                                       withExtension: "json",
+                                       subdirectory: "PromptPacks/Core") else {
+            print("Core pack manifest not found in bundle")
+            return nil
+        }
+        
+        do {
+            let data = try Data(contentsOf: url)
+            var pack = try JSONDecoder().decode(PromptPack.self, from: data)
+            
+            // Count prompts in each category
+            for i in pack.categories.indices {
+                let category = pack.categories[i]
+                if let tsvURL = Bundle.main.url(forResource: category.file.replacingOccurrences(of: ".tsv", with: ""),
+                                               withExtension: "tsv",
+                                               subdirectory: "PromptPacks/Core") {
+                    if let content = try? String(contentsOf: tsvURL) {
+                        let lines = content.components(separatedBy: .newlines)
+                        pack.categories[i].promptCount = lines.dropFirst().filter { !$0.isEmpty }.count
+                    }
+                }
+            }
+            
+            return pack
+        } catch {
+            print("Failed to load core pack: \(error)")
+            return nil
+        }
+    }
+    
+    private func loadDownloadedPacks() -> [PromptPack]? {
+        do {
+            let packDirs = try FileManager.default.contentsOfDirectory(at: packsDirectory,
+                                                                      includingPropertiesForKeys: nil)
+            
+            return packDirs.compactMap { packDir in
+                let manifestURL = packDir.appendingPathComponent("manifest.json")
+                guard let data = try? Data(contentsOf: manifestURL),
+                      var pack = try? JSONDecoder().decode(PromptPack.self, from: data) else {
+                    return nil
+                }
+                
+                // Count prompts in each category
+                for i in pack.categories.indices {
+                    let category = pack.categories[i]
+                    let tsvURL = packDir.appendingPathComponent(category.file)
+                    if let content = try? String(contentsOf: tsvURL) {
+                        let lines = content.components(separatedBy: .newlines)
+                        pack.categories[i].promptCount = lines.dropFirst().filter { !$0.isEmpty }.count
+                    }
+                }
+                
+                return pack
+            }
+        } catch {
+            print("Failed to load downloaded packs: \(error)")
+            return nil
+        }
+    }
+    
+    func fetchAvailablePacks() async {
+        await MainActor.run {
+            isLoading = true
+        }
+        
+        let urlString = "\(githubRepo)/packs.json"
+        print("Fetching available packs from: \(urlString)")
+        
+        guard let url = URL(string: urlString) else { 
+            print("Invalid URL for packs.json")
+            return 
+        }
+        
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                print("Packs.json response code: \(httpResponse.statusCode)")
+            }
+            
+            let packs = try JSONDecoder().decode([RemotePackInfo].self, from: data)
+            print("Found \(packs.count) total packs")
+            
+            await MainActor.run {
+                self.availablePacks = packs.filter { remoteInfo in
+                    // Filter out already installed packs
+                    let isInstalled = installedPacks.contains { $0.id == remoteInfo.id }
+                    if isInstalled {
+                        print("Pack \(remoteInfo.id) is already installed")
+                    }
+                    return !isInstalled
+                }
+                print("Available packs after filtering: \(self.availablePacks.count)")
+                isLoading = false
+            }
+        } catch {
+            print("Failed to fetch available packs: \(error)")
+            await MainActor.run {
+                isLoading = false
+            }
+        }
+    }
+    
+    func downloadPack(_ packInfo: RemotePackInfo) async throws {
+        print("Starting download for pack: \(packInfo.id)")
+        
+        guard let baseURL = URL(string: packInfo.downloadUrl) else {
+            print("Invalid URL: \(packInfo.downloadUrl)")
+            throw PackError.invalidURL
+        }
+        
+        // Create pack directory
+        let packDir = packsDirectory.appendingPathComponent(packInfo.id)
+        print("Creating directory at: \(packDir.path)")
+        try FileManager.default.createDirectory(at: packDir, 
+                                               withIntermediateDirectories: true)
+        
+        // Download manifest.json
+        let manifestURL = baseURL.appendingPathComponent("manifest.json")
+        print("Downloading manifest from: \(manifestURL)")
+        let (manifestData, response) = try await URLSession.shared.data(from: manifestURL)
+        
+        if let httpResponse = response as? HTTPURLResponse {
+            print("Manifest download response code: \(httpResponse.statusCode)")
+        }
+        
+        let manifestPath = packDir.appendingPathComponent("manifest.json")
+        try manifestData.write(to: manifestPath)
+        print("Saved manifest to: \(manifestPath.path)")
+        
+        // Parse manifest to get categories
+        let manifest = try JSONDecoder().decode(PromptPack.self, from: manifestData)
+        print("Manifest has \(manifest.categories.count) categories")
+        
+        // Download each category TSV file
+        for category in manifest.categories {
+            let tsvURL = baseURL.appendingPathComponent(category.file)
+            print("Downloading TSV from: \(tsvURL)")
+            let (tsvData, tsvResponse) = try await URLSession.shared.data(from: tsvURL)
+            
+            if let httpResponse = tsvResponse as? HTTPURLResponse {
+                print("TSV download response code: \(httpResponse.statusCode)")
+            }
+            
+            let tsvPath = packDir.appendingPathComponent(category.file)
+            try tsvData.write(to: tsvPath)
+            print("Saved TSV to: \(tsvPath.path)")
+        }
+        
+        print("Pack download completed successfully")
+        
+        // Reload packs
+        await MainActor.run {
+            loadInstalledPacks()
+        }
+    }
+    
+    func togglePack(_ packId: String, enabled: Bool) {
+        if let index = installedPacks.firstIndex(where: { $0.id == packId }) {
+            installedPacks[index].isEnabled = enabled
+            
+            // Save to UserDefaults
+            var enabledPacks = UserDefaults.standard.dictionary(forKey: "enabledPacks") as? [String: Bool] ?? [:]
+            enabledPacks[packId] = enabled
+            UserDefaults.standard.set(enabledPacks, forKey: "enabledPacks")
+        }
+    }
+    
+    func deletePack(_ packId: String) {
+        // Can't delete core pack
+        if packId == "core" { return }
+        
+        let packDir = packsDirectory.appendingPathComponent(packId)
+        try? FileManager.default.removeItem(at: packDir)
+        
+        loadInstalledPacks()
+    }
+    
+    func updatePack(_ packId: String) async throws {
+        print("Updating pack \(packId) from GitHub...")
+        
+        // Determine the download URL based on pack ID
+        let baseURL: String
+        if packId == "core" {
+            baseURL = "\(githubRepo)/packs/core/"
+        } else {
+            baseURL = "\(githubRepo)/packs/\(packId)/"
+        }
+        
+        // Download to documents directory
+        let packDir = packsDirectory.appendingPathComponent(packId)
+        
+        do {
+            try FileManager.default.createDirectory(at: packDir, 
+                                                   withIntermediateDirectories: true)
+            print("Created directory: \(packDir.path)")
+        } catch {
+            print("Failed to create directory: \(error)")
+            throw PackError.downloadFailed
+        }
+        
+        // Download manifest
+        let manifestURLString = "\(baseURL)manifest.json"
+        guard let manifestURL = URL(string: manifestURLString) else {
+            print("Invalid manifest URL: \(manifestURLString)")
+            throw PackError.invalidURL
+        }
+        
+        do {
+            print("Downloading manifest from: \(manifestURL)")
+            let (manifestData, response) = try await URLSession.shared.data(from: manifestURL)
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                print("Manifest response code: \(httpResponse.statusCode)")
+                if httpResponse.statusCode != 200 {
+                    throw PackError.downloadFailed
+                }
+            }
+            
+            let manifestPath = packDir.appendingPathComponent("manifest.json")
+            try manifestData.write(to: manifestPath)
+            print("Saved manifest to: \(manifestPath.path)")
+            
+            // Parse manifest to get categories
+            let manifest = try JSONDecoder().decode(PromptPack.self, from: manifestData)
+            print("Parsed manifest with \(manifest.categories.count) categories")
+            
+            // Download each category TSV file
+            for category in manifest.categories {
+                let tsvURLString = "\(baseURL)\(category.file)"
+                guard let tsvURL = URL(string: tsvURLString) else {
+                    print("Invalid TSV URL: \(tsvURLString)")
+                    continue
+                }
+                
+                print("Downloading TSV: \(category.file)")
+                let (tsvData, tsvResponse) = try await URLSession.shared.data(from: tsvURL)
+                
+                if let httpResponse = tsvResponse as? HTTPURLResponse {
+                    print("TSV response code: \(httpResponse.statusCode)")
+                    if httpResponse.statusCode != 200 {
+                        print("Failed to download \(category.file)")
+                        continue
+                    }
+                }
+                
+                let tsvPath = packDir.appendingPathComponent(category.file)
+                try tsvData.write(to: tsvPath)
+                print("Saved TSV: \(category.file)")
+            }
+            
+            print("Pack \(packId) updated successfully")
+            
+            // Reload packs
+            await MainActor.run {
+                loadInstalledPacks()
+                PromptService.shared.reloadPrompts()
+            }
+        } catch {
+            print("Error updating pack \(packId): \(error)")
+            throw error
+        }
+    }
+    
+    func getEnabledCategories() -> [Category] {
+        var categories: [Category] = []
+        
+        for pack in installedPacks where pack.isEnabled {
+            for category in pack.categories {
+                // Map to existing Category enum if possible
+                if let cat = categoryFromPackCategory(category) {
+                    categories.append(cat)
+                }
+            }
+        }
+        
+        return categories
+    }
+    
+    private func categoryFromPackCategory(_ packCategory: PackCategory) -> Category? {
+        switch packCategory.id {
+        case "personalDevelopment": return .personalDevelopment
+        case "professional": return .professional
+        case "creative": return .creative
+        case "lifestyle": return .lifestyle
+        case "relationships": return .relationships
+        case "entertainment": return .entertainment
+        case "travel": return .travel
+        case "learning": return .learning
+        case "financial": return .financial
+        case "socialImpact": return .socialImpact
+        case "health": return .health
+        case "mindfulness": return .mindfulness
+        case "selfcare", "selfCare": return .selfCare
+        case "gratitude": return .gratitude
+        default: return nil
+        }
+    }
+}
+
+enum PackError: Error {
+    case invalidURL
+    case downloadFailed
+    case extractionFailed
+}
