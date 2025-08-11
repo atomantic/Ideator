@@ -158,11 +158,11 @@ struct SettingsView: View {
                 }
             }
             
-            Link(destination: URL(string: "mailto:support@idealoom.app")!) {
+            Link(destination: URL(string: "https://github.com/atomantic/IdeatorPromptPacks/issues")!) {
                 HStack {
                     Text("Contact Support")
                     Spacer()
-                    Image(systemName: "envelope")
+                    Image(systemName: "arrow.up.right.square")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
