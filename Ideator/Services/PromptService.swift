@@ -48,19 +48,13 @@ class PromptService {
         let categoryEnum = categoryFromString(category.id)
         
         return dataLines.compactMap { line in
-            let columns = line.components(separatedBy: "\t")
-            guard columns.count >= 2 else { return nil }
-            
-            let text = columns[0]
-            let tagsString = columns[1]
-            
-            let tags = tagsString.components(separatedBy: "|")
+            let text = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !text.isEmpty else { return nil }
             
             return Prompt(
                 text: text,
                 category: categoryEnum,
-                suggestedCount: 10, // Default count, user can override in settings
-                tags: tags
+                suggestedCount: 10 // Default count, user can override in settings
             )
         }
     }

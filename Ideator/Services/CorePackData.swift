@@ -147,152 +147,152 @@ struct CorePackData {
     }
     
     private static let personalDevelopmentTSV = """
-    text\ttags
-    things to accomplish in the next decade\tgoals|milestones|personal
-    habits to develop this year\thabits|self-improvement|daily
-    fears to overcome\tcourage|growth|challenges
-    skills I'd like to master\tlearning|abilities|expertise
-    ways to improve my morning routine\troutine|productivity|morning
-    things I'm grateful for today\tgratitude|mindfulness|appreciation
-    things I would do if I knew I could not fail\tcourage|dreams|unlimited
+    text
+    things to accomplish in the next decade
+    habits to develop this year
+    fears to overcome
+    skills I'd like to master
+    ways to improve my morning routine
+    things I'm grateful for today
+    things I would do if I knew I could not fail
     """
     
     private static let professionalTSV = """
-    text\ttags
-    business ideas to explore\tentrepreneurship|innovation|startup
-    ways to improve my workspace\tproductivity|office|environment
-    networking opportunities to pursue\tconnections|career|networking
-    career goals for the next 5 years\tcareer|planning|future
-    ways to add value to my team\tteamwork|contribution|leadership
-    side projects to start this month\tprojects|initiative|creativity
+    text
+    business ideas to explore
+    ways to improve my workspace
+    networking opportunities to pursue
+    career goals for the next 5 years
+    ways to add value to my team
+    side projects to start this month
     """
     
     private static let creativeTSV = """
-    text\ttags
-    short story concepts\twriting|fiction|storytelling
-    inventions that would make life easier\tinnovation|problem-solving|invention
-    art projects to try\tart|creativity|expression
-    podcast episode ideas\tcontent|podcast|media
-    app ideas that solve real problems\ttechnology|apps|solutions
-    YouTube video concepts\tvideo|content|youtube
+    text
+    short story concepts
+    inventions that would make life easier
+    art projects to try
+    podcast episode ideas
+    app ideas that solve real problems
+    YouTube video concepts
     """
     
     private static let lifestyleTSV = """
-    text\ttags
-    bucket list adventures\tadventure|experiences|bucket-list
-    recipes to try this month\tcooking|food|culinary
-    ways to simplify my life\tminimalism|simplicity|organization
-    healthy habits to adopt\thealth|wellness|fitness
-    ways to reduce stress\tstress-relief|relaxation|mental-health
-    home improvement projects\thome|DIY|improvement
+    text
+    bucket list adventures
+    recipes to try this month
+    ways to simplify my life
+    healthy habits to adopt
+    ways to reduce stress
+    home improvement projects
     """
     
     private static let relationshipsTSV = """
-    text\ttags
-    ways to show appreciation to loved ones\tlove|appreciation|gestures
-    conversation starters for meaningful discussions\tcommunication|deep-talk|connection
-    qualities I value in friendships\tfriendship|values|connections
-    ways to strengthen my relationships\tbonding|improvement|connection
-    people I should reconnect with\treconnection|friendship|nostalgia
+    text
+    ways to show appreciation to loved ones
+    conversation starters for meaningful discussions
+    qualities I value in friendships
+    ways to strengthen my relationships
+    people I should reconnect with
     """
     
     private static let entertainmentTSV = """
-    text\ttags
-    movie night themes\tmovies|themes|entertainment
-    book genres to explore\treading|genres|exploration
-    games to play with friends\tgames|fun|social
-    types of live events to experience\tevents|experiences|entertainment
-    hobbies to explore\thobbies|interests|activities
+    text
+    movie night themes
+    book genres to explore
+    games to play with friends
+    types of live events to experience
+    hobbies to explore
     """
     
     private static let travelTSV = """
-    text\ttags
-    types of local adventures to try\tlocal|exploration|discovery
-    dream vacation themes\tvacation|dreams|travel
-    road trip themes or activities\troad-trip|themes|adventure
-    unique travel experiences I'd enjoy\texperiences|adventure|unique
-    weekend getaway themes\tweekend|themes|relaxation
+    text
+    types of local adventures to try
+    dream vacation themes
+    road trip themes or activities
+    unique travel experiences I'd enjoy
+    weekend getaway themes
     """
     
     private static let learningTSV = """
-    text\ttags
-    subjects I want to learn more about\teducation|topics|curiosity
-    languages I'd like to learn\tlanguages|communication|culture
-    documentary topics that interest me\tdocumentaries|topics|interest
-    skills that would advance my career\tprofessional|skills|development
-    topics I'm curious about\tcuriosity|knowledge|interest
+    text
+    subjects I want to learn more about
+    languages I'd like to learn
+    documentary topics that interest me
+    skills that would advance my career
+    topics I'm curious about
     """
     
     private static let financialTSV = """
-    text\ttags
-    ways to save money\tsavings|budgeting|money
-    investment opportunities to explore\tinvesting|wealth|future
-    financial goals for this year\tgoals|planning|money
-    ways to increase my income\tincome|earning|money
+    text
+    ways to save money
+    investment opportunities to explore
+    financial goals for this year
+    ways to increase my income
     """
     
     private static let socialImpactTSV = """
-    text\ttags
-    causes to support\tcharity|causes|giving
-    ways to help my community\tcommunity|service|local
-    environmental changes to make\tenvironment|sustainability|green
-    volunteer opportunities to pursue\tvolunteering|service|helping
-    random acts of kindness to perform\tkindness|giving|compassion
+    text
+    causes to support
+    ways to help my community
+    environmental changes to make
+    volunteer opportunities to pursue
+    random acts of kindness to perform
     """
     
     private static let healthTSV = """
-    text\ttags
-    healthy snacks to prepare\tnutrition|snacks|health
-    movement activities that sound fun\texercise|movement|fun
-    sleep hygiene improvements to make\tsleep|rest|health
-    ways to stay hydrated\thydration|water|health
-    stretches to do during work breaks\tstretching|breaks|wellness
-    outdoor activities to try\toutdoor|nature|activity
-    healthy meal prep ideas\tmeals|nutrition|planning
-    ways to reduce screen time\tdigital|detox|health
-    morning routines for energy\tmorning|routine|energy
-    stress-relief activities\tstress|relief|relaxation
+    text
+    healthy snacks to prepare
+    movement activities that sound fun
+    sleep hygiene improvements to make
+    ways to stay hydrated
+    stretches to do during work breaks
+    outdoor activities to try
+    healthy meal prep ideas
+    ways to reduce screen time
+    morning routines for energy
+    stress-relief activities
     """
     
     private static let mindfulnessTSV = """
-    text\ttags
-    moments today when I felt present\tmindfulness|presence|awareness
-    thoughts I can let go of\trelease|thoughts|mindfulness
-    sensations I'm noticing right now\tawareness|senses|present
-    breathing exercises to try\tbreathing|meditation|calm
-    meditation techniques to explore\tmeditation|practice|mindfulness
-    ways to ground myself when anxious\tgrounding|anxiety|calm
-    mindful activities for this week\tactivities|mindfulness|practice
-    triggers I want to be aware of\ttriggers|awareness|growth
-    intentions for tomorrow\tintentions|planning|mindfulness
-    types of peaceful environments I enjoy\tpeace|environment|calm
+    text
+    moments today when I felt present
+    thoughts I can let go of
+    sensations I'm noticing right now
+    breathing exercises to try
+    meditation techniques to explore
+    ways to ground myself when anxious
+    mindful activities for this week
+    triggers I want to be aware of
+    intentions for tomorrow
+    types of peaceful environments I enjoy
     """
     
     private static let selfcareTSV = """
-    text\ttags
-    ways to pamper myself this weekend\tselfcare|relaxation|treat
-    boundaries I need to set\tboundaries|protection|selfcare
-    self-care rituals to establish\trituals|routine|care
-    activities that recharge my energy\tenergy|recharge|rest
-    ways to say no without guilt\tboundaries|guilt|assertiveness
-    comfort activities for bad days\tcomfort|support|selfcare
-    positive affirmations I need to hear\taffirmations|positive|self-love
-    ways to celebrate small wins\tcelebration|achievement|recognition
-    self-compassion practices to try\tcompassion|kindness|self
-    rest activities that aren't sleep\trest|relaxation|recovery
+    text
+    ways to pamper myself this weekend
+    boundaries I need to set
+    self-care rituals to establish
+    activities that recharge my energy
+    ways to say no without guilt
+    comfort activities for bad days
+    positive affirmations I need to hear
+    ways to celebrate small wins
+    self-compassion practices to try
+    rest activities that aren't sleep
     """
     
     private static let gratitudeTSV = """
-    text\ttags
-    small joys I experienced today\tgratitude|joy|appreciation
-    people who made my life better\tpeople|gratitude|relationships
-    abilities I'm grateful for\tabilities|gratitude|self
-    challenges that helped me grow\tgrowth|challenges|gratitude
-    simple pleasures I often overlook\tsimple|pleasure|mindfulness
-    things about my body I appreciate\tbody|appreciation|gratitude
-    opportunities I'm thankful for\topportunities|thankful|gratitude
-    memories that make me smile\tmemories|happiness|past
-    aspects of my home I love\thome|comfort|gratitude
-    lessons I'm grateful to have learned\tlessons|learning|wisdom
+    text
+    small joys I experienced today
+    people who made my life better
+    abilities I'm grateful for
+    challenges that helped me grow
+    simple pleasures I often overlook
+    things about my body I appreciate
+    opportunities I'm thankful for
+    memories that make me smile
+    aspects of my home I love
+    lessons I'm grateful to have learned
     """
 }
