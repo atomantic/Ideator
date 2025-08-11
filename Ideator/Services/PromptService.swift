@@ -32,25 +32,13 @@ class PromptService {
     }
     
     private func loadPromptsFromCategory(pack: PromptPack, category: PackCategory) -> [Prompt]? {
-        var url: URL?
-        
-        // First check documents directory (for all packs including updated Core)
+        // Load from documents directory (all packs are now stored there)
         let documentsPath = FileManager.default.urls(for: .documentDirectory, 
                                                     in: .userDomainMask).first!
         let packDir = documentsPath.appendingPathComponent("PromptPacks/\(pack.id)")
-        let documentsFile = packDir.appendingPathComponent(category.file)
+        let fileURL = packDir.appendingPathComponent(category.file)
         
-        if FileManager.default.fileExists(atPath: documentsFile.path) {
-            url = documentsFile
-        } else if pack.id == "core" {
-            // Fall back to bundle for Core pack if not in documents
-            url = Bundle.main.url(forResource: category.file.replacingOccurrences(of: ".tsv", with: ""),
-                                  withExtension: "tsv",
-                                  subdirectory: "PromptPacks/Core")
-        }
-        
-        guard let fileURL = url,
-              let data = try? String(contentsOf: fileURL) else {
+        guard let data = try? String(contentsOf: fileURL) else {
             return nil
         }
         

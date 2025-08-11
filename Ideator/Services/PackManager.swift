@@ -20,21 +20,53 @@ class PackManager: ObservableObject {
         try? FileManager.default.createDirectory(at: packsDirectory, 
                                                 withIntermediateDirectories: true)
         
+        // Install embedded Core pack if not already present
+        installEmbeddedCorePackIfNeeded()
+        
         loadInstalledPacks()
+    }
+    
+    private func installEmbeddedCorePackIfNeeded() {
+        let corePackDir = packsDirectory.appendingPathComponent("core")
+        let manifestPath = corePackDir.appendingPathComponent("manifest.json")
+        
+        // Check if Core pack already exists
+        if FileManager.default.fileExists(atPath: manifestPath.path) {
+            return
+        }
+        
+        // Create Core pack directory
+        try? FileManager.default.createDirectory(at: corePackDir,
+                                                withIntermediateDirectories: true)
+        
+        // Write manifest
+        if let manifestData = CorePackData.manifest.data(using: .utf8) {
+            try? manifestData.write(to: manifestPath)
+        }
+        
+        // Parse manifest to get categories
+        if let manifestData = CorePackData.manifest.data(using: .utf8),
+           let manifest = try? JSONDecoder().decode(PromptPack.self, from: manifestData) {
+            
+            // Write each TSV file
+            for category in manifest.categories {
+                if let tsvContent = CorePackData.getTSVContent(for: category.file),
+                   let tsvData = tsvContent.data(using: .utf8) {
+                    let tsvPath = corePackDir.appendingPathComponent(category.file)
+                    try? tsvData.write(to: tsvPath)
+                }
+            }
+        }
+        
+        print("Installed embedded Core pack")
     }
     
     func loadInstalledPacks() {
         var packs: [PromptPack] = []
         
-        // Load downloaded packs from documents (including updated Core pack if present)
+        // Load all packs from documents directory (including Core pack)
         if let downloadedPacks = loadDownloadedPacks() {
             packs.append(contentsOf: downloadedPacks)
-        }
-        
-        // Only load bundled Core pack if not already downloaded
-        let hasDownloadedCore = packs.contains { $0.id == "core" }
-        if !hasDownloadedCore, let corePack = loadBundledPack() {
-            packs.append(corePack)
         }
         
         // Load enabled state from UserDefaults
@@ -44,38 +76,6 @@ class PackManager: ObservableObject {
         }
         
         installedPacks = packs
-    }
-    
-    private func loadBundledPack() -> PromptPack? {
-        guard let url = Bundle.main.url(forResource: "manifest", 
-                                       withExtension: "json",
-                                       subdirectory: "PromptPacks/Core") else {
-            print("Core pack manifest not found in bundle")
-            return nil
-        }
-        
-        do {
-            let data = try Data(contentsOf: url)
-            var pack = try JSONDecoder().decode(PromptPack.self, from: data)
-            
-            // Count prompts in each category
-            for i in pack.categories.indices {
-                let category = pack.categories[i]
-                if let tsvURL = Bundle.main.url(forResource: category.file.replacingOccurrences(of: ".tsv", with: ""),
-                                               withExtension: "tsv",
-                                               subdirectory: "PromptPacks/Core") {
-                    if let content = try? String(contentsOf: tsvURL) {
-                        let lines = content.components(separatedBy: .newlines)
-                        pack.categories[i].promptCount = lines.dropFirst().filter { !$0.isEmpty }.count
-                    }
-                }
-            }
-            
-            return pack
-        } catch {
-            print("Failed to load core pack: \(error)")
-            return nil
-        }
     }
     
     private func loadDownloadedPacks() -> [PromptPack]? {
