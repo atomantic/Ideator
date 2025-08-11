@@ -1,0 +1,130 @@
+name: CI/CD Pipeline
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - testflight
+      - 'release/**'
+
+env:
+  IPHONEOS_DEPLOYMENT_TARGET: ${{ vars.IPHONEOS_DEPLOYMENT_TARGET }}
+  TEAM_ID:                  ${{ secrets.TEAM_ID }}
+  APPSTORE_API_KEY_ID:      ${{ secrets.APPSTORE_API_KEY_ID }}
+  APPSTORE_ISSUER_ID:       ${{ secrets.APPSTORE_ISSUER_ID }}
+  APPSTORE_API_PRIVATE_KEY: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+
+jobs:
+  ci:
+    runs-on: macos-latest
+    name: Build & Test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.2'
+
+      - name: Verify iOS 18.2 runtime
+        run: |
+          if ! xcrun simctl list runtimes | grep -q "com.apple.CoreSimulator.SimRuntime.iOS-18-2"; then
+            echo "❌ iOS 18.2 runtime not installed"
+            exit 1
+          fi
+
+      - name: Create & boot iOS 18.2 simulator
+        run: |
+          SIM_UDID=$(xcrun simctl create "test-sim" \
+            com.apple.CoreSimulator.SimDeviceType.iPhone-16 \
+            com.apple.CoreSimulator.SimRuntime.iOS-18-2)
+          echo "SIM_UDID=$SIM_UDID" >> $GITHUB_ENV
+
+          # Boot it and wait for it to fully start
+          xcrun simctl boot "$SIM_UDID"
+          xcrun simctl bootstatus "$SIM_UDID" -b
+
+      - name: Run unit tests on simulator
+        run: |
+          xcodebuild test \
+            -project Ideator.xcodeproj \
+            -scheme Ideator \
+            -destination "id=$SIM_UDID" \
+            -destination-timeout 60 \
+            -configuration Debug \
+            -derivedDataPath build \
+            IPHONEOS_DEPLOYMENT_TARGET=18.2 \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO
+
+  cd:
+    runs-on: macos-latest
+    name: Build and Deploy to TestFlight
+    needs: ci
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/testflight' || startsWith(github.ref, 'refs/heads/release/'))
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: 'latest-stable'
+
+      - name: Create ASC key file
+        run: |
+          cat > "$GITHUB_WORKSPACE/AuthKey.p8" <<EOF
+          ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+          EOF
+          chmod 600 "$GITHUB_WORKSPACE/AuthKey.p8"
+
+      - name: Archive iOS App (unsigned)
+        run: |
+          xcodebuild \
+            -project Ideator.xcodeproj \
+            -scheme Ideator \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/Ideator.xcarchive \
+            IPHONEOS_DEPLOYMENT_TARGET="$IPHONEOS_DEPLOYMENT_TARGET" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            archive
+
+      - name: Create exportOptions.plist
+        run: |
+          cat > exportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+            "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>teamID</key><string>$TEAM_ID</string>
+            <key>signingStyle</key><string>automatic</string>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Export .ipa (automatic signing)
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath build/Ideator.xcarchive \
+            -exportOptionsPlist exportOptions.plist \
+            -exportPath build/export \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$GITHUB_WORKSPACE/AuthKey.p8" \
+            -authenticationKeyID "${{ secrets.APPSTORE_API_KEY_ID }}" \
+            -authenticationKeyIssuerID "${{ secrets.APPSTORE_ISSUER_ID }}"
+
+      - name: Upload to TestFlight
+        uses: apple-actions/upload-testflight-build@v3
+        with:
+          app-path: 'build/export/Ideator.ipa'
+          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+          api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
+          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
