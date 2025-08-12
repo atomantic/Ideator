@@ -26,7 +26,7 @@ struct Prompt: Identifiable, Codable, Hashable {
     }
     
     var formattedTitle: String {
-        "\(suggestedCount) \(text)"
+        text
     }
 }
 
