@@ -7,6 +7,7 @@ struct HomeView: View {
     @Binding var showingIdeaInput: Bool
     
     @State private var animateGradient = false
+    @State private var refreshID = UUID()
     
     var body: some View {
         NavigationStack {
@@ -17,11 +18,19 @@ struct HomeView: View {
                     quickStartSection
                     
                     statsSection
+                        .id(refreshID)
                     
                     recentCategoriesSection
                 }
                 .padding()
             }
+        }
+        .onAppear {
+            refreshID = UUID()
+        }
+        .onChange(of: showingIdeaInput) { _, _ in
+            // Refresh stats when idea input sheet dismisses
+            refreshID = UUID()
         }
     }
     
@@ -166,8 +175,9 @@ struct HomeView: View {
         let drafts = PersistenceManager.shared.loadDrafts()
         let completed = PersistenceManager.shared.loadCompleted()
         
-        let draftIdeas = drafts.reduce(0) { $0 + $1.ideas.filter { !$0.isEmpty }.count }
-        let completedIdeas = completed.reduce(0) { $0 + $1.ideas.filter { !$0.isEmpty }.count }
+        // Since we now use dynamic lists, all ideas in the array are valid (no empty placeholders)
+        let draftIdeas = drafts.reduce(0) { $0 + $1.ideas.count }
+        let completedIdeas = completed.reduce(0) { $0 + $1.ideas.count }
         
         return draftIdeas + completedIdeas
     }
