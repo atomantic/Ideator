@@ -90,26 +90,61 @@ struct SettingsView: View {
                 .buttonStyle(.bordered)
             }
             
-            ForEach(Category.allCases, id: \.self) { category in
-                NavigationLink(destination: CategoryPromptsDetailView(
-                    category: category,
-                    promptViewModel: promptViewModel
-                )) {
-                    HStack {
-                        Image(systemName: category.icon)
-                            .foregroundColor(category.colorValue)
-                            .frame(width: 30)
-                        
-                        Text(category.rawValue)
-                            .font(.subheadline)
-                        
-                        Spacer()
-                        
-                        let unused = promptViewModel.getUnusedPromptsCount(for: category)
-                        let total = promptViewModel.getPromptsForCategory(category).count
-                        Text("\(unused)/\(total)")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+            // Group categories by pack
+            let groupedCategories = promptViewModel.getCategoriesGroupedByPack()
+            ForEach(Array(groupedCategories.enumerated()), id: \.offset) { _, group in
+                if groupedCategories.count > 1 {
+                    Section(header: Text(group.packName ?? "Core")
+                        .font(.caption)
+                        .foregroundColor(.secondary)) {
+                        ForEach(group.categories, id: \.id) { flexCategory in
+                            NavigationLink(destination: FlexibleCategoryPromptsDetailView(
+                                category: flexCategory,
+                                promptViewModel: promptViewModel
+                            )) {
+                                HStack {
+                                    Image(systemName: flexCategory.icon)
+                                        .foregroundColor(flexCategory.colorValue)
+                                        .frame(width: 30)
+                                    
+                                    Text(flexCategory.name)
+                                        .font(.subheadline)
+                                    
+                                    Spacer()
+                                    
+                                    let unused = promptViewModel.getUnusedPromptsCount(for: flexCategory)
+                                    let total = promptViewModel.getPrompts(for: flexCategory).count
+                                    Text("\(unused)/\(total)")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    // If only one pack, don't show section headers
+                    ForEach(group.categories, id: \.id) { flexCategory in
+                        NavigationLink(destination: FlexibleCategoryPromptsDetailView(
+                            category: flexCategory,
+                            promptViewModel: promptViewModel
+                        )) {
+                            HStack {
+                                Image(systemName: flexCategory.icon)
+                                    .foregroundColor(flexCategory.colorValue)
+                                    .frame(width: 30)
+                                
+                                Text(flexCategory.name)
+                                    .font(.subheadline)
+                                
+                                Spacer()
+                                
+                                let unused = promptViewModel.getUnusedPromptsCount(for: flexCategory)
+                                let total = promptViewModel.getPrompts(for: flexCategory).count
+                                Text("\(unused)/\(total)")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
                     }
                 }
             }
