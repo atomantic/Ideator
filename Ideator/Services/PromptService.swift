@@ -10,6 +10,7 @@ class PromptService {
     private init() {
         loadPromptsFromPacks()
         loadUsedPromptIds()
+        migrateCompletedListsToUsedPrompts()
     }
     
     private func loadPromptsFromPacks() {
@@ -195,5 +196,33 @@ class PromptService {
             prompts = prompts.filter { $0.category == category }
         }
         return prompts.count
+    }
+    
+    private func migrateCompletedListsToUsedPrompts() {
+        // Check if migration has already been done
+        let migrationKey = "PromptUsageMigrationCompleted"
+        if UserDefaults.standard.bool(forKey: migrationKey) {
+            return
+        }
+        
+        // Get all completed lists
+        let completed = PersistenceManager.shared.loadCompleted()
+        
+        // Mark each prompt from completed lists as used
+        for ideaList in completed {
+            // Find matching prompt by text and category
+            if let matchingPrompt = allPrompts.first(where: { 
+                $0.text == ideaList.prompt.text && 
+                $0.category == ideaList.prompt.category 
+            }) {
+                usedPromptIds.insert(matchingPrompt.id)
+            }
+        }
+        
+        // Save the updated used prompt IDs
+        saveUsedPromptIds()
+        
+        // Mark migration as complete
+        UserDefaults.standard.set(true, forKey: migrationKey)
     }
 }
