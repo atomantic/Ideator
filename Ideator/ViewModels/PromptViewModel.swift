@@ -46,4 +46,8 @@ class PromptViewModel {
         promptService.resetUsedPrompts()
         loadPrompts()
     }
+    
+    func isPromptUsed(_ prompt: Prompt) -> Bool {
+        promptService.isPromptUsed(prompt)
+    }
 }

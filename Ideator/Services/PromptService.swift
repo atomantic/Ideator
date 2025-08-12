@@ -185,6 +185,10 @@ class PromptService {
         saveUsedPromptIds()
     }
     
+    func isPromptUsed(_ prompt: Prompt) -> Bool {
+        usedPromptIds.contains(prompt.id)
+    }
+    
     func getUnusedPromptsCount(for category: Category? = nil) -> Int {
         var prompts = allPrompts.filter { !usedPromptIds.contains($0.id) }
         if let category = category {

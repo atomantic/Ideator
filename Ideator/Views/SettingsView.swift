@@ -91,19 +91,26 @@ struct SettingsView: View {
             }
             
             ForEach(Category.allCases, id: \.self) { category in
-                HStack {
-                    Image(systemName: category.icon)
-                        .foregroundColor(category.colorValue)
-                        .frame(width: 30)
-                    
-                    Text(category.rawValue)
-                        .font(.subheadline)
-                    
-                    Spacer()
-                    
-                    Text("\(promptViewModel.getUnusedPromptsCount(for: category))")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                NavigationLink(destination: CategoryPromptsDetailView(
+                    category: category,
+                    promptViewModel: promptViewModel
+                )) {
+                    HStack {
+                        Image(systemName: category.icon)
+                            .foregroundColor(category.colorValue)
+                            .frame(width: 30)
+                        
+                        Text(category.rawValue)
+                            .font(.subheadline)
+                        
+                        Spacer()
+                        
+                        let unused = promptViewModel.getUnusedPromptsCount(for: category)
+                        let total = promptViewModel.getPromptsForCategory(category).count
+                        Text("\(unused)/\(total)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
                 }
             }
         }
