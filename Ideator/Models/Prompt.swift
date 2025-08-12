@@ -3,7 +3,8 @@ import Foundation
 struct Prompt: Identifiable, Codable, Hashable {
     let id: UUID
     let text: String
-    let category: Category
+    let category: Category // Keep for backwards compatibility
+    let flexibleCategory: FlexibleCategory
     let suggestedCount: Int
     
     init(
@@ -22,6 +23,27 @@ struct Prompt: Identifiable, Codable, Hashable {
         }
         self.text = text
         self.category = category
+        self.flexibleCategory = FlexibleCategory.from(category: category)
+        self.suggestedCount = suggestedCount
+    }
+    
+    init(
+        id: UUID? = nil,
+        text: String,
+        flexibleCategory: FlexibleCategory,
+        suggestedCount: Int = 10
+    ) {
+        // Generate consistent UUID based on text and category
+        if let providedId = id {
+            self.id = providedId
+        } else {
+            // Create deterministic UUID from prompt text and category
+            let uniqueString = "\(text)_\(flexibleCategory.id)"
+            self.id = UUID(uuidString: uniqueString.uuidFromString()) ?? UUID()
+        }
+        self.text = text
+        self.category = flexibleCategory.toCategory() ?? .personalDevelopment
+        self.flexibleCategory = flexibleCategory
         self.suggestedCount = suggestedCount
     }
     

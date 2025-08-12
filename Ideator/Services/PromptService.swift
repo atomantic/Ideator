@@ -46,7 +46,12 @@ class PromptService {
         let lines = data.components(separatedBy: .newlines)
         let dataLines = lines.dropFirst().filter { !$0.isEmpty }
         
-        let categoryEnum = categoryFromString(category.id)
+        // Create flexible category for this pack category
+        let flexibleCategory = FlexibleCategory.from(
+            packCategory: category,
+            packId: pack.id,
+            packName: pack.name
+        )
         
         return dataLines.compactMap { line in
             let text = line.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -54,7 +59,7 @@ class PromptService {
             
             return Prompt(
                 text: text,
-                category: categoryEnum,
+                flexibleCategory: flexibleCategory,
                 suggestedCount: 10 // Default count, user can override in settings
             )
         }
@@ -198,6 +203,38 @@ class PromptService {
         return prompts.count
     }
     
+    func getUnusedPromptsCount(for flexibleCategory: FlexibleCategory) -> Int {
+        allPrompts.filter { 
+            $0.flexibleCategory.id == flexibleCategory.id && 
+            !usedPromptIds.contains($0.id) 
+        }.count
+    }
+    
+    func getPrompts(for flexibleCategory: FlexibleCategory) -> [Prompt] {
+        allPrompts.filter { $0.flexibleCategory.id == flexibleCategory.id }
+    }
+    
+    func getCategoriesGroupedByPack() -> [(packName: String?, categories: [FlexibleCategory])] {
+        var categoryDict: [String?: Set<FlexibleCategory>] = [:]
+        
+        for prompt in allPrompts {
+            let packName = prompt.flexibleCategory.packName
+            if categoryDict[packName] == nil {
+                categoryDict[packName] = []
+            }
+            categoryDict[packName]?.insert(prompt.flexibleCategory)
+        }
+        
+        // Sort: Core (nil) first, then alphabetically by pack name
+        let sorted = categoryDict.sorted { (first, second) in
+            if first.key == nil { return true }
+            if second.key == nil { return false }
+            return (first.key ?? "") < (second.key ?? "")
+        }
+        
+        return sorted.map { (packName: $0.key, categories: Array($0.value).sorted { $0.name < $1.name }) }
+    }
+    
     private func migrateCompletedListsToUsedPrompts() {
         // Check if migration has already been done
         let migrationKey = "PromptUsageMigrationCompleted"
@@ -210,10 +247,11 @@ class PromptService {
         
         // Mark each prompt from completed lists as used
         for ideaList in completed {
-            // Find matching prompt by text and category
+            // Find matching prompt by text and flexible category
             if let matchingPrompt = allPrompts.first(where: { 
                 $0.text == ideaList.prompt.text && 
-                $0.category == ideaList.prompt.category 
+                ($0.flexibleCategory.id == ideaList.prompt.flexibleCategory.id ||
+                 $0.category == ideaList.prompt.category)
             }) {
                 usedPromptIds.insert(matchingPrompt.id)
             }

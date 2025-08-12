@@ -50,4 +50,23 @@ class PromptViewModel {
     func isPromptUsed(_ prompt: Prompt) -> Bool {
         promptService.isPromptUsed(prompt)
     }
+    
+    func getCategoriesGroupedByPack() -> [(packName: String?, categories: [FlexibleCategory])] {
+        promptService.getCategoriesGroupedByPack()
+    }
+    
+    func getUnusedPromptsCount(for flexibleCategory: FlexibleCategory) -> Int {
+        promptService.getUnusedPromptsCount(for: flexibleCategory)
+    }
+    
+    func getPrompts(for flexibleCategory: FlexibleCategory) -> [Prompt] {
+        promptService.getPrompts(for: flexibleCategory)
+    }
+    
+    func selectFlexibleCategory(_ category: FlexibleCategory) {
+        // Clear the old category selection
+        selectedCategory = category.toCategory()
+        // Filter prompts by flexible category
+        prompts = promptService.getPrompts(for: category)
+    }
 }

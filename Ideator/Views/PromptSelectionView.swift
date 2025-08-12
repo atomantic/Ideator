@@ -116,8 +116,8 @@ struct PromptRow: View {
         Button(action: onSelect) {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Image(systemName: prompt.category.icon)
-                        .foregroundColor(prompt.category.colorValue)
+                    Image(systemName: prompt.flexibleCategory.icon)
+                        .foregroundColor(prompt.flexibleCategory.colorValue)
                         .font(.title3)
                     
                     Text(prompt.formattedTitle)
@@ -128,7 +128,7 @@ struct PromptRow: View {
                     Spacer()
                 }
                 
-                Label(prompt.category.rawValue, systemImage: "tag.fill")
+                Label(prompt.flexibleCategory.name, systemImage: "tag.fill")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
