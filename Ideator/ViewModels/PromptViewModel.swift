@@ -6,6 +6,7 @@ class PromptViewModel {
     var prompts: [Prompt] = []
     var categories: [Category] = Category.allCases
     var selectedCategory: Category?
+    var selectedFlexibleCategory: FlexibleCategory?
     var currentPrompt: Prompt?
     var isLoading = false
     
@@ -17,12 +18,17 @@ class PromptViewModel {
     
     func loadPrompts() {
         isLoading = true
-        prompts = promptService.getPrompts(for: selectedCategory)
+        if let flexCategory = selectedFlexibleCategory {
+            prompts = promptService.getPrompts(for: flexCategory)
+        } else {
+            prompts = promptService.getPrompts(for: selectedCategory)
+        }
         isLoading = false
     }
     
     func selectCategory(_ category: Category?) {
         selectedCategory = category
+        selectedFlexibleCategory = nil // Clear flexible category when selecting regular category
         loadPrompts()
     }
     
@@ -64,9 +70,11 @@ class PromptViewModel {
     }
     
     func selectFlexibleCategory(_ category: FlexibleCategory) {
-        // Clear the old category selection
+        // Set the flexible category
+        selectedFlexibleCategory = category
+        // Also set the old category for backwards compatibility
         selectedCategory = category.toCategory()
-        // Filter prompts by flexible category
-        prompts = promptService.getPrompts(for: category)
+        // Load prompts for this flexible category
+        loadPrompts()
     }
 }

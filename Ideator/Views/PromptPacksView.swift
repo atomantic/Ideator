@@ -49,6 +49,7 @@ struct PromptPacksView: View {
                 PackRow(
                     pack: pack,
                     isUpdating: updatingPacks.contains(pack.id),
+                    updateAvailable: packManager.packUpdates[pack.id],
                     onToggle: {
                         packManager.togglePack(pack.id, enabled: !pack.isEnabled)
                         // Reload prompts when toggling packs
@@ -59,6 +60,10 @@ struct PromptPacksView: View {
                             updatingPacks.insert(pack.id)
                             do {
                                 try await packManager.updatePack(pack.id)
+                                // Reload the installed packs to get the new version
+                                packManager.loadInstalledPacks()
+                                // Re-check for updates to clear the update indicator
+                                await packManager.fetchAvailablePacks()
                                 PromptService.shared.reloadPrompts()
                                 showUpdateSuccess = true
                             } catch {
@@ -127,6 +132,7 @@ struct PromptPacksView: View {
 struct PackRow: View {
     let pack: PromptPack
     let isUpdating: Bool
+    let updateAvailable: String? // New version if update is available
     let onToggle: () -> Void
     let onUpdate: () -> Void
     
@@ -163,30 +169,39 @@ struct PackRow: View {
                 
                 Spacer()
                 
-                if isUpdating {
-                    ProgressView()
-                        .scaleEffect(0.7)
-                } else {
-                    Button(action: onUpdate) {
-                        Image(systemName: "arrow.triangle.2.circlepath")
-                            .font(.caption)
-                            .foregroundColor(.blue)
+                if let newVersion = updateAvailable {
+                    // Show update button for any pack including core
+                    if isUpdating {
+                        ProgressView()
+                            .scaleEffect(0.7)
+                    } else {
+                        Button(action: onUpdate) {
+                            HStack(spacing: 4) {
+                                Text("v\(pack.version)")
+                                    .strikethrough()
+                                    .foregroundColor(.secondary)
+                                Image(systemName: "arrow.right")
+                                    .font(.caption2)
+                                Text("v\(newVersion)")
+                                    .fontWeight(.medium)
+                                Image(systemName: "arrow.down.circle.fill")
+                            }
+                            .font(.caption2)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(Color.orange.opacity(0.15))
+                            .foregroundColor(.orange)
+                            .clipShape(Capsule())
+                        }
+                        .buttonStyle(BorderlessButtonStyle())
                     }
-                    .buttonStyle(BorderlessButtonStyle())
-                }
-                
-                if pack.id == "core" {
-                    Text("Built-in")
-                        .font(.caption2)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 2)
-                        .background(Color.blue.opacity(0.2))
-                        .foregroundColor(.blue)
-                        .clipShape(Capsule())
                 } else {
-                    Text("v\(pack.version)")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
+                    // Show version for all packs
+                    HStack(spacing: 4) {
+                        Text("v\(pack.version)")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
                 }
             }
         }

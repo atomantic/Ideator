@@ -47,7 +47,6 @@ struct RemotePackInfo: Codable {
     let description: String
     let author: String
     let downloadUrl: String
-    let size: Int
     let promptCount: Int
     let categories: [String]
 }

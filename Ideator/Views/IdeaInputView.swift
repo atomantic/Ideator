@@ -147,19 +147,23 @@ struct IdeaInputView: View {
     private var promptCard: some View {
         VStack(alignment: .leading, spacing: 8) {
             if let prompt = viewModel.currentIdeaList?.prompt {
-                HStack {
-                    Image(systemName: prompt.category.icon)
-                        .foregroundColor(prompt.category.colorValue)
-                        .font(.title2)
+                // Category on top with icon
+                HStack(spacing: 6) {
+                    Image(systemName: prompt.flexibleCategory.icon)
+                        .foregroundColor(prompt.flexibleCategory.colorValue)
+                        .font(.caption)
                     
-                    Text(prompt.formattedTitle)
-                        .font(.headline)
-                        .fontWeight(.bold)
+                    Text(prompt.flexibleCategory.name)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.secondary)
                 }
                 
-                Label(prompt.category.rawValue, systemImage: "tag.fill")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                // Prompt text below
+                Text(prompt.formattedTitle)
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .foregroundColor(.primary)
             }
         }
         .padding()
@@ -208,6 +212,7 @@ struct ExportView: View {
     let ideaList: IdeaList
     let onComplete: () -> Void
     @State private var exportFormat = "text"
+    @State private var showingShareSheet = false
     
     var body: some View {
         NavigationStack {
@@ -234,7 +239,7 @@ struct ExportView: View {
                 .padding(.horizontal)
                 
                 Button(action: {
-                    exportToNotes()
+                    showingShareSheet = true
                 }) {
                     Label("Export to Notes", systemImage: "square.and.arrow.up")
                         .font(.headline)
@@ -257,14 +262,13 @@ struct ExportView: View {
             .navigationTitle("Success!")
             .navigationBarTitleDisplayMode(.inline)
         }
-    }
-    
-    private func exportToNotes() {
-        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let rootViewController = windowScene.windows.first?.rootViewController else {
-            return
+        .sheet(isPresented: $showingShareSheet) {
+            ShareSheet(activityItems: [
+                exportFormat == "markdown" 
+                    ? ExportManager.shared.exportAsMarkdown(ideaList)
+                    : ideaList.formattedForExport
+            ])
         }
-        
-        ExportManager.shared.exportToNotes(ideaList, from: rootViewController)
     }
 }
+

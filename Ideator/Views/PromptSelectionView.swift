@@ -7,6 +7,7 @@ struct PromptSelectionView: View {
     @Environment(\.dismiss) private var dismiss
     
     @State private var selectedCategory: Category?
+    @State private var selectedFlexibleCategory: FlexibleCategory?
     @State private var searchText = ""
     
     init(promptViewModel: PromptViewModel, ideaListViewModel: IdeaListViewModel, showingIdeaInput: Binding<Bool>) {
@@ -15,12 +16,18 @@ struct PromptSelectionView: View {
         self._showingIdeaInput = showingIdeaInput
         // Initialize selectedCategory from promptViewModel
         self._selectedCategory = State(initialValue: promptViewModel.selectedCategory)
+        self._selectedFlexibleCategory = State(initialValue: promptViewModel.selectedFlexibleCategory)
     }
     
     var filteredPrompts: [Prompt] {
-        let prompts = selectedCategory != nil 
-            ? promptViewModel.getPromptsForCategory(selectedCategory!)
-            : promptViewModel.prompts
+        let prompts: [Prompt]
+        if let flexCategory = selectedFlexibleCategory {
+            prompts = promptViewModel.getPrompts(for: flexCategory)
+        } else if let category = selectedCategory {
+            prompts = promptViewModel.getPromptsForCategory(category)
+        } else {
+            prompts = promptViewModel.prompts
+        }
         
         if searchText.isEmpty {
             return prompts
@@ -33,18 +40,50 @@ struct PromptSelectionView: View {
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                categoryPicker
-                
-                List(filteredPrompts) { prompt in
-                    PromptRow(prompt: prompt) {
-                        selectPrompt(prompt)
+            List {
+                if selectedFlexibleCategory != nil || searchText.isEmpty == false {
+                    // Single category or search results - no sections needed
+                    ForEach(filteredPrompts) { prompt in
+                        PromptRow(prompt: prompt) {
+                            selectPrompt(prompt)
+                        }
+                    }
+                } else {
+                    // All categories - group by pack/category
+                    let groupedPrompts = Dictionary(grouping: filteredPrompts) { prompt in
+                        "\(prompt.flexibleCategory.packName ?? "Core")|\(prompt.flexibleCategory.name)"
+                    }
+                    let sortedGroups = groupedPrompts.keys.sorted()
+                    
+                    ForEach(sortedGroups, id: \.self) { groupKey in
+                        let components = groupKey.split(separator: "|").map(String.init)
+                        let packName = components[0]
+                        let categoryName = components[1]
+                        
+                        Section(header: HStack {
+                            Text(packName)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Text("›")
+                                .font(.caption)
+                                .foregroundColor(.secondary.opacity(0.5))
+                            Text(categoryName)
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .foregroundColor(.secondary)
+                        }) {
+                            ForEach(groupedPrompts[groupKey] ?? []) { prompt in
+                                PromptRow(prompt: prompt) {
+                                    selectPrompt(prompt)
+                                }
+                            }
+                        }
                     }
                 }
-                .searchable(text: $searchText, prompt: "Search prompts...")
-                .listStyle(PlainListStyle())
             }
-            .navigationTitle("Choose a Prompt")
+            .searchable(text: $searchText, prompt: "Search prompts...")
+            .listStyle(PlainListStyle())
+            .navigationTitle(navigationTitle)
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -54,45 +93,58 @@ struct PromptSelectionView: View {
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Random") {
-                        selectRandomPrompt()
+                    Menu {
+                        Button(action: selectRandomPrompt) {
+                            Label("Random from All", systemImage: "dice.fill")
+                        }
+                        
+                        Divider()
+                        
+                        // All categories option
+                        Button(action: {
+                            selectedCategory = nil
+                            selectedFlexibleCategory = nil
+                            promptViewModel.selectCategory(nil)
+                        }) {
+                            Label("All Categories", systemImage: "square.grid.2x2")
+                        }
+                        
+                        Divider()
+                        
+                        // Group categories by pack
+                        let groupedCategories = promptViewModel.getCategoriesGroupedByPack()
+                        ForEach(Array(groupedCategories.enumerated()), id: \.offset) { _, group in
+                            Section(group.packName ?? "Core") {
+                                ForEach(group.categories, id: \.id) { flexCategory in
+                                    Button(action: {
+                                        selectedFlexibleCategory = flexCategory
+                                        selectedCategory = flexCategory.toCategory()
+                                        promptViewModel.selectFlexibleCategory(flexCategory)
+                                    }) {
+                                        Label(flexCategory.name, systemImage: flexCategory.icon)
+                                    }
+                                }
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "line.3.horizontal.decrease.circle")
+                            .symbolRenderingMode(.hierarchical)
                     }
-                    .buttonStyle(.borderedProminent)
                 }
             }
         }
     }
     
-    private var categoryPicker: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 12) {
-                CategoryChip(
-                    title: "All",
-                    icon: "square.grid.2x2",
-                    isSelected: selectedCategory == nil,
-                    color: .blue
-                ) {
-                    selectedCategory = nil
-                    promptViewModel.selectCategory(nil)
-                }
-                
-                ForEach(Category.allCases, id: \.self) { category in
-                    CategoryChip(
-                        title: category.rawValue,
-                        icon: category.icon,
-                        isSelected: selectedCategory == category,
-                        color: category.colorValue
-                    ) {
-                        selectedCategory = category
-                        promptViewModel.selectCategory(category)
-                    }
-                }
-            }
-            .padding(.horizontal)
-            .padding(.vertical, 8)
+    private var navigationTitle: String {
+        if let flexCategory = selectedFlexibleCategory {
+            return flexCategory.name
+        } else if searchText.isEmpty {
+            return "All Prompts"
+        } else {
+            return "Search Results"
         }
-        .background(Color(UIColor.systemGroupedBackground))
     }
+    
     
     private func selectPrompt(_ prompt: Prompt) {
         ideaListViewModel.startNewList(with: prompt)
@@ -114,52 +166,25 @@ struct PromptRow: View {
     
     var body: some View {
         Button(action: onSelect) {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Image(systemName: prompt.flexibleCategory.icon)
-                        .foregroundColor(prompt.flexibleCategory.colorValue)
-                        .font(.title3)
-                    
-                    Text(prompt.formattedTitle)
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                        .multilineTextAlignment(.leading)
-                    
-                    Spacer()
-                }
+            HStack {
+                Image(systemName: prompt.flexibleCategory.icon)
+                    .foregroundColor(prompt.flexibleCategory.colorValue)
+                    .font(.title2)
                 
-                Label(prompt.flexibleCategory.name, systemImage: "tag.fill")
+                Text(prompt.formattedTitle)
+                    .font(.body)
+                    .foregroundColor(.primary)
+                    .multilineTextAlignment(.leading)
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.secondary.opacity(0.5))
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, 4)
         }
         .buttonStyle(PlainButtonStyle())
     }
 }
 
-struct CategoryChip: View {
-    let title: String
-    let icon: String
-    let isSelected: Bool
-    let color: Color
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.caption)
-                Text(title)
-                    .font(.caption)
-                    .fontWeight(.medium)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(isSelected ? color : Color(UIColor.systemGray5))
-            .foregroundColor(isSelected ? .white : .primary)
-            .clipShape(Capsule())
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-}

@@ -60,71 +60,41 @@ struct HomeView: View {
     }
     
     private var quickStartSection: some View {
-        VStack(spacing: 16) {
-            Button(action: {
-                if let randomPrompt = promptViewModel.getRandomPrompt() {
-                    ideaListViewModel.startNewList(with: randomPrompt)
-                    showingIdeaInput = true
-                }
-            }) {
-                HStack {
-                    Image(systemName: "dice.fill")
-                        .font(.title2)
-                    
-                    VStack(alignment: .leading) {
-                        Text("Random Prompt")
-                            .font(.headline)
-                        Text("Let fate decide your next idea list")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    Spacer()
-                    
-                    Image(systemName: "chevron.right")
+        Button(action: {
+            if let randomPrompt = promptViewModel.getRandomPrompt() {
+                ideaListViewModel.startNewList(with: randomPrompt)
+                showingIdeaInput = true
+            }
+        }) {
+            HStack {
+                Image(systemName: "dice.fill")
+                    .font(.title2)
+                
+                VStack(alignment: .leading) {
+                    Text("Random Prompt")
+                        .font(.headline)
+                    Text("Let fate decide your next idea list")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
-                .padding()
-                .background(
-                    LinearGradient(
-                        colors: [.blue.opacity(0.1), .purple.opacity(0.1)],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .padding()
+            .background(
+                LinearGradient(
+                    colors: [.blue.opacity(0.1), .purple.opacity(0.1)],
+                    startPoint: .leading,
+                    endPoint: .trailing
                 )
-                .cornerRadius(12)
-            }
-            .buttonStyle(PlainButtonStyle())
-            
-            Button(action: {
-                promptViewModel.selectCategory(nil) // Clear category to show All
-                showingPromptSelection = true
-            }) {
-                HStack {
-                    Image(systemName: "list.bullet.rectangle.fill")
-                        .font(.title2)
-                    
-                    VStack(alignment: .leading) {
-                        Text("Browse Prompts")
-                            .font(.headline)
-                        Text("Explore all categories and prompts")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    Spacer()
-                    
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                .padding()
-                .background(Color(UIColor.secondarySystemBackground))
-                .cornerRadius(12)
-            }
-            .buttonStyle(PlainButtonStyle())
+            )
+            .cornerRadius(12)
         }
+        .buttonStyle(PlainButtonStyle())
     }
     
     private var statsSection: some View {

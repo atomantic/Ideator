@@ -6,6 +6,7 @@ class PackManager: ObservableObject {
     @Published var installedPacks: [PromptPack] = []
     @Published var availablePacks: [RemotePackInfo] = []
     @Published var isLoading = false
+    @Published var packUpdates: [String: String] = [:] // packId -> newVersion
     
     private let packsDirectory: URL
     private let githubRepo = "https://raw.githubusercontent.com/atomantic/IdeatorPromptPacks/main"
@@ -148,13 +149,26 @@ class PackManager: ObservableObject {
             print("Found \(packs.count) total packs")
             
             await MainActor.run {
+                // Check for updates to installed packs
+                self.packUpdates.removeAll()
+                for remotePack in packs {
+                    if let localPack = self.installedPacks.first(where: { $0.id == remotePack.id }) {
+                        // Compare versions
+                        if self.isNewerVersion(remotePack.version, than: localPack.version) {
+                            self.packUpdates[remotePack.id] = remotePack.version
+                            print("Update available for \(remotePack.id): \(localPack.version) -> \(remotePack.version)")
+                        }
+                    }
+                }
+                
                 self.availablePacks = packs.filter { remoteInfo in
-                    // Filter out already installed packs
+                    // Only show packs that are NOT installed at all
                     let isInstalled = installedPacks.contains { $0.id == remoteInfo.id }
                     if isInstalled {
                         print("Pack \(remoteInfo.id) is already installed")
+                        return false
                     }
-                    return !isInstalled
+                    return true
                 }
                 print("Available packs after filtering: \(self.availablePacks.count)")
                 isLoading = false
@@ -368,4 +382,27 @@ enum PackError: Error {
     case invalidURL
     case downloadFailed
     case extractionFailed
+}
+
+extension PackManager {
+    // Compare semantic versions (e.g., "1.0.1" > "1.0.0")
+    func isNewerVersion(_ new: String, than old: String) -> Bool {
+        let newComponents = new.split(separator: ".").compactMap { Int($0) }
+        let oldComponents = old.split(separator: ".").compactMap { Int($0) }
+        
+        let maxLength = max(newComponents.count, oldComponents.count)
+        
+        for i in 0..<maxLength {
+            let newValue = i < newComponents.count ? newComponents[i] : 0
+            let oldValue = i < oldComponents.count ? oldComponents[i] : 0
+            
+            if newValue > oldValue {
+                return true
+            } else if newValue < oldValue {
+                return false
+            }
+        }
+        
+        return false
+    }
 }
