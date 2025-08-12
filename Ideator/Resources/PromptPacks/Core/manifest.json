@@ -1,9 +1,9 @@
 {
   "id": "core",
-  "name": "Core Pack",
+  "name": "Core",
   "version": "1.0.0",
   "description": "Essential prompt categories for daily ideation including wellness and personal growth",
-  "author": "Idea Loom Team",
+  "author": "Idea Loom",
   "categories": [
     {
       "id": "personalDevelopment",

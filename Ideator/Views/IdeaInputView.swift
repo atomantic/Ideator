@@ -241,7 +241,7 @@ struct ExportView: View {
                 Button(action: {
                     showingShareSheet = true
                 }) {
-                    Label("Export to Notes", systemImage: "square.and.arrow.up")
+                    Label("Export", systemImage: "square.and.arrow.up")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding()

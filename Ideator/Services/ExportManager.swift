@@ -57,8 +57,6 @@ class ExportManager {
                 output += "\(index + 1). \(idea)\n"
             }
         }
-        
-        output += "\n---\n*Generated with Idea Loom*"
         return output
     }
 }

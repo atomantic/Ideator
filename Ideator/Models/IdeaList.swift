@@ -38,8 +38,6 @@ struct IdeaList: Identifiable, Codable {
                 output += "\(index + 1). \(idea)\n"
             }
         }
-        
-        output += "\n---\nGenerated with Idea Loom"
         return output
     }
 }
