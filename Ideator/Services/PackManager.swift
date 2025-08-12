@@ -110,7 +110,7 @@ class PackManager: ObservableObject {
                 for i in pack.categories.indices {
                     let category = pack.categories[i]
                     let tsvURL = packDir.appendingPathComponent(category.file)
-                    if let content = try? String(contentsOf: tsvURL) {
+                    if let content = try? String(contentsOf: tsvURL, encoding: .utf8) {
                         let lines = content.components(separatedBy: .newlines)
                         pack.categories[i].promptCount = lines.dropFirst().filter { !$0.isEmpty }.count
                     }

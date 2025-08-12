@@ -39,7 +39,7 @@ class PromptService {
         let packDir = documentsPath.appendingPathComponent("PromptPacks/\(pack.id)")
         let fileURL = packDir.appendingPathComponent(category.file)
         
-        guard let data = try? String(contentsOf: fileURL) else {
+        guard let data = try? String(contentsOf: fileURL, encoding: .utf8) else {
             return nil
         }
         
