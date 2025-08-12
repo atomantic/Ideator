@@ -232,7 +232,7 @@ struct IdeaListDetailView: View {
         }
         .sheet(isPresented: $showingShareSheet) {
             if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-               let rootViewController = windowScene.windows.first?.rootViewController {
+               let _ = windowScene.windows.first?.rootViewController {
                 ShareSheet(activityItems: [ideaList.formattedForExport])
             }
         }

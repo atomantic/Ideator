@@ -72,7 +72,7 @@ class IdeaListViewModel {
     }
     
     func exportList() {
-        guard let ideaList = currentIdeaList else { return }
+        guard currentIdeaList != nil else { return }
         showExportSheet = true
     }
     
