@@ -7,7 +7,6 @@ struct HomeView: View {
     @Binding var showingIdeaInput: Bool
     
     @State private var animateGradient = false
-    @State private var refreshID = UUID()
     
     var body: some View {
         NavigationStack {
@@ -17,20 +16,10 @@ struct HomeView: View {
                     
                     quickStartSection
                     
-                    statsSection
-                        .id(refreshID)
-                    
                     recentCategoriesSection
                 }
                 .padding()
             }
-        }
-        .onAppear {
-            refreshID = UUID()
-        }
-        .onChange(of: showingIdeaInput) { _, _ in
-            // Refresh stats when idea input sheet dismisses
-            refreshID = UUID()
         }
     }
     
@@ -97,30 +86,6 @@ struct HomeView: View {
         .buttonStyle(PlainButtonStyle())
     }
     
-    private var statsSection: some View {
-        HStack(spacing: 16) {
-            StatCard(
-                title: "Drafts",
-                value: "\(PersistenceManager.shared.loadDrafts().count)",
-                icon: "doc.text",
-                color: .orange
-            )
-            
-            StatCard(
-                title: "Completed",
-                value: "\(PersistenceManager.shared.loadCompleted().count)",
-                icon: "checkmark.circle.fill",
-                color: .green
-            )
-            
-            StatCard(
-                title: "Ideas",
-                value: "\(totalIdeasCount)",
-                icon: "lightbulb.fill",
-                color: .blue
-            )
-        }
-    }
     
     private var recentCategoriesSection: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -155,44 +120,8 @@ struct HomeView: View {
         }
     }
     
-    private var totalIdeasCount: Int {
-        let drafts = PersistenceManager.shared.loadDrafts()
-        let completed = PersistenceManager.shared.loadCompleted()
-        
-        // Since we now use dynamic lists, all ideas in the array are valid (no empty placeholders)
-        let draftIdeas = drafts.reduce(0) { $0 + $1.ideas.count }
-        let completedIdeas = completed.reduce(0) { $0 + $1.ideas.count }
-        
-        return draftIdeas + completedIdeas
-    }
 }
 
-struct StatCard: View {
-    let title: String
-    let value: String
-    let icon: String
-    let color: Color
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundColor(color)
-            
-            Text(value)
-                .font(.title)
-                .fontWeight(.bold)
-            
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding()
-        .background(Color(UIColor.secondarySystemBackground))
-        .cornerRadius(12)
-    }
-}
 
 struct CategoryCard: View {
     let category: Category

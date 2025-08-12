@@ -13,6 +13,7 @@ struct ContentView: View {
     @State private var selectedTab = 0
     @State private var showingPromptSelection = false
     @State private var showingIdeaInput = false
+    @State private var draftCount = 0
     
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -31,6 +32,7 @@ struct ContentView: View {
                 .tabItem {
                     Label("Drafts", systemImage: "doc.text.fill")
                 }
+                .badge(draftCount > 0 ? "\(draftCount)" : nil)
                 .tag(1)
             
             HistoryView()
@@ -45,6 +47,15 @@ struct ContentView: View {
                 }
                 .tag(3)
         }
+        .onAppear {
+            updateDraftCount()
+        }
+        .onChange(of: selectedTab) { _, _ in
+            updateDraftCount()
+        }
+        .onChange(of: showingIdeaInput) { _, _ in
+            updateDraftCount()
+        }
         .sheet(isPresented: $showingPromptSelection) {
             PromptSelectionView(
                 promptViewModel: promptViewModel,
@@ -57,6 +68,10 @@ struct ContentView: View {
                 IdeaInputView(viewModel: ideaListViewModel)
             }
         }
+    }
+    
+    private func updateDraftCount() {
+        draftCount = PersistenceManager.shared.loadDrafts().count
     }
 }
 
