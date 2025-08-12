@@ -35,9 +35,11 @@ struct SettingsView: View {
             Button("Clear", role: .destructive) {
                 PersistenceManager.shared.clearAll()
                 promptViewModel.resetUsedPrompts()
+                PackManager.shared.clearAllPackData()
+                PromptService.shared.reloadPrompts()
             }
         } message: {
-            Text("This will delete all drafts and completed lists. This action cannot be undone.")
+            Text("This will delete all drafts, completed lists, and downloaded prompt packs. The Core pack will be reinstalled fresh. This action cannot be undone.")
         }
     }
     

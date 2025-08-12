@@ -256,6 +256,30 @@ class PackManager: ObservableObject {
         loadInstalledPacks()
     }
     
+    func clearAllPackData() {
+        // Remove all pack data from documents directory
+        if FileManager.default.fileExists(atPath: packsDirectory.path) {
+            try? FileManager.default.removeItem(at: packsDirectory)
+        }
+        
+        // Recreate the directory
+        try? FileManager.default.createDirectory(at: packsDirectory, 
+                                                withIntermediateDirectories: true)
+        
+        // Clear pack-related UserDefaults
+        UserDefaults.standard.removeObject(forKey: "enabledPacks")
+        UserDefaults.standard.removeObject(forKey: "installedPackVersions")
+        
+        // Reinstall the embedded Core pack
+        installEmbeddedCorePackIfNeeded()
+        
+        // Reload packs
+        loadInstalledPacks()
+        
+        // Clear the pack updates tracking
+        packUpdates.removeAll()
+    }
+    
     func updatePack(_ packId: String) async throws {
         print("Updating pack \(packId) from GitHub...")
         
