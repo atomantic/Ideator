@@ -186,6 +186,11 @@ class PromptService {
         saveUsedPromptIds()
     }
     
+    func unmarkPromptAsUsed(_ prompt: Prompt) {
+        usedPromptIds.remove(prompt.id)
+        saveUsedPromptIds()
+    }
+    
     func resetUsedPrompts() {
         usedPromptIds.removeAll()
         saveUsedPromptIds()

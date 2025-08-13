@@ -61,6 +61,10 @@ class PromptViewModel {
         promptService.markPromptAsUsed(prompt)
     }
     
+    func unmarkPromptAsUsed(_ prompt: Prompt) {
+        promptService.unmarkPromptAsUsed(prompt)
+    }
+    
     func getCategoriesGroupedByPack() -> [(packName: String?, categories: [FlexibleCategory])] {
         promptService.getCategoriesGroupedByPack()
     }

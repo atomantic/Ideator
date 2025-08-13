@@ -4,6 +4,7 @@ struct FlexibleCategoryPromptsDetailView: View {
     let category: FlexibleCategory
     let promptViewModel: PromptViewModel
     @State private var showOnlyUnused = false
+    @State private var refreshID = UUID()
     
     var body: some View {
         List {
@@ -22,31 +23,39 @@ struct FlexibleCategoryPromptsDetailView: View {
                         .foregroundColor(.secondary)
                 }
             }
+            .id(refreshID)
             
             Section("Prompts") {
                 ForEach(filteredPrompts) { prompt in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(prompt.formattedTitle)
-                                .font(.subheadline)
-                                .foregroundColor(isPromptUsed(prompt) ? .secondary : .primary)
-                            
-                            if isPromptUsed(prompt) {
-                                Label("Used", systemImage: "checkmark.circle.fill")
-                                    .font(.caption)
-                                    .foregroundColor(.green)
+                    Button(action: {
+                        togglePromptUsedStatus(prompt)
+                    }) {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(prompt.formattedTitle)
+                                    .font(.subheadline)
+                                    .foregroundColor(isPromptUsed(prompt) ? .secondary : .primary)
+                                
+                                if isPromptUsed(prompt) {
+                                    Label("Used", systemImage: "checkmark.circle.fill")
+                                        .font(.caption)
+                                        .foregroundColor(.green)
+                                } else {
+                                    Text("Tap to mark as used")
+                                        .font(.caption2)
+                                        .foregroundColor(.blue)
+                                }
                             }
+                            
+                            Spacer()
+                            
+                            Image(systemName: isPromptUsed(prompt) ? "checkmark.circle.fill" : "circle")
+                                .font(.title3)
+                                .foregroundColor(isPromptUsed(prompt) ? .green : .secondary)
                         }
-                        
-                        Spacer()
-                        
-                        if !isPromptUsed(prompt) {
-                            Image(systemName: "circle")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
+                        .padding(.vertical, 4)
                     }
-                    .padding(.vertical, 4)
+                    .buttonStyle(PlainButtonStyle())
                 }
             }
         }
@@ -73,5 +82,15 @@ struct FlexibleCategoryPromptsDetailView: View {
     
     private func isPromptUsed(_ prompt: Prompt) -> Bool {
         promptViewModel.isPromptUsed(prompt)
+    }
+    
+    private func togglePromptUsedStatus(_ prompt: Prompt) {
+        if isPromptUsed(prompt) {
+            promptViewModel.unmarkPromptAsUsed(prompt)
+        } else {
+            promptViewModel.markPromptAsUsed(prompt)
+        }
+        // Force view refresh
+        refreshID = UUID()
     }
 }
