@@ -22,7 +22,7 @@ struct DraftsView: View {
             }
             .sheet(item: $selectedDraft) { draft in
                 NavigationStack {
-                    IdeaInputView(viewModel: ideaListViewModel)
+                    IdeaInputView(viewModel: ideaListViewModel, promptViewModel: nil)
                         .onAppear {
                             ideaListViewModel.startNewList(with: draft.prompt)
                         }

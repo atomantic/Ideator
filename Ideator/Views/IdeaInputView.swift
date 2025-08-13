@@ -2,10 +2,12 @@ import SwiftUI
 
 struct IdeaInputView: View {
     @Bindable var viewModel: IdeaListViewModel
+    let promptViewModel: PromptViewModel?
     @Environment(\.dismiss) private var dismiss
     @FocusState private var isInputFocused: Bool
     @State private var currentInput = ""
     @State private var showingExportSheet = false
+    @State private var showingSkipAlert = false
     
     var body: some View {
         NavigationStack {
@@ -81,9 +83,21 @@ struct IdeaInputView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Save Draft") {
-                        viewModel.saveDraft()
-                        dismiss()
+                    Menu {
+                        Button {
+                            viewModel.saveDraft()
+                            dismiss()
+                        } label: {
+                            Label("Save Draft", systemImage: "doc.badge.plus")
+                        }
+                        
+                        Button(role: .destructive) {
+                            showingSkipAlert = true
+                        } label: {
+                            Label("Skip Prompt", systemImage: "forward.fill")
+                        }
+                    } label: {
+                        Text("Options")
                     }
                 }
                 
@@ -115,6 +129,14 @@ struct IdeaInputView: View {
         }
         .onAppear {
             isInputFocused = true
+        }
+        .alert("Skip This Prompt?", isPresented: $showingSkipAlert) {
+            Button("Cancel", role: .cancel) {}
+            Button("Skip", role: .destructive) {
+                skipPrompt()
+            }
+        } message: {
+            Text("This prompt will be marked as used and won't appear again unless you reset your prompts.")
         }
     }
     
@@ -175,6 +197,14 @@ struct IdeaInputView: View {
     private func completeList() {
         viewModel.markAsComplete()
         showingExportSheet = true
+    }
+    
+    private func skipPrompt() {
+        if let prompt = viewModel.currentIdeaList?.prompt,
+           let promptViewModel = promptViewModel {
+            promptViewModel.markPromptAsUsed(prompt)
+        }
+        dismiss()
     }
 }
 

@@ -65,7 +65,7 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showingIdeaInput) {
             if let _ = ideaListViewModel.currentIdeaList {
-                IdeaInputView(viewModel: ideaListViewModel)
+                IdeaInputView(viewModel: ideaListViewModel, promptViewModel: promptViewModel)
             }
         }
     }
