@@ -1,9 +1,9 @@
 {
   "id": "core",
   "name": "Core",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Essential prompt categories for daily ideation including wellness and personal growth",
-  "author": "Idea Loom",
+  "author": "Idea Loom Team",
   "categories": [
     {
       "id": "personalDevelopment",
@@ -55,13 +55,6 @@
       "color": "green"
     },
     {
-      "id": "learning",
-      "name": "Learning & Skills",
-      "file": "learning.tsv",
-      "icon": "book.fill",
-      "color": "indigo"
-    },
-    {
       "id": "financial",
       "name": "Financial",
       "file": "financial.tsv",
@@ -102,6 +95,13 @@
       "file": "gratitude.tsv",
       "icon": "hands.sparkles",
       "color": "orange"
+    },
+    {
+      "id": "future",
+      "name": "Future",
+      "file": "future.tsv",
+      "icon": "sparkle",
+      "color": "cyan"
     }
   ]
 }
