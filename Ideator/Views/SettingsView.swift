@@ -5,8 +5,11 @@ struct SettingsView: View {
     let promptViewModel: PromptViewModel
     @AppStorage("defaultListSize") private var defaultListSize = 10
     @AppStorage("enableNotifications") private var enableNotifications = false
+    @AppStorage("notificationHour") private var notificationHour = 9
+    @AppStorage("notificationMinute") private var notificationMinute = 0
     @State private var showingResetAlert = false
     @State private var showingClearDataAlert = false
+    @State private var notificationTime = Date()
     
     var body: some View {
         NavigationStack {
@@ -41,6 +44,13 @@ struct SettingsView: View {
         } message: {
             Text("This will delete all drafts, completed lists, and downloaded prompt packs. The Core pack will be reinstalled fresh. This action cannot be undone.")
         }
+        .onAppear {
+            // Initialize notification time from stored values
+            var components = DateComponents()
+            components.hour = notificationHour
+            components.minute = notificationMinute
+            notificationTime = Calendar.current.date(from: components) ?? Date()
+        }
     }
     
     private var preferencesSection: some View {
@@ -56,8 +66,22 @@ struct SettingsView: View {
                 .onChange(of: enableNotifications) { _, newValue in
                     if newValue {
                         requestNotificationPermission()
+                    } else {
+                        // Cancel notifications when disabled
+                        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["daily-prompt"])
                     }
                 }
+            
+            if enableNotifications {
+                DatePicker("Notification Time", selection: $notificationTime, displayedComponents: .hourAndMinute)
+                    .onChange(of: notificationTime) { _, newValue in
+                        let components = Calendar.current.dateComponents([.hour, .minute], from: newValue)
+                        notificationHour = components.hour ?? 9
+                        notificationMinute = components.minute ?? 0
+                        // Reschedule notification with new time
+                        scheduleDailyNotification()
+                    }
+            }
         }
     }
     
@@ -238,14 +262,17 @@ struct SettingsView: View {
     }
     
     private func scheduleDailyNotification() {
+        // Cancel any existing notification
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["daily-prompt"])
+        
         let content = UNMutableNotificationContent()
         content.title = "Time for Ideas!"
         content.body = "Ready to brainstorm? Open Idea Loom for today's creative prompt."
         content.sound = .default
         
         var dateComponents = DateComponents()
-        dateComponents.hour = 9
-        dateComponents.minute = 0
+        dateComponents.hour = notificationHour
+        dateComponents.minute = notificationMinute
         
         let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
         
