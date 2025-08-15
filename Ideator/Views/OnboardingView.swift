@@ -140,11 +140,11 @@ struct OnboardingView: View {
     }
     
     private var packsPage: some View {
-        VStack(spacing: 24) {
-            Spacer()
+        VStack(spacing: 20) {
+            Spacer(minLength: 20)
             
             Image(systemName: "square.stack.3d.up.fill")
-                .font(.system(size: 60))
+                .font(.system(size: 50))
                 .foregroundColor(.purple)
                 .symbolEffect(.pulse)
             
@@ -198,10 +198,10 @@ struct OnboardingView: View {
                     }
                     .padding(.horizontal, 20)
                 }
-                .frame(maxHeight: 250)
+                .frame(maxHeight: 400)
             }
             
-            Spacer()
+            Spacer(minLength: 10)
         }
     }
     
