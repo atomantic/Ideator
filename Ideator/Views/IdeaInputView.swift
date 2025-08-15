@@ -122,7 +122,7 @@ struct IdeaInputView: View {
         }
         .sheet(isPresented: $showingExportSheet) {
             if let ideaList = viewModel.currentIdeaList {
-                ExportView(ideaList: ideaList) {
+                ExportView(ideaList: ideaList, promptViewModel: promptViewModel) {
                     dismiss()
                 }
             }
@@ -240,9 +240,11 @@ struct IdeaRow: View {
 
 struct ExportView: View {
     let ideaList: IdeaList
+    let promptViewModel: PromptViewModel?
     let onComplete: () -> Void
     @State private var exportFormat = "text"
     @State private var showingShareSheet = false
+    @State private var markPromptAsUsed = true
     
     var body: some View {
         NavigationStack {
@@ -268,6 +270,28 @@ struct ExportView: View {
                 .pickerStyle(SegmentedPickerStyle())
                 .padding(.horizontal)
                 
+                // Prompt usage toggle
+                VStack(alignment: .leading, spacing: 8) {
+                    Toggle(isOn: $markPromptAsUsed) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Mark prompt as used")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                            
+                            Text(markPromptAsUsed ? 
+                                "This prompt won't appear in random selections" : 
+                                "Keep this prompt active for future use")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .toggleStyle(SwitchToggleStyle(tint: .blue))
+                }
+                .padding()
+                .background(Color(UIColor.secondarySystemBackground))
+                .cornerRadius(12)
+                .padding(.horizontal)
+                
                 Button(action: {
                     showingShareSheet = true
                 }) {
@@ -282,6 +306,11 @@ struct ExportView: View {
                 .padding(.horizontal)
                 
                 Button("Done") {
+                    // Handle prompt usage based on toggle
+                    if !markPromptAsUsed, let promptViewModel = promptViewModel {
+                        // User wants to keep prompt active, so unmark it if it was marked
+                        promptViewModel.unmarkPromptAsUsed(ideaList.prompt)
+                    }
                     onComplete()
                 }
                 .font(.headline)
