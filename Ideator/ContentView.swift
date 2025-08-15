@@ -43,11 +43,16 @@ struct ContentView: View {
                 }
                 .tag(2)
             
-            SettingsView(promptViewModel: promptViewModel)
-                .tabItem {
-                    Label("Settings", systemImage: "gear")
+            SettingsView(
+                promptViewModel: promptViewModel,
+                onShowOnboarding: {
+                    showingOnboarding = true
                 }
-                .tag(3)
+            )
+            .tabItem {
+                Label("Settings", systemImage: "gear")
+            }
+            .tag(3)
         }
         .onAppear {
             updateDraftCount()

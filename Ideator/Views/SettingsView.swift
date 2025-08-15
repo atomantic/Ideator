@@ -3,6 +3,7 @@ import UserNotifications
 
 struct SettingsView: View {
     let promptViewModel: PromptViewModel
+    var onShowOnboarding: (() -> Void)?
     @AppStorage("defaultListSize") private var defaultListSize = 10
     @AppStorage("enableNotifications") private var enableNotifications = false
     @AppStorage("notificationHour") private var notificationHour = 9
@@ -51,6 +52,9 @@ struct SettingsView: View {
                 
                 // Cancel any pending notifications
                 UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["daily-prompt"])
+                
+                // Show onboarding immediately
+                onShowOnboarding?()
             }
         } message: {
             Text("This will delete all drafts, completed lists, and downloaded prompt packs. The Core pack will be reinstalled fresh. The app will show the introduction again on next launch. This action cannot be undone.")
