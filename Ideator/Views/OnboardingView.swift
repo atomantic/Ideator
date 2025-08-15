@@ -100,42 +100,65 @@ struct OnboardingView: View {
     }
     
     private var benefitsPage: some View {
-        VStack(spacing: 30) {
-            Spacer()
+        VStack(spacing: 20) {
+            Spacer(minLength: 30)
             
             Text("Why Daily Ideas?")
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .multilineTextAlignment(.center)
+                .padding(.bottom, 10)
             
-            VStack(alignment: .leading, spacing: 24) {
-                benefitRow(
-                    icon: "brain.fill",
-                    title: "Boost Creativity",
-                    description: "Train your brain to think differently every day"
-                )
+            // Feature cards in a 2x2 grid
+            VStack(spacing: 16) {
+                HStack(spacing: 16) {
+                    BenefitCard(
+                        icon: "brain.fill",
+                        title: "Creative\nMuscle",
+                        color: .purple,
+                        description: "Like physical exercise, daily ideation strengthens your creative thinking"
+                    )
+                    
+                    BenefitCard(
+                        icon: "sparkles",
+                        title: "Hidden\nGems",
+                        color: .orange,
+                        description: "Your next big breakthrough might be hiding in today's list"
+                    )
+                }
                 
-                benefitRow(
-                    icon: "sparkles",
-                    title: "Discover Opportunities",
-                    description: "Uncover hidden gems in your everyday thoughts"
-                )
-                
-                benefitRow(
-                    icon: "chart.line.uptrend.xyaxis",
-                    title: "Build Momentum",
-                    description: "Small daily habits lead to extraordinary results"
-                )
-                
-                benefitRow(
-                    icon: "heart.fill",
-                    title: "Reduce Mental Clutter",
-                    description: "Clear your mind by capturing ideas systematically"
-                )
+                HStack(spacing: 16) {
+                    BenefitCard(
+                        icon: "chart.line.uptrend.xyaxis",
+                        title: "Compound\nGrowth",
+                        color: .green,
+                        description: "10 ideas daily = 3,650 possibilities per year"
+                    )
+                    
+                    BenefitCard(
+                        icon: "heart.fill",
+                        title: "Mental\nClarity",
+                        color: .pink,
+                        description: "Free your mind by giving your thoughts a home"
+                    )
+                }
             }
-            .padding(.horizontal, 40)
+            .padding(.horizontal, 20)
             
-            Spacer()
+            // Inspiring quote
+            VStack(spacing: 8) {
+                Text("\"Become an idea machine\"")
+                    .font(.headline)
+                    .italic()
+                    .foregroundColor(.primary)
+                
+                Text("— James Altucher")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .padding(.top, 20)
+            
+            Spacer(minLength: 20)
         }
     }
     
@@ -252,23 +275,6 @@ struct OnboardingView: View {
         }
     }
     
-    private func benefitRow(icon: String, title: String, description: String) -> some View {
-        HStack(alignment: .top, spacing: 16) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundColor(.blue)
-                .frame(width: 30)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.headline)
-                
-                Text(description)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-        }
-    }
     
     private var bottomControls: some View {
         VStack(spacing: 16) {
@@ -400,6 +406,51 @@ struct OnboardingView: View {
                 isLoadingPacks = false
             }
         }
+    }
+}
+
+struct BenefitCard: View {
+    let icon: String
+    let title: String
+    let color: Color
+    let description: String
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(size: 32))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [color, color.opacity(0.7)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(height: 40)
+            
+            Text(title)
+                .font(.system(size: 15, weight: .bold))
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .foregroundColor(.primary)
+            
+            Text(description)
+                .font(.system(size: 11))
+                .multilineTextAlignment(.center)
+                .foregroundColor(.primary.opacity(0.7))
+                .lineLimit(3)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(color.opacity(0.1))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(color.opacity(0.3), lineWidth: 1)
+        )
     }
 }
 
