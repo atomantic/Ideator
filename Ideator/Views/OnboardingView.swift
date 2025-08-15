@@ -116,14 +116,14 @@ struct OnboardingView: View {
                         icon: "brain.fill",
                         title: "Creative\nMuscle",
                         color: .purple,
-                        description: "Like physical exercise, daily ideation strengthens your creative thinking"
+                        description: "Daily ideation strengthens creative thinking"
                     )
                     
                     BenefitCard(
                         icon: "sparkles",
                         title: "Hidden\nGems",
                         color: .orange,
-                        description: "Your next big breakthrough might be hiding in today's list"
+                        description: "Brainstorm plans and possible futures"
                     )
                 }
                 
@@ -132,14 +132,14 @@ struct OnboardingView: View {
                         icon: "chart.line.uptrend.xyaxis",
                         title: "Compound\nGrowth",
                         color: .green,
-                        description: "10 ideas daily = 3,650 possibilities per year"
+                        description: "10 ideas daily = 3,650 per year"
                     )
                     
                     BenefitCard(
                         icon: "heart.fill",
                         title: "Mental\nClarity",
                         color: .pink,
-                        description: "Free your mind by giving your thoughts a home"
+                        description: "From to-do to gratitude"
                     )
                 }
             }
@@ -435,7 +435,7 @@ struct BenefitCard: View {
                 .foregroundColor(.primary)
             
             Text(description)
-                .font(.system(size: 11))
+                .font(.system(size: 14))
                 .multilineTextAlignment(.center)
                 .foregroundColor(.primary.opacity(0.7))
                 .lineLimit(3)
