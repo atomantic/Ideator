@@ -40,9 +40,20 @@ struct SettingsView: View {
                 promptViewModel.resetUsedPrompts()
                 PackManager.shared.clearAllPackData()
                 PromptService.shared.reloadPrompts()
+                
+                // Reset onboarding state for testing
+                UserDefaults.standard.set(false, forKey: "hasCompletedOnboarding")
+                
+                // Also reset notification preferences
+                UserDefaults.standard.set(false, forKey: "enableNotifications")
+                UserDefaults.standard.removeObject(forKey: "notificationHour")
+                UserDefaults.standard.removeObject(forKey: "notificationMinute")
+                
+                // Cancel any pending notifications
+                UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["daily-prompt"])
             }
         } message: {
-            Text("This will delete all drafts, completed lists, and downloaded prompt packs. The Core pack will be reinstalled fresh. This action cannot be undone.")
+            Text("This will delete all drafts, completed lists, and downloaded prompt packs. The Core pack will be reinstalled fresh. The app will show the introduction again on next launch. This action cannot be undone.")
         }
         .onAppear {
             // Initialize notification time from stored values
