@@ -140,7 +140,7 @@ struct OnboardingView: View {
     }
     
     private var packsPage: some View {
-        VStack(spacing: 30) {
+        VStack(spacing: 24) {
             Spacer()
             
             Image(systemName: "square.stack.3d.up.fill")
@@ -148,7 +148,7 @@ struct OnboardingView: View {
                 .foregroundColor(.purple)
                 .symbolEffect(.pulse)
             
-            VStack(spacing: 16) {
+            VStack(spacing: 12) {
                 Text("Expand Your Horizons")
                     .font(.title)
                     .fontWeight(.bold)
@@ -164,6 +164,11 @@ struct OnboardingView: View {
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .padding(.top, 8)
+                
+                Text("You can always add or remove packs later in Settings")
+                    .font(.caption)
+                    .foregroundColor(.secondary.opacity(0.8))
+                    .italic()
             }
             
             if isLoadingPacks {
