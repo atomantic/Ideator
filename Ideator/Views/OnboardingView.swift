@@ -6,10 +6,16 @@ struct OnboardingView: View {
     @State private var currentPage = 0
     @State private var enableNotifications = true
     @State private var selectedTime = Date()
+    @State private var selectedPacks: Set<String> = []
+    @State private var availablePacks: [RemotePackInfo] = []
+    @State private var isLoadingPacks = false
+    @State private var isDownloadingPacks = false
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @AppStorage("enableNotifications") private var notificationsEnabled = false
     @AppStorage("notificationHour") private var notificationHour = 9
     @AppStorage("notificationMinute") private var notificationMinute = 0
+    
+    private let packManager = PackManager.shared
     
     init(isPresented: Binding<Bool>) {
         self._isPresented = isPresented
@@ -29,8 +35,11 @@ struct OnboardingView: View {
                 benefitsPage
                     .tag(1)
                 
-                notificationPage
+                packsPage
                     .tag(2)
+                
+                notificationPage
+                    .tag(3)
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             .animation(.easeInOut, value: currentPage)
@@ -46,6 +55,9 @@ struct OnboardingView: View {
                 endPoint: .bottomTrailing
             )
         )
+        .onAppear {
+            loadAvailablePacks()
+        }
     }
     
     private var welcomePage: some View {
@@ -127,6 +139,67 @@ struct OnboardingView: View {
         }
     }
     
+    private var packsPage: some View {
+        VStack(spacing: 30) {
+            Spacer()
+            
+            Image(systemName: "square.stack.3d.up.fill")
+                .font(.system(size: 60))
+                .foregroundColor(.purple)
+                .symbolEffect(.pulse)
+            
+            VStack(spacing: 16) {
+                Text("Expand Your Horizons")
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .multilineTextAlignment(.center)
+                
+                Text("Start with our Core pack of 200+ prompts across 14 categories")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+                
+                Text("Want more? Choose additional packs:")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .padding(.top, 8)
+            }
+            
+            if isLoadingPacks {
+                ProgressView("Loading available packs...")
+                    .padding()
+            } else if availablePacks.isEmpty {
+                Text("Additional packs will be available soon!")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .italic()
+            } else {
+                ScrollView {
+                    VStack(spacing: 12) {
+                        ForEach(availablePacks, id: \.id) { pack in
+                            PackSelectionRow(
+                                pack: pack,
+                                isSelected: selectedPacks.contains(pack.id),
+                                onToggle: {
+                                    if selectedPacks.contains(pack.id) {
+                                        selectedPacks.remove(pack.id)
+                                    } else {
+                                        selectedPacks.insert(pack.id)
+                                    }
+                                }
+                            )
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                }
+                .frame(maxHeight: 250)
+            }
+            
+            Spacer()
+        }
+    }
+    
     private var notificationPage: some View {
         VStack(spacing: 30) {
             Spacer()
@@ -196,7 +269,7 @@ struct OnboardingView: View {
         VStack(spacing: 16) {
             // Page indicators
             HStack(spacing: 8) {
-                ForEach(0..<3) { index in
+                ForEach(0..<4) { index in
                     Circle()
                         .fill(currentPage == index ? Color.blue : Color.gray.opacity(0.3))
                         .frame(width: 8, height: 8)
@@ -216,7 +289,7 @@ struct OnboardingView: View {
                 
                 Spacer()
                 
-                if currentPage < 2 {
+                if currentPage < 3 {
                     Button("Next") {
                         withAnimation {
                             currentPage += 1
@@ -224,35 +297,57 @@ struct OnboardingView: View {
                     }
                     .fontWeight(.semibold)
                 } else {
-                    Button("Get Started") {
+                    Button(isDownloadingPacks ? "Setting up..." : "Get Started") {
                         completeOnboarding()
                     }
                     .fontWeight(.bold)
                     .foregroundColor(.white)
                     .padding(.horizontal, 30)
                     .padding(.vertical, 12)
-                    .background(Color.blue)
+                    .background(isDownloadingPacks ? Color.gray : Color.blue)
                     .cornerRadius(25)
+                    .disabled(isDownloadingPacks)
                 }
             }
         }
     }
     
     private func completeOnboarding() {
-        // Save notification preferences
-        if enableNotifications {
-            let components = Calendar.current.dateComponents([.hour, .minute], from: selectedTime)
-            notificationHour = components.hour ?? 9
-            notificationMinute = components.minute ?? 0
-            notificationsEnabled = true
-            
-            // Request notification permission and schedule
-            requestNotificationPermission()
-        }
+        isDownloadingPacks = true
         
-        // Mark onboarding as completed
-        hasCompletedOnboarding = true
-        isPresented = false
+        Task {
+            // Download selected packs
+            for packId in selectedPacks {
+                if let pack = availablePacks.first(where: { $0.id == packId }) {
+                    do {
+                        try await packManager.downloadPack(pack)
+                    } catch {
+                        print("Failed to download pack \(packId): \(error)")
+                    }
+                }
+            }
+            
+            await MainActor.run {
+                // Save notification preferences
+                if enableNotifications {
+                    let components = Calendar.current.dateComponents([.hour, .minute], from: selectedTime)
+                    notificationHour = components.hour ?? 9
+                    notificationMinute = components.minute ?? 0
+                    notificationsEnabled = true
+                    
+                    // Request notification permission and schedule
+                    requestNotificationPermission()
+                }
+                
+                // Mark onboarding as completed
+                hasCompletedOnboarding = true
+                isDownloadingPacks = false
+                isPresented = false
+                
+                // Reload prompts to include new packs
+                PromptService.shared.reloadPrompts()
+            }
+        }
     }
     
     private func requestNotificationPermission() {
@@ -285,6 +380,70 @@ struct OnboardingView: View {
         )
         
         UNUserNotificationCenter.current().add(request)
+    }
+    
+    private func loadAvailablePacks() {
+        isLoadingPacks = true
+        Task {
+            await packManager.fetchAvailablePacks()
+            await MainActor.run {
+                // Filter out already installed packs and Core pack
+                let installedIds = Set(packManager.installedPacks.map { $0.id })
+                availablePacks = packManager.availablePacks.filter { pack in
+                    !installedIds.contains(pack.id) && pack.id != "core"
+                }
+                isLoadingPacks = false
+            }
+        }
+    }
+}
+
+struct PackSelectionRow: View {
+    let pack: RemotePackInfo
+    let isSelected: Bool
+    let onToggle: () -> Void
+    
+    var body: some View {
+        Button(action: onToggle) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(pack.name)
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    
+                    Text(pack.description)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
+                    
+                    HStack(spacing: 12) {
+                        Label("\(pack.promptCount) prompts", systemImage: "doc.text")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                        
+                        Label("\(pack.categories.count) categories", systemImage: "folder")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                
+                Spacer()
+                
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.title2)
+                    .foregroundColor(isSelected ? .blue : .gray.opacity(0.3))
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(isSelected ? Color.blue.opacity(0.1) : Color.gray.opacity(0.05))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(isSelected ? Color.blue : Color.gray.opacity(0.2), lineWidth: 1)
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
     }
 }
 
