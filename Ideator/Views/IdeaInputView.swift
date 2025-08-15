@@ -279,7 +279,7 @@ struct ExportView: View {
                                 .fontWeight(.medium)
                             
                             Text(markPromptAsUsed ? 
-                                "This prompt won't appear in random selections" : 
+                                "We won't use this prompt again" :
                                 "Keep this prompt active for future use")
                                 .font(.caption)
                                 .foregroundColor(.secondary)

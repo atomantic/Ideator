@@ -44,7 +44,10 @@ struct PromptSelectionView: View {
                 if selectedFlexibleCategory != nil || searchText.isEmpty == false {
                     // Single category or search results - no sections needed
                     ForEach(filteredPrompts) { prompt in
-                        PromptRow(prompt: prompt) {
+                        PromptRow(
+                            prompt: prompt,
+                            isUsed: promptViewModel.isPromptUsed(prompt)
+                        ) {
                             selectPrompt(prompt)
                         }
                     }
@@ -73,7 +76,10 @@ struct PromptSelectionView: View {
                                 .foregroundColor(.secondary)
                         }) {
                             ForEach(groupedPrompts[groupKey] ?? []) { prompt in
-                                PromptRow(prompt: prompt) {
+                                PromptRow(
+                                    prompt: prompt,
+                                    isUsed: promptViewModel.isPromptUsed(prompt)
+                                ) {
                                     selectPrompt(prompt)
                                 }
                             }
@@ -162,19 +168,29 @@ struct PromptSelectionView: View {
 
 struct PromptRow: View {
     let prompt: Prompt
+    let isUsed: Bool
     let onSelect: () -> Void
     
     var body: some View {
         Button(action: onSelect) {
             HStack {
                 Image(systemName: prompt.flexibleCategory.icon)
-                    .foregroundColor(prompt.flexibleCategory.colorValue)
+                    .foregroundColor(isUsed ? prompt.flexibleCategory.colorValue.opacity(0.5) : prompt.flexibleCategory.colorValue)
                     .font(.title2)
                 
-                Text(prompt.formattedTitle)
-                    .font(.body)
-                    .foregroundColor(.primary)
-                    .multilineTextAlignment(.leading)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(prompt.formattedTitle)
+                        .font(.body)
+                        .foregroundColor(isUsed ? .secondary : .primary)
+                        .multilineTextAlignment(.leading)
+                        .strikethrough(isUsed, color: .secondary.opacity(0.5))
+                    
+                    if isUsed {
+                        Label("Used", systemImage: "checkmark.circle.fill")
+                            .font(.caption2)
+                            .foregroundColor(.green.opacity(0.7))
+                    }
+                }
                 
                 Spacer()
                 
