@@ -324,40 +324,48 @@ struct OnboardingView: View {
     }
     
     private func completeOnboarding() {
-        isDownloadingPacks = true
+        // Save notification preferences first
+        if enableNotifications {
+            let components = Calendar.current.dateComponents([.hour, .minute], from: selectedTime)
+            notificationHour = components.hour ?? 9
+            notificationMinute = components.minute ?? 0
+            notificationsEnabled = true
+            
+            // Request notification permission and schedule
+            requestNotificationPermission()
+        }
         
-        Task {
-            // Download selected packs
-            for packId in selectedPacks {
-                if let pack = availablePacks.first(where: { $0.id == packId }) {
-                    do {
-                        try await packManager.downloadPack(pack)
-                    } catch {
-                        print("Failed to download pack \(packId): \(error)")
+        // Mark onboarding as completed
+        hasCompletedOnboarding = true
+        
+        // Download packs if any selected
+        if !selectedPacks.isEmpty {
+            isDownloadingPacks = true
+            
+            Task {
+                // Download selected packs
+                for packId in selectedPacks {
+                    if let pack = availablePacks.first(where: { $0.id == packId }) {
+                        do {
+                            try await packManager.downloadPack(pack)
+                        } catch {
+                            print("Failed to download pack \(packId): \(error)")
+                        }
                     }
                 }
-            }
-            
-            await MainActor.run {
-                // Save notification preferences
-                if enableNotifications {
-                    let components = Calendar.current.dateComponents([.hour, .minute], from: selectedTime)
-                    notificationHour = components.hour ?? 9
-                    notificationMinute = components.minute ?? 0
-                    notificationsEnabled = true
-                    
-                    // Request notification permission and schedule
-                    requestNotificationPermission()
+                
+                await MainActor.run {
+                    // Reload prompts to include new packs
+                    PromptService.shared.reloadPrompts()
+                    isDownloadingPacks = false
+                    // Dismiss after downloads complete
+                    isPresented = false
                 }
-                
-                // Mark onboarding as completed
-                hasCompletedOnboarding = true
-                isDownloadingPacks = false
-                isPresented = false
-                
-                // Reload prompts to include new packs
-                PromptService.shared.reloadPrompts()
             }
+        } else {
+            // No packs to download, dismiss immediately
+            isPresented = false
+            PromptService.shared.reloadPrompts()
         }
     }
     
