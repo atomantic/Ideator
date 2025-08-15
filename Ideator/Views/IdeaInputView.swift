@@ -8,7 +8,7 @@ struct IdeaInputView: View {
     @State private var currentInput = ""
     @State private var showingExportSheet = false
     @State private var showingSkipAlert = false
-    @State private var currentHelpTip = ""
+    @State private var currentHelpTip = "Enter an idea..."
     @State private var helpTimer: Timer?
     
     let helpTips = [
@@ -39,7 +39,7 @@ struct IdeaInputView: View {
                     
                     // Single input field at the top
                     HStack(spacing: 12) {
-                        TextField("Enter an idea...", text: $currentInput)
+                        TextField(currentHelpTip, text: $currentInput)
                             .font(.body)
                             .focused($isInputFocused)
                             .onSubmit {
@@ -97,22 +97,11 @@ struct IdeaInputView: View {
                             }
                             
                             if viewModel.ideas.filter({ !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }).isEmpty {
-                                VStack(spacing: 8) {
-                                    Text("Your ideas will appear here...")
-                                        .font(.body)
-                                        .foregroundColor(.secondary)
-                                    
-                                    if !currentHelpTip.isEmpty && isInputFocused {
-                                        Text("💡 \(currentHelpTip)")
-                                            .font(.subheadline)
-                                            .foregroundColor(.blue)
-                                            .italic()
-                                            .transition(.opacity.combined(with: .scale))
-                                            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: currentHelpTip)
-                                    }
-                                }
-                                .padding()
-                                .frame(maxWidth: .infinity)
+                                Text("Your ideas will appear here...")
+                                    .font(.body)
+                                    .foregroundColor(.secondary)
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
                             }
                         }
                         .padding(.horizontal)
@@ -254,18 +243,28 @@ struct IdeaInputView: View {
     
     private func startHelpTimer() {
         stopHelpTimer()
-        currentHelpTip = ""
+        currentHelpTip = "Enter an idea..."
         
-        helpTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { _ in
+        // Show first tip after 3 seconds, then cycle through tips every 5 seconds
+        helpTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { timer in
             withAnimation {
-                currentHelpTip = helpTips.randomElement() ?? ""
+                // First firing (3 seconds) - show random help tip
+                if currentHelpTip == "Enter an idea..." {
+                    currentHelpTip = helpTips.randomElement() ?? "Enter an idea..."
+                    // Change interval to 5 seconds for cycling
+                    timer.fireDate = Date().addingTimeInterval(5.0)
+                } else {
+                    // Get a different tip
+                    let newTip = helpTips.filter { $0 != currentHelpTip }.randomElement() ?? helpTips.randomElement() ?? "Enter an idea..."
+                    currentHelpTip = newTip
+                }
             }
         }
     }
     
     private func resetHelpTimer() {
         stopHelpTimer()
-        currentHelpTip = ""
+        currentHelpTip = "Enter an idea..."
         
         // Only restart if input is still empty and focused
         if currentInput.isEmpty && isInputFocused {
