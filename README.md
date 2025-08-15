@@ -1,5 +1,9 @@
 # Idea Loom
 
+A creative brainstorming iOS app that helps users generate and capture ideas through prompted list-making exercises.
+
+## Overview
+
 Idea Loom is an iOS app designed to spark creativity and help users brainstorm ideas through guided prompts. The app presents users with various idea list prompts (e.g., "10 things I'd like to do before I die" or "10 ideas for an app"), allows them to input their ideas, and then export them to Apple Notes or other sources for future reference.
 
 ## Features
@@ -58,6 +62,12 @@ To ensure variety and prevent repetition:
 - 10 recipes to try this month
 - 10 books to read this year
 - 10 places to visit in my city
+
+## TODO:
+
+- intro explaining app
+- on share page explain that we've saved it in history
+- should prompt to set daily notification
 
 ## License
 

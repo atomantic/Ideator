@@ -13,7 +13,9 @@ struct ContentView: View {
     @State private var selectedTab = 0
     @State private var showingPromptSelection = false
     @State private var showingIdeaInput = false
+    @State private var showingOnboarding = false
     @State private var draftCount = 0
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -49,6 +51,10 @@ struct ContentView: View {
         }
         .onAppear {
             updateDraftCount()
+            // Show onboarding for first-time users
+            if !hasCompletedOnboarding {
+                showingOnboarding = true
+            }
         }
         .onChange(of: selectedTab) { _, _ in
             updateDraftCount()
@@ -67,6 +73,9 @@ struct ContentView: View {
             if let _ = ideaListViewModel.currentIdeaList {
                 IdeaInputView(viewModel: ideaListViewModel, promptViewModel: promptViewModel)
             }
+        }
+        .fullScreenCover(isPresented: $showingOnboarding) {
+            OnboardingView(isPresented: $showingOnboarding)
         }
     }
     
