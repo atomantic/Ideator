@@ -8,6 +8,26 @@ struct IdeaInputView: View {
     @State private var currentInput = ""
     @State private var showingExportSheet = false
     @State private var showingSkipAlert = false
+    @State private var currentHelpTip = ""
+    @State private var helpTimer: Timer?
+    
+    let helpTips = [
+        "Get silly with it!",
+        "Think outside the box",
+        "Just say whatever pops into your head!",
+        "No idea is too wild",
+        "What would a kid suggest?",
+        "Combine two unrelated things",
+        "What's the opposite approach?",
+        "Make it ridiculous!",
+        "What if money was no object?",
+        "Channel your inner genius",
+        "Start with 'What if...'",
+        "Be bold and brave",
+        "Imagine the impossible",
+        "Mix and match ideas",
+        "Think big, then bigger!"
+    ]
     
     var body: some View {
         NavigationStack {
@@ -24,6 +44,16 @@ struct IdeaInputView: View {
                             .focused($isInputFocused)
                             .onSubmit {
                                 addIdea()
+                            }
+                            .onChange(of: currentInput) { _, _ in
+                                resetHelpTimer()
+                            }
+                            .onChange(of: isInputFocused) { _, focused in
+                                if focused {
+                                    startHelpTimer()
+                                } else {
+                                    stopHelpTimer()
+                                }
                             }
                             .submitLabel(.done)
                             .textFieldStyle(PlainTextFieldStyle())
@@ -67,11 +97,22 @@ struct IdeaInputView: View {
                             }
                             
                             if viewModel.ideas.filter({ !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }).isEmpty {
-                                Text("Your ideas will appear here...")
-                                    .font(.body)
-                                    .foregroundColor(.secondary)
-                                    .padding()
-                                    .frame(maxWidth: .infinity)
+                                VStack(spacing: 8) {
+                                    Text("Your ideas will appear here...")
+                                        .font(.body)
+                                        .foregroundColor(.secondary)
+                                    
+                                    if !currentHelpTip.isEmpty && isInputFocused {
+                                        Text("💡 \(currentHelpTip)")
+                                            .font(.subheadline)
+                                            .foregroundColor(.blue)
+                                            .italic()
+                                            .transition(.opacity.combined(with: .scale))
+                                            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: currentHelpTip)
+                                    }
+                                }
+                                .padding()
+                                .frame(maxWidth: .infinity)
                             }
                         }
                         .padding(.horizontal)
@@ -129,6 +170,10 @@ struct IdeaInputView: View {
         }
         .onAppear {
             isInputFocused = true
+            startHelpTimer()
+        }
+        .onDisappear {
+            stopHelpTimer()
         }
         .alert("Skip This Prompt?", isPresented: $showingSkipAlert) {
             Button("Cancel", role: .cancel) {}
@@ -205,6 +250,32 @@ struct IdeaInputView: View {
             promptViewModel.markPromptAsUsed(prompt)
         }
         dismiss()
+    }
+    
+    private func startHelpTimer() {
+        stopHelpTimer()
+        currentHelpTip = ""
+        
+        helpTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { _ in
+            withAnimation {
+                currentHelpTip = helpTips.randomElement() ?? ""
+            }
+        }
+    }
+    
+    private func resetHelpTimer() {
+        stopHelpTimer()
+        currentHelpTip = ""
+        
+        // Only restart if input is still empty and focused
+        if currentInput.isEmpty && isInputFocused {
+            startHelpTimer()
+        }
+    }
+    
+    private func stopHelpTimer() {
+        helpTimer?.invalidate()
+        helpTimer = nil
     }
 }
 
