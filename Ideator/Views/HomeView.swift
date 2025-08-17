@@ -7,6 +7,7 @@ struct HomeView: View {
     @Binding var showingIdeaInput: Bool
     
     @State private var animateGradient = false
+    @State private var showingCustomPrompt = false
     
     var body: some View {
         NavigationStack {
@@ -19,6 +20,12 @@ struct HomeView: View {
                     recentCategoriesSection
                 }
                 .padding()
+            }
+            .sheet(isPresented: $showingCustomPrompt) {
+                CustomPromptView(
+                    ideaListViewModel: ideaListViewModel,
+                    showingIdeaInput: $showingIdeaInput
+                )
             }
         }
     }
@@ -49,41 +56,77 @@ struct HomeView: View {
     }
     
     private var quickStartSection: some View {
-        Button(action: {
-            if let randomPrompt = promptViewModel.getRandomPrompt() {
-                ideaListViewModel.startNewList(with: randomPrompt)
-                showingIdeaInput = true
-            }
-        }) {
-            HStack {
-                Image(systemName: "dice.fill")
-                    .font(.title2)
-                
-                VStack(alignment: .leading) {
-                    Text("Random Prompt")
-                        .font(.headline)
-                    Text("Let fate decide your next idea list")
+        VStack(spacing: 12) {
+            Button(action: {
+                if let randomPrompt = promptViewModel.getRandomPrompt() {
+                    ideaListViewModel.startNewList(with: randomPrompt)
+                    showingIdeaInput = true
+                }
+            }) {
+                HStack {
+                    Image(systemName: "dice.fill")
+                        .font(.title2)
+                    
+                    VStack(alignment: .leading) {
+                        Text("Random Prompt")
+                            .font(.headline)
+                        Text("Let fate decide your next idea list")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chevron.right")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            .padding()
-            .background(
-                LinearGradient(
-                    colors: [.blue.opacity(0.1), .purple.opacity(0.1)],
-                    startPoint: .leading,
-                    endPoint: .trailing
+                .padding()
+                .background(
+                    LinearGradient(
+                        colors: [.blue.opacity(0.1), .purple.opacity(0.1)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
                 )
-            )
-            .cornerRadius(12)
+                .cornerRadius(12)
+            }
+            .buttonStyle(PlainButtonStyle())
+            
+            Button(action: {
+                showingCustomPrompt = true
+            }) {
+                HStack {
+                    Image(systemName: "sparkles")
+                        .font(.title2)
+                        .foregroundColor(.purple)
+                    
+                    VStack(alignment: .leading) {
+                        Text("Create Custom Prompt")
+                            .font(.headline)
+                        Text("Write your own creative challenge")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .padding()
+                .background(
+                    LinearGradient(
+                        colors: [.purple.opacity(0.1), .pink.opacity(0.1)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .cornerRadius(12)
+            }
+            .buttonStyle(PlainButtonStyle())
         }
-        .buttonStyle(PlainButtonStyle())
     }
     
     
