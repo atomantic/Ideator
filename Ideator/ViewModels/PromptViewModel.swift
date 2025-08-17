@@ -18,11 +18,32 @@ class PromptViewModel {
     
     func loadPrompts() {
         isLoading = true
+        
+        // Get prompts from the service
+        var allPrompts: [Prompt] = []
         if let flexCategory = selectedFlexibleCategory {
-            prompts = promptService.getPrompts(for: flexCategory)
+            allPrompts = promptService.getPrompts(for: flexCategory)
         } else {
-            prompts = promptService.getPrompts(for: selectedCategory)
+            allPrompts = promptService.getPrompts(for: selectedCategory)
         }
+        
+        // Add custom prompts if showing all categories or no specific category
+        if selectedCategory == nil && selectedFlexibleCategory == nil {
+            let customPrompts = PersistenceManager.shared.loadCustomPrompts()
+            allPrompts.append(contentsOf: customPrompts)
+        } else if let category = selectedFlexibleCategory {
+            // Include custom prompts that match the selected category
+            let customPrompts = PersistenceManager.shared.loadCustomPrompts()
+                .filter { $0.flexibleCategory.id == category.id }
+            allPrompts.append(contentsOf: customPrompts)
+        } else if let category = selectedCategory {
+            // Include custom prompts that match the selected category
+            let customPrompts = PersistenceManager.shared.loadCustomPrompts()
+                .filter { $0.category == category }
+            allPrompts.append(contentsOf: customPrompts)
+        }
+        
+        prompts = allPrompts
         isLoading = false
     }
     

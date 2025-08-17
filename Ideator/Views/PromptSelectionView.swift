@@ -9,6 +9,7 @@ struct PromptSelectionView: View {
     @State private var selectedCategory: Category?
     @State private var selectedFlexibleCategory: FlexibleCategory?
     @State private var searchText = ""
+    @State private var showingCustomPrompt = false
     
     init(promptViewModel: PromptViewModel, ideaListViewModel: IdeaListViewModel, showingIdeaInput: Binding<Bool>) {
         self.promptViewModel = promptViewModel
@@ -38,6 +39,11 @@ struct PromptSelectionView: View {
         }
     }
     
+    private func isCustomPrompt(_ prompt: Prompt) -> Bool {
+        let customPrompts = PersistenceManager.shared.loadCustomPrompts()
+        return customPrompts.contains(where: { $0.id == prompt.id })
+    }
+    
     var body: some View {
         NavigationStack {
             List {
@@ -46,7 +52,8 @@ struct PromptSelectionView: View {
                     ForEach(filteredPrompts) { prompt in
                         PromptRow(
                             prompt: prompt,
-                            isUsed: promptViewModel.isPromptUsed(prompt)
+                            isUsed: promptViewModel.isPromptUsed(prompt),
+                            isCustom: isCustomPrompt(prompt)
                         ) {
                             selectPrompt(prompt)
                         }
@@ -78,7 +85,8 @@ struct PromptSelectionView: View {
                             ForEach(groupedPrompts[groupKey] ?? []) { prompt in
                                 PromptRow(
                                     prompt: prompt,
-                                    isUsed: promptViewModel.isPromptUsed(prompt)
+                                    isUsed: promptViewModel.isPromptUsed(prompt),
+                                    isCustom: isCustomPrompt(prompt)
                                 ) {
                                     selectPrompt(prompt)
                                 }
@@ -100,6 +108,10 @@ struct PromptSelectionView: View {
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
+                        Button(action: { showingCustomPrompt = true }) {
+                            Label("Create Custom Prompt", systemImage: "plus.circle.fill")
+                        }
+                        
                         Button(action: selectRandomPrompt) {
                             Label("Random from All", systemImage: "dice.fill")
                         }
@@ -138,6 +150,12 @@ struct PromptSelectionView: View {
                     }
                 }
             }
+            .sheet(isPresented: $showingCustomPrompt) {
+                CustomPromptView(
+                    ideaListViewModel: ideaListViewModel,
+                    showingIdeaInput: $showingIdeaInput
+                )
+            }
         }
     }
     
@@ -169,7 +187,15 @@ struct PromptSelectionView: View {
 struct PromptRow: View {
     let prompt: Prompt
     let isUsed: Bool
+    let isCustom: Bool
     let onSelect: () -> Void
+    
+    init(prompt: Prompt, isUsed: Bool, isCustom: Bool = false, onSelect: @escaping () -> Void) {
+        self.prompt = prompt
+        self.isUsed = isUsed
+        self.isCustom = isCustom
+        self.onSelect = onSelect
+    }
     
     var body: some View {
         Button(action: onSelect) {
@@ -179,16 +205,32 @@ struct PromptRow: View {
                     .font(.title2)
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(prompt.formattedTitle)
-                        .font(.body)
-                        .foregroundColor(isUsed ? .secondary : .primary)
-                        .multilineTextAlignment(.leading)
-                        .strikethrough(isUsed, color: .secondary.opacity(0.5))
+                    HStack(spacing: 4) {
+                        Text(prompt.formattedTitle)
+                            .font(.body)
+                            .foregroundColor(isUsed ? .secondary : .primary)
+                            .multilineTextAlignment(.leading)
+                            .strikethrough(isUsed, color: .secondary.opacity(0.5))
+                        
+                        if isCustom {
+                            Image(systemName: "sparkles")
+                                .font(.caption)
+                                .foregroundColor(.purple)
+                        }
+                    }
                     
-                    if isUsed {
-                        Label("Used", systemImage: "checkmark.circle.fill")
-                            .font(.caption2)
-                            .foregroundColor(.green.opacity(0.7))
+                    HStack(spacing: 8) {
+                        if isUsed {
+                            Label("Used", systemImage: "checkmark.circle.fill")
+                                .font(.caption2)
+                                .foregroundColor(.green.opacity(0.7))
+                        }
+                        
+                        if isCustom {
+                            Text("Custom")
+                                .font(.caption2)
+                                .foregroundColor(.purple.opacity(0.7))
+                        }
                     }
                 }
                 

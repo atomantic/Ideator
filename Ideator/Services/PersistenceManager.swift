@@ -5,6 +5,7 @@ class PersistenceManager {
     
     private let draftsKey = "ideator_drafts"
     private let completedKey = "ideator_completed"
+    private let customPromptsKey = "custom_prompts"
     
     private init() {}
     
@@ -82,5 +83,27 @@ class PersistenceManager {
     func clearAll() {
         UserDefaults.standard.removeObject(forKey: draftsKey)
         UserDefaults.standard.removeObject(forKey: completedKey)
+        UserDefaults.standard.removeObject(forKey: customPromptsKey)
+    }
+    
+    // Custom Prompts Management
+    func saveCustomPrompt(_ prompt: Prompt) {
+        var prompts = loadCustomPrompts()
+        
+        // Check if prompt already exists by text
+        if !prompts.contains(where: { $0.text == prompt.text }) {
+            prompts.append(prompt)
+            save(prompts, forKey: customPromptsKey)
+        }
+    }
+    
+    func loadCustomPrompts() -> [Prompt] {
+        load(forKey: customPromptsKey) ?? []
+    }
+    
+    func deleteCustomPrompt(withId id: UUID) {
+        var prompts = loadCustomPrompts()
+        prompts.removeAll { $0.id == id }
+        save(prompts, forKey: customPromptsKey)
     }
 }

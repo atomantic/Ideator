@@ -114,6 +114,21 @@ struct SettingsView: View {
                 }
             }
             
+            NavigationLink(destination: CustomPromptsListView()) {
+                HStack {
+                    Image(systemName: "sparkles")
+                        .foregroundColor(.purple)
+                    Text("Custom Prompts")
+                    Spacer()
+                    let customCount = PersistenceManager.shared.loadCustomPrompts().count
+                    if customCount > 0 {
+                        Text("\(customCount)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            
             HStack {
                 VStack(alignment: .leading) {
                     Text("Unused Prompts")
