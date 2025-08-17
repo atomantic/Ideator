@@ -6,12 +6,14 @@ struct Prompt: Identifiable, Codable, Hashable {
     let category: Category // Keep for backwards compatibility
     let flexibleCategory: FlexibleCategory
     let suggestedCount: Int
+    let help: String?
     
     init(
         id: UUID? = nil,
         text: String,
         category: Category,
-        suggestedCount: Int = 10
+        suggestedCount: Int = 10,
+        help: String? = nil
     ) {
         // Generate consistent UUID based on text and category to ensure persistence
         if let providedId = id {
@@ -25,13 +27,15 @@ struct Prompt: Identifiable, Codable, Hashable {
         self.category = category
         self.flexibleCategory = FlexibleCategory.from(category: category)
         self.suggestedCount = suggestedCount
+        self.help = help
     }
     
     init(
         id: UUID? = nil,
         text: String,
         flexibleCategory: FlexibleCategory,
-        suggestedCount: Int = 10
+        suggestedCount: Int = 10,
+        help: String? = nil
     ) {
         // Generate consistent UUID based on text and category
         if let providedId = id {
@@ -45,6 +49,7 @@ struct Prompt: Identifiable, Codable, Hashable {
         self.category = flexibleCategory.toCategory() ?? .personalDevelopment
         self.flexibleCategory = flexibleCategory
         self.suggestedCount = suggestedCount
+        self.help = help
     }
     
     var formattedTitle: String {

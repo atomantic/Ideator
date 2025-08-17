@@ -220,6 +220,14 @@ struct IdeaInputView: View {
                     .font(.headline)
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
+
+                // Optional help/exemplar guidance
+                if let help = prompt.help, !help.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Text(help)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
         .padding()
@@ -400,4 +408,3 @@ struct ExportView: View {
         }
     }
 }
-

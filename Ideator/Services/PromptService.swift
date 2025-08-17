@@ -54,13 +54,20 @@ class PromptService {
         )
         
         return dataLines.compactMap { line in
-            let text = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else { return nil }
+
+            // Support both 1-column (text) and 2-column (text, help) TSV formats
+            let parts = trimmed.components(separatedBy: "\t")
+            let text = parts.first?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
             guard !text.isEmpty else { return nil }
+            let help = parts.count > 1 ? parts[1].trimmingCharacters(in: .whitespacesAndNewlines) : nil
             
             return Prompt(
                 text: text,
                 flexibleCategory: flexibleCategory,
-                suggestedCount: 10 // Default count, user can override in settings
+                suggestedCount: 10, // Default count, user can override in settings
+                help: help
             )
         }
     }
