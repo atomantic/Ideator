@@ -61,17 +61,24 @@ struct ContentView: View {
                 showingOnboarding = true
             }
         }
-        .onChange(of: selectedTab) { _, _ in
-            updateDraftCount()
-        }
-        .onChange(of: showingIdeaInput) { _, _ in
-            updateDraftCount()
-        }
-        .sheet(isPresented: $showingPromptSelection) {
-            PromptSelectionView(
-                promptViewModel: promptViewModel,
-                ideaListViewModel: ideaListViewModel,
-                showingIdeaInput: $showingIdeaInput
+          .onChange(of: selectedTab) { _, _ in
+              updateDraftCount()
+          }
+          .onChange(of: showingIdeaInput) { _, _ in
+              updateDraftCount()
+          }
+          .onReceive(NotificationCenter.default.publisher(for: .dailyPromptTriggered)) { _ in
+              if let randomPrompt = promptViewModel.getRandomPrompt() {
+                  ideaListViewModel.startNewList(with: randomPrompt)
+                  showingIdeaInput = true
+                  selectedTab = 0
+              }
+          }
+          .sheet(isPresented: $showingPromptSelection) {
+              PromptSelectionView(
+                  promptViewModel: promptViewModel,
+                  ideaListViewModel: ideaListViewModel,
+                  showingIdeaInput: $showingIdeaInput
             )
         }
         .sheet(isPresented: $showingIdeaInput) {
