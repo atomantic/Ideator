@@ -16,6 +16,7 @@ enum Category: String, CaseIterable, Codable {
     case mindfulness = "Mindfulness"
     case selfCare = "Self Care"
     case gratitude = "Gratitude"
+    case custom = "Custom"
     
     var icon: String {
         switch self {
@@ -33,6 +34,7 @@ enum Category: String, CaseIterable, Codable {
         case .mindfulness: return "leaf.fill"
         case .selfCare: return "sparkles"
         case .gratitude: return "hands.sparkles"
+        case .custom: return "sparkles.rectangle.stack"
         }
     }
     
@@ -52,6 +54,7 @@ enum Category: String, CaseIterable, Codable {
         case .mindfulness: return "green"
         case .selfCare: return "purple"
         case .gratitude: return "orange"
+        case .custom: return "purple"
         }
     }
     
@@ -71,6 +74,7 @@ enum Category: String, CaseIterable, Codable {
         case .mindfulness: return .green
         case .selfCare: return .purple
         case .gratitude: return .orange
+        case .custom: return .purple
         }
     }
 }

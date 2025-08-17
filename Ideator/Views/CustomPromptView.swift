@@ -6,7 +6,7 @@ struct CustomPromptView: View {
     @Binding var showingIdeaInput: Bool
     
     @State private var promptText = ""
-    @State private var selectedCategory = FlexibleCategory.from(category: .personalDevelopment)
+    @State private var selectedCategory = FlexibleCategory.from(category: .custom)
     @State private var suggestedCount = 10
     @FocusState private var isTextFieldFocused: Bool
     
@@ -78,9 +78,15 @@ struct CustomPromptView: View {
     private func getAllCategories() -> [FlexibleCategory] {
         var categories: [FlexibleCategory] = []
         
-        // Add core categories
+        // Add Custom category first
+        let customCategory = FlexibleCategory.from(category: .custom)
+        categories.append(customCategory)
+        
+        // Add other core categories
         for category in Category.allCases {
-            categories.append(FlexibleCategory.from(category: category))
+            if category != .custom {
+                categories.append(FlexibleCategory.from(category: category))
+            }
         }
         
         // Add pack categories if available
@@ -100,7 +106,10 @@ struct CustomPromptView: View {
                 }
             }
         
-        return categories.sorted { $0.name < $1.name }
+        // Sort all except Custom (which stays first)
+        let customFirst = categories.first!
+        let rest = Array(categories.dropFirst()).sorted { $0.name < $1.name }
+        return [customFirst] + rest
     }
     
     private func startCustomPrompt() {
