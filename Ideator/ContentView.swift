@@ -15,6 +15,7 @@ struct ContentView: View {
     @State private var showingIdeaInput = false
     @State private var showingOnboarding = false
     @State private var draftCount = 0
+    @State private var packsVersion = 0
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     
     var body: some View {
@@ -25,6 +26,7 @@ struct ContentView: View {
                 showingPromptSelection: $showingPromptSelection,
                 showingIdeaInput: $showingIdeaInput
             )
+            .id(packsVersion)
             .tabItem {
                 Label("Home", systemImage: "house.fill")
             }
@@ -73,6 +75,11 @@ struct ContentView: View {
                   showingIdeaInput = true
                   selectedTab = 0
               }
+          }
+          .onReceive(NotificationCenter.default.publisher(for: .promptsReloaded)) { _ in
+              // Reload prompts and force HomeView rebuild to reflect new categories
+              promptViewModel.loadPrompts()
+              packsVersion &+= 1
           }
           .sheet(isPresented: $showingPromptSelection) {
               PromptSelectionView(

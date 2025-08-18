@@ -75,6 +75,9 @@ class PromptService {
     func reloadPrompts() {
         packManager.loadInstalledPacks()
         loadPromptsFromPacks()
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: .promptsReloaded, object: nil)
+        }
     }
     
     private func loadDefaultPrompts() {

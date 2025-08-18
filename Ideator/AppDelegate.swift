@@ -22,5 +22,5 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 
 extension Notification.Name {
     static let dailyPromptTriggered = Notification.Name("dailyPromptTriggered")
+    static let promptsReloaded = Notification.Name("promptsReloaded")
 }
-
