@@ -9,7 +9,10 @@ class PackManager: ObservableObject {
     @Published var packUpdates: [String: String] = [:] // packId -> newVersion
     
     private let packsDirectory: URL
-    private let githubRepo = "https://raw.githubusercontent.com/atomantic/IdeatorPromptPacks/main"
+    // Base root of the prompt packs repo (without ref); we'll append a ref like "main" or a version tag
+    private let githubRepoRoot = "https://raw.githubusercontent.com/atomantic/IdeatorPromptPacks"
+    private let supportedSchemaMajor = 1
+    private var selectedRef: String = "main" // either "main" or a version tag like "v1.2.3"
     
     private init() {
         // Get documents directory for downloaded packs
@@ -25,6 +28,35 @@ class PackManager: ObservableObject {
         installEmbeddedCorePackIfNeeded()
         
         loadInstalledPacks()
+    }
+
+    // Determine which ref to use (main or a version tag) based on schema compatibility.
+    // If main declares a schemaMajor greater than we support, use a tag matching the current app version.
+    private func updateSelectedRefIfNeeded() async {
+        // If we've already chosen a ref, keep it
+        if selectedRef != "main" { return }
+
+        guard let url = URL(string: "\(githubRepoRoot)/main/schema.json") else { return }
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            if let http = response as? HTTPURLResponse, http.statusCode == 200 {
+                if let schema = try? JSONDecoder().decode(SchemaInfo.self, from: data) {
+                    if schema.schemaMajor > supportedSchemaMajor {
+                        // fallback to the tag that matches the running app version
+                        let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
+                        selectedRef = "v\(appVersion)"
+                        print("Using tagged packs ref: \(selectedRef) due to schemaMajor=\(schema.schemaMajor)")
+                    }
+                }
+            }
+        } catch {
+            // If schema.json isn't reachable, keep using main
+            print("Schema check failed: \(error). Defaulting to main.")
+        }
+    }
+
+    private func packsURL(_ path: String) -> URL? {
+        URL(string: "\(githubRepoRoot)/\(selectedRef)/\(path)")
     }
     
     private func installEmbeddedCorePackIfNeeded() {
@@ -130,13 +162,12 @@ class PackManager: ObservableObject {
             isLoading = true
         }
         
-        let urlString = "\(githubRepo)/packs.json"
-        print("Fetching available packs from: \(urlString)")
-        
-        guard let url = URL(string: urlString) else { 
+        await updateSelectedRefIfNeeded()
+        guard let url = packsURL("packs.json") else {
             print("Invalid URL for packs.json")
             return 
         }
+        print("Fetching available packs from: \(url)")
         
         do {
             let (data, response) = try await URLSession.shared.data(from: url)
@@ -174,7 +205,14 @@ class PackManager: ObservableObject {
                 isLoading = false
             }
         } catch {
-            print("Failed to fetch available packs: \(error)")
+            print("Failed to fetch available packs from \(url): \(error)")
+            // Fallback: retry using main if we were targeting a tag
+            if selectedRef != "main" {
+                print("Retrying packs.json from main as fallback...")
+                selectedRef = "main"
+                await fetchAvailablePacks()
+                return
+            }
             await MainActor.run {
                 isLoading = false
             }
@@ -184,7 +222,10 @@ class PackManager: ObservableObject {
     func downloadPack(_ packInfo: RemotePackInfo) async throws {
         print("Starting download for pack: \(packInfo.id)")
         
-        guard let baseURL = URL(string: packInfo.downloadUrl) else {
+        await updateSelectedRefIfNeeded()
+        // Replace '/main/' in downloadUrl with the selected ref for schema compatibility
+        let adjustedURLString = packInfo.downloadUrl.replacingOccurrences(of: "/main/", with: "/\(selectedRef)/")
+        guard let baseURL = URL(string: adjustedURLString) else {
             print("Invalid URL: \(packInfo.downloadUrl)")
             throw PackError.invalidURL
         }
@@ -282,13 +323,14 @@ class PackManager: ObservableObject {
     
     func updatePack(_ packId: String) async throws {
         print("Updating pack \(packId) from GitHub...")
+        await updateSelectedRefIfNeeded()
         
         // Determine the download URL based on pack ID
         let baseURL: String
         if packId == "core" {
-            baseURL = "\(githubRepo)/packs/core/"
+            baseURL = "\(githubRepoRoot)/\(selectedRef)/packs/core/"
         } else {
-            baseURL = "\(githubRepo)/packs/\(packId)/"
+            baseURL = "\(githubRepoRoot)/\(selectedRef)/packs/\(packId)/"
         }
         
         // Download to documents directory
@@ -406,6 +448,11 @@ enum PackError: Error {
     case invalidURL
     case downloadFailed
     case extractionFailed
+}
+
+// Lightweight schema descriptor fetched from the packs repo
+private struct SchemaInfo: Codable {
+    let schemaMajor: Int
 }
 
 extension PackManager {

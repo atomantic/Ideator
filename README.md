@@ -72,3 +72,16 @@ To ensure variety and prevent repetition:
 ## License
 
 [Idea Loom License](./LICENSE)
+### Prompt Pack Version Selection
+
+The app downloads community packs from the `IdeatorPromptPacks` repo. To avoid breaking older app versions when the prompt schema evolves, the app chooses which git ref (branch/tag) to read from:
+
+- The packs repo publishes a root `schema.json` with `schemaMajor`.
+- On startup, the app fetches `schema.json` from `main`:
+  - If `schemaMajor` on `main` is greater than the app’s supported schema, the app reads packs from the git tag that matches the app version: `v{CFBundleShortVersionString}`.
+  - Otherwise, it reads from `main`.
+- If fetching from the chosen ref fails, the app falls back to `main`.
+
+Release flow:
+- Before introducing a breaking schema change on `main`, tag the packs repo with the current App Store version `vX.Y.Z` and bump `schemaMajor` in `schema.json`.
+- Ship the new app when ready; older apps will continue reading their matching tag; newer apps will read `main`.
