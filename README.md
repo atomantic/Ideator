@@ -4,7 +4,7 @@ A creative brainstorming iOS app that helps users generate and capture ideas thr
 
 ## Overview
 
-Idea Loom is an iOS app designed to spark creativity and help users brainstorm ideas through guided prompts. The app presents users with various idea list prompts (e.g., "10 things I'd like to do before I die" or "10 ideas for an app"), allows them to input their ideas, and then export them to Apple Notes or other sources for future reference.
+Idea Loom is an iOS app designed to spark creativity and help users brainstorm ideas through guided prompts. The app presents users with various idea list prompts (e.g., "things I'd like to do before I die" or "ideas for an app"), allows them to input their ideas, and then export them to Apple Notes or other sources for future reference.
 
 ## Features
 
@@ -28,7 +28,7 @@ Idea Loom is an iOS app designed to spark creativity and help users brainstorm i
 To ensure variety and prevent repetition:
 
 1. **Template System**: Create prompt templates with variables
-   - Example: "10 [adjective] ways to [verb] your [noun]"
+   - Example: "[adjective] ways to [verb] your [noun]"
    - Generate variations programmatically
 
 2. **Category Rotation**: Track last-used categories and prioritize others
@@ -40,28 +40,28 @@ To ensure variety and prevent repetition:
 ## Sample Prompts
 
 ### Personal Development
-- 10 habits I want to develop this year
-- 10 fears I want to overcome
-- 10 skills I'd like to master
-- 10 ways to improve my morning routine
+- habits I want to develop this year
+- fears I want to overcome
+- skills I'd like to master
+- ways to improve my morning routine
 
 ### Creative
-- 10 story ideas I'd love to write
-- 10 inventions that would make life easier
-- 10 art projects to try
-- 10 podcast episode ideas
+- story ideas I'd love to write
+- inventions that would make life easier
+- art projects to try
+- podcast episode ideas
 
 ### Professional
-- 10 business ideas to explore
-- 10 ways to improve my workspace
-- 10 networking opportunities to pursue
-- 10 career goals for the next 5 years
+- business ideas to explore
+- ways to improve my workspace
+- networking opportunities to pursue
+- career goals for the next 5 years
 
 ### Fun & Lifestyle
-- 10 bucket list adventures
-- 10 recipes to try this month
-- 10 books to read this year
-- 10 places to visit in my city
+- bucket list adventures
+- recipes to try this month
+- books to read this year
+- places to visit in my city
 
 ## TODO:
 

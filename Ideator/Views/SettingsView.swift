@@ -41,6 +41,7 @@ struct SettingsView: View {
                 promptViewModel.resetUsedPrompts()
                 PackManager.shared.clearAllPackData()
                 PromptService.shared.reloadPrompts()
+                StreakManager.shared.resetAllStats()
                 
                 // Reset onboarding state for testing
                 UserDefaults.standard.set(false, forKey: "hasCompletedOnboarding")
@@ -208,7 +209,32 @@ struct SettingsView: View {
     }
     
     private var dataSection: some View {
-        Section("Data") {
+        Section("Data & Stats") {
+            // Streak Statistics
+            HStack {
+                Image(systemName: "flame.fill")
+                    .foregroundColor(.orange)
+                    .frame(width: 30)
+                
+                VStack(alignment: .leading) {
+                    Text("Current Streak")
+                    Text("\(StreakManager.shared.currentStreak) days")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                VStack(alignment: .trailing) {
+                    Text("Best: \(StreakManager.shared.longestStreak)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text("Total: \(StreakManager.shared.totalCompletedLists)")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+            }
+            
             HStack {
                 VStack(alignment: .leading) {
                     Text("Drafts")

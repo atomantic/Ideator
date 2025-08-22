@@ -8,6 +8,12 @@ struct HomeView: View {
     
     @State private var animateGradient = false
     @State private var showingCustomPrompt = false
+    @State private var currentStreak = 0
+    @State private var streakStatus = StreakManager.StreakStatus.neverStarted
+    @State private var showingMilestone = false
+    @State private var milestoneStreak = 0
+    
+    private let streakManager = StreakManager.shared
     
     var body: some View {
         NavigationStack {
@@ -15,17 +21,36 @@ struct HomeView: View {
                 VStack(spacing: 24) {
                     heroSection
                     
+                    streakSection
+                    
                     quickStartSection
                     
                     recentCategoriesSection
                 }
                 .padding()
             }
+            .onAppear {
+                updateStreakDisplay()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .streakUpdated)) { _ in
+                updateStreakDisplay()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .streakMilestone)) { notification in
+                if let streak = notification.userInfo?["streak"] as? Int {
+                    milestoneStreak = streak
+                    showingMilestone = true
+                }
+            }
             .sheet(isPresented: $showingCustomPrompt) {
                 CustomPromptView(
                     ideaListViewModel: ideaListViewModel,
                     showingIdeaInput: $showingIdeaInput
                 )
+            }
+            .alert("Streak Milestone! 🎉", isPresented: $showingMilestone) {
+                Button("Awesome!") {}
+            } message: {
+                Text(getMilestoneMessage(for: milestoneStreak))
             }
         }
     }
@@ -53,6 +78,67 @@ struct HomeView: View {
                 .multilineTextAlignment(.center)
         }
         .padding(.vertical, 8)
+    }
+    
+    private var streakSection: some View {
+        HStack(spacing: 16) {
+            // Current Streak Card
+            VStack(spacing: 8) {
+                HStack {
+                    Image(systemName: "flame.fill")
+                        .font(.title2)
+                        .foregroundColor(currentStreak > 0 ? .orange : .gray)
+                    
+                    Text("\(currentStreak)")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                }
+                
+                Text("Day Streak")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                Text(streakStatus.emoji + " " + streakStatus.message)
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity)
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(UIColor.secondarySystemBackground))
+            )
+            
+            // Longest Streak Card
+            VStack(spacing: 8) {
+                HStack {
+                    Image(systemName: "trophy.fill")
+                        .font(.title2)
+                        .foregroundColor(streakManager.longestStreak > 0 ? .yellow : .gray)
+                    
+                    Text("\(streakManager.longestStreak)")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                }
+                
+                Text("Best Streak")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                Text("\(streakManager.totalCompletedLists) total lists")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(UIColor.secondarySystemBackground))
+            )
+        }
     }
     
     private var quickStartSection: some View {
@@ -163,6 +249,31 @@ struct HomeView: View {
         }
     }
     
+    private func updateStreakDisplay() {
+        currentStreak = streakManager.currentStreak
+        streakStatus = streakManager.getStreakStatus()
+    }
+    
+    private func getMilestoneMessage(for streak: Int) -> String {
+        switch streak {
+        case 3:
+            return "You've completed 3 days in a row! You're building a great habit. Keep it up!"
+        case 7:
+            return "One week streak! You're on fire! Your creativity is flowing."
+        case 14:
+            return "Two weeks of daily ideas! You're unstoppable!"
+        case 30:
+            return "30 day streak! You've mastered the art of daily ideation. Incredible dedication!"
+        case 60:
+            return "60 days! Two months of creative brilliance. You're an idea machine!"
+        case 100:
+            return "100 DAYS! Triple digits! You've reached legendary status!"
+        case 365:
+            return "ONE FULL YEAR! 365 days of ideas! You are truly extraordinary!"
+        default:
+            return "Amazing streak of \(streak) days! Keep those creative juices flowing!"
+        }
+    }
 }
 
 
