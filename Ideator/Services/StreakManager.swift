@@ -16,6 +16,7 @@ class StreakManager {
     
     private init() {
         loadStreakData()
+        rebuildFromCompletedIfNeeded()
         
         // Listen for completed lists
         NotificationCenter.default.addObserver(
@@ -118,7 +119,7 @@ class StreakManager {
             }
         }
     }
-    
+
     private func checkMilestones() {
         // Check for milestone streaks (3, 7, 14, 30, 60, 100, 365)
         let milestones = [3, 7, 14, 30, 60, 100, 365]
@@ -131,6 +132,76 @@ class StreakManager {
                 userInfo: ["streak": currentStreak]
             )
         }
+    }
+
+    // MARK: - Migration from completed lists
+    private func rebuildFromCompletedIfNeeded() {
+        let migrationFlag = "streak_migration_v1_done"
+        if UserDefaults.standard.bool(forKey: migrationFlag) { return }
+
+        let completed = PersistenceManager.shared.loadCompleted().filter { $0.isComplete }
+        guard !completed.isEmpty else {
+            UserDefaults.standard.set(true, forKey: migrationFlag)
+            return
+        }
+
+        // Build set of unique completion days
+        let calendar = Calendar.current
+        let completionDays: Set<Date> = Set(completed.map { list in
+            // Prefer modifiedDate as completion timestamp; fallback to createdDate
+            let date = list.modifiedDate
+            return calendar.startOfDay(for: date)
+        })
+
+        guard let latestDay = completionDays.max() else {
+            UserDefaults.standard.set(true, forKey: migrationFlag)
+            return
+        }
+
+        let today = calendar.startOfDay(for: Date())
+        // Only reconstruct if latest completion is today or yesterday (active streak)
+        let yesterday = calendar.date(byAdding: .day, value: -1, to: today)!
+        guard latestDay == today || latestDay == yesterday else {
+            // No active streak; still set totals
+            totalCompletedLists = completed.count
+            saveStreakData()
+            UserDefaults.standard.set(true, forKey: migrationFlag)
+            return
+        }
+
+        // Walk backwards to count consecutive days up to today/yesterday
+        var streak = 0
+        var cursor = latestDay
+        while completionDays.contains(cursor) {
+            streak += 1
+            guard let prev = calendar.date(byAdding: .day, value: -1, to: cursor) else { break }
+            cursor = prev
+        }
+
+        // Compute longest streak across all completion days
+        var longest = 0
+        var visited: Set<Date> = []
+        for day in completionDays {
+            let prevDay = calendar.date(byAdding: .day, value: -1, to: day)!
+            if completionDays.contains(prevDay) { continue } // Not a run start
+            var runLen = 0
+            var runCursor = day
+            while completionDays.contains(runCursor) {
+                runLen += 1
+                visited.insert(runCursor)
+                guard let prev = calendar.date(byAdding: .day, value: 1, to: runCursor) else { break }
+                runCursor = prev
+            }
+            if runLen > longest { longest = runLen }
+        }
+
+        currentStreak = streak
+        longestStreak = max(longestStreak, longest)
+        totalCompletedLists = completed.count
+        lastCompletionDate = latestDay
+        saveStreakData()
+        UserDefaults.standard.set(true, forKey: migrationFlag)
+        NotificationCenter.default.post(name: .streakUpdated, object: nil)
     }
     
     func resetStreak() {
@@ -180,13 +251,13 @@ class StreakManager {
         var message: String {
             switch self {
             case .neverStarted:
-                return "Start your streak today!"
+                return "Start today!"
             case .completedToday:
                 return "Great job! See you tomorrow!"
             case .needsCompletionToday:
-                return "Complete today to continue your streak!"
+                return "Keep it going!"
             case .broken:
-                return "Start a new streak today!"
+                return "Start again!"
             }
         }
         

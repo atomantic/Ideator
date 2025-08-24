@@ -63,6 +63,8 @@ class IdeaListViewModel {
     func markAsComplete() {
         guard var ideaList = currentIdeaList else { return }
         ideaList.isComplete = true
+        // Ensure completion timestamp captured
+        ideaList.modifiedDate = Date()
         ideaList.ideas = ideas
         currentIdeaList = ideaList
         persistenceManager.saveCompleted(ideaList)
