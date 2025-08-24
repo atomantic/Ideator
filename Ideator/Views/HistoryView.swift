@@ -5,6 +5,10 @@ struct HistoryView: View {
     @State private var selectedList: IdeaList?
     @State private var searchText = ""
     @State private var selectedCategory: Category?
+    @State private var viewMode: ViewMode = .list
+    @State private var calendarMonth: Date = Date()
+    @State private var selectedDateForDaySheet: Date?
+    @State private var showingDaySheet = false
     
     var filteredLists: [IdeaList] {
         var lists = completedLists
@@ -31,19 +35,43 @@ struct HistoryView: View {
                 } else {
                     VStack(spacing: 0) {
                         if !completedLists.isEmpty {
+                            headerControls
                             categoryFilter
                         }
                         
-                        List {
-                            ForEach(filteredLists) { list in
-                                HistoryRow(ideaList: list) {
-                                    selectedList = list
+                        if viewMode == .list {
+                            List {
+                                ForEach(filteredLists) { list in
+                                    HistoryRow(ideaList: list) {
+                                        selectedList = list
+                                    }
+                                }
+                                .onDelete(perform: deleteLists)
+                            }
+                            .listStyle(PlainListStyle())
+                            .searchable(text: $searchText, prompt: "Search ideas...")
+                        } else {
+                            HistoryCalendarView(
+                                month: $calendarMonth,
+                                listsByDay: groupListsByDay(filteredLists),
+                                onSelectList: { list in selectedList = list },
+                                onSelectDay: { date in
+                                    selectedDateForDaySheet = date
+                                    showingDaySheet = true
+                                }
+                            )
+                            .padding(.horizontal)
+                            .padding(.top, 8)
+                            .sheet(isPresented: $showingDaySheet) {
+                                if let date = selectedDateForDaySheet {
+                                    DayListsSheet(
+                                        date: date,
+                                        lists: groupListsByDay(filteredLists)[Calendar.current.startOfDay(for: date)] ?? [],
+                                        onOpen: { list in selectedList = list }
+                                    )
                                 }
                             }
-                            .onDelete(perform: deleteLists)
                         }
-                        .listStyle(PlainListStyle())
-                        .searchable(text: $searchText, prompt: "Search ideas...")
                     }
                 }
             }
@@ -56,6 +84,18 @@ struct HistoryView: View {
                 IdeaListDetailView(ideaList: list)
             }
         }
+    }
+    
+    private var headerControls: some View {
+        HStack {
+            Picker("View", selection: $viewMode) {
+                Text("List").tag(ViewMode.list)
+                Text("Calendar").tag(ViewMode.calendar)
+            }
+            .pickerStyle(.segmented)
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
     }
     
     private var emptyStateView: some View {
@@ -111,6 +151,159 @@ struct HistoryView: View {
             PersistenceManager.shared.deleteCompleted(withId: filteredLists[index].id)
         }
         loadHistory()
+    }
+}
+
+private func completionDay(for list: IdeaList) -> Date {
+    // Prefer modifiedDate as completion timestamp; fallback to createdDate
+    let date = list.modifiedDate
+    return Calendar.current.startOfDay(for: date)
+}
+
+private func groupListsByDay(_ lists: [IdeaList]) -> [Date: [IdeaList]] {
+    var dict: [Date: [IdeaList]] = [:]
+    for list in lists where list.isComplete {
+        let day = completionDay(for: list)
+        dict[day, default: []].append(list)
+    }
+    return dict
+}
+
+enum ViewMode { case list, calendar }
+
+struct HistoryCalendarView: View {
+    @Binding var month: Date
+    let listsByDay: [Date: [IdeaList]]
+    let onSelectList: (IdeaList) -> Void
+    let onSelectDay: (Date) -> Void
+    
+    private var monthInterval: DateInterval {
+        Calendar.current.dateInterval(of: .month, for: month)!
+    }
+    
+    private var days: [Date?] {
+        let calendar = Calendar.current
+        let start = monthInterval.start
+        let range = calendar.range(of: .day, in: .month, for: start)!
+        let firstWeekday = calendar.component(.weekday, from: start) // 1..7
+        let leadingEmpty = (firstWeekday - calendar.firstWeekday + 7) % 7
+        let total = leadingEmpty + range.count
+        return (0..<total).map { index in
+            if index < leadingEmpty { return nil }
+            let dayOffset = index - leadingEmpty
+            return calendar.date(byAdding: .day, value: dayOffset, to: start)!
+        }
+    }
+    
+    private var weekdaySymbols: [String] {
+        let symbols = Calendar.current.shortStandaloneWeekdaySymbols
+        // Reorder based on firstWeekday
+        let first = Calendar.current.firstWeekday - 1
+        return Array(symbols[first...] + symbols[..<first])
+    }
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            HStack {
+                Button { changeMonth(-1) } label: { Image(systemName: "chevron.left") }
+                Spacer()
+                Text(month, style: .date)
+                    .font(.headline)
+                    .id(monthInterval.start)
+                Spacer()
+                Button { changeMonth(1) } label: { Image(systemName: "chevron.right") }
+            }
+            .padding(.vertical, 4)
+            
+            // Weekday headers
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7), spacing: 6) {
+                ForEach(weekdaySymbols, id: \.self) { wd in
+                    Text(wd.uppercased())
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity)
+                }
+                
+                ForEach(Array(days.enumerated()), id: \.offset) { _, date in
+                    DayCell(date: date, lists: listsForDay(date)) { d in
+                        if let d { onSelectDay(d) }
+                    }
+                }
+            }
+        }
+    }
+    
+    private func changeMonth(_ delta: Int) {
+        if let newMonth = Calendar.current.date(byAdding: .month, value: delta, to: month) {
+            month = newMonth
+        }
+    }
+    
+    private func listsForDay(_ date: Date?) -> [IdeaList] {
+        guard let date else { return [] }
+        let key = Calendar.current.startOfDay(for: date)
+        return listsByDay[key] ?? []
+    }
+}
+
+private struct DayCell: View {
+    let date: Date?
+    let lists: [IdeaList]
+    let onTap: (Date?) -> Void
+    
+    var body: some View {
+        Button {
+            onTap(date)
+        } label: {
+            VStack(spacing: 4) {
+                if let date {
+                    Text("\(Calendar.current.component(.day, from: date))")
+                        .font(.callout)
+                        .foregroundColor(.primary)
+                        .frame(maxWidth: .infinity)
+                    if !lists.isEmpty {
+                        Circle()
+                            .fill(Color.blue)
+                            .frame(width: 6, height: 6)
+                    } else {
+                        Circle()
+                            .fill(Color.clear)
+                            .frame(width: 6, height: 6)
+                    }
+                } else {
+                    Text("")
+                        .frame(maxWidth: .infinity)
+                    Circle()
+                        .fill(Color.clear)
+                        .frame(width: 6, height: 6)
+                }
+            }
+            .padding(.vertical, 6)
+            .frame(minHeight: 36)
+        }
+        .buttonStyle(.plain)
+        .disabled(date == nil)
+    }
+}
+
+private struct DayListsSheet: View {
+    let date: Date
+    let lists: [IdeaList]
+    let onOpen: (IdeaList) -> Void
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationStack {
+            List(lists) { list in
+                HistoryRow(ideaList: list) { onOpen(list) }
+            }
+            .navigationTitle(date.formatted(date: .abbreviated, time: .omitted))
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
     }
 }
 
