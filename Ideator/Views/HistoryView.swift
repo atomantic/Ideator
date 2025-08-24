@@ -7,8 +7,7 @@ struct HistoryView: View {
     @State private var selectedCategory: Category?
     @State private var viewMode: ViewMode = .list
     @State private var calendarMonth: Date = Date()
-    @State private var selectedDateForDaySheet: Date?
-    @State private var showingDaySheet = false
+    @State private var daySelection: DaySelection?
     
     var filteredLists: [IdeaList] {
         var lists = completedLists
@@ -34,11 +33,6 @@ struct HistoryView: View {
                     emptyStateView
                 } else {
                     VStack(spacing: 0) {
-                        if !completedLists.isEmpty {
-                            headerControls
-                            categoryFilter
-                        }
-                        
                         if viewMode == .list {
                             List {
                                 ForEach(filteredLists) { list in
@@ -49,27 +43,32 @@ struct HistoryView: View {
                                 .onDelete(perform: deleteLists)
                             }
                             .listStyle(PlainListStyle())
-                            .searchable(text: $searchText, prompt: "Search ideas...")
                         } else {
-                            HistoryCalendarView(
-                                month: $calendarMonth,
-                                listsByDay: groupListsByDay(filteredLists),
-                                onSelectList: { list in selectedList = list },
-                                onSelectDay: { date in
-                                    selectedDateForDaySheet = date
-                                    showingDaySheet = true
-                                }
-                            )
-                            .padding(.horizontal)
-                            .padding(.top, 8)
-                            .sheet(isPresented: $showingDaySheet) {
-                                if let date = selectedDateForDaySheet {
-                                    DayListsSheet(
-                                        date: date,
-                                        lists: groupListsByDay(filteredLists)[Calendar.current.startOfDay(for: date)] ?? [],
-                                        onOpen: { list in selectedList = list }
+                            // Wrap calendar in a List to align layout behavior with List mode
+                            List {
+                                Section {
+                                    HistoryCalendarView(
+                                        month: $calendarMonth,
+                                        listsByDay: groupListsByDay(filteredLists),
+                                        onSelectList: { list in selectedList = list },
+                                        onSelectDay: { date in
+                                            daySelection = DaySelection(date: date)
+                                        }
                                     )
+                                    .padding(.horizontal, 12)
+                                    .listRowInsets(EdgeInsets())
+                                    .listRowSeparator(.hidden)
                                 }
+                            }
+                            .listStyle(PlainListStyle())
+                            .scrollContentBackground(.hidden)
+                            .sheet(item: $daySelection) { item in
+                                let date = item.date
+                                DayListsSheet(
+                                    date: date,
+                                    lists: groupListsByDay(filteredLists)[Calendar.current.startOfDay(for: date)] ?? [],
+                                    onOpen: { list in selectedList = list }
+                                )
                             }
                         }
                     }
@@ -77,6 +76,20 @@ struct HistoryView: View {
             }
             .navigationTitle("History")
             .navigationBarTitleDisplayMode(.large)
+            .searchable(
+                text: $searchText,
+                placement: .navigationBarDrawer(displayMode: .always),
+                prompt: "Search ideas..."
+            )
+            .safeAreaInset(edge: .top) {
+                if !completedLists.isEmpty {
+                    VStack(spacing: 0) {
+                        headerControls
+                        categoryFilter
+                    }
+                    .background(.ultraThinMaterial)
+                }
+            }
             .onAppear {
                 loadHistory()
             }
@@ -143,7 +156,7 @@ struct HistoryView: View {
     
     private func loadHistory() {
         completedLists = PersistenceManager.shared.loadCompleted()
-            .sorted { $0.createdDate > $1.createdDate }
+            .sorted { ($0.modifiedDate) > ($1.modifiedDate) }
     }
     
     private func deleteLists(at offsets: IndexSet) {
@@ -207,7 +220,7 @@ struct HistoryCalendarView: View {
             HStack {
                 Button { changeMonth(-1) } label: { Image(systemName: "chevron.left") }
                 Spacer()
-                Text(month, style: .date)
+                Text(month, format: .dateTime.year().month(.wide))
                     .font(.headline)
                     .id(monthInterval.start)
                 Spacer()
@@ -255,21 +268,20 @@ private struct DayCell: View {
         Button {
             onTap(date)
         } label: {
+            let isToday = date.map { Calendar.current.isDateInToday($0) } ?? false
             VStack(spacing: 4) {
                 if let date {
+                    let hasLists = !lists.isEmpty
                     Text("\(Calendar.current.component(.day, from: date))")
                         .font(.callout)
-                        .foregroundColor(.primary)
+                        .fontWeight(hasLists ? .semibold : .regular)
+                        .foregroundColor(hasLists ? .primary : .secondary)
                         .frame(maxWidth: .infinity)
-                    if !lists.isEmpty {
-                        Circle()
-                            .fill(Color.blue)
-                            .frame(width: 6, height: 6)
-                    } else {
-                        Circle()
-                            .fill(Color.clear)
-                            .frame(width: 6, height: 6)
-                    }
+                        .padding(.vertical, 2)
+                    Circle()
+                        .fill(hasLists ? Color.accentColor : Color.clear)
+                        .frame(width: 6, height: 6)
+                        .accessibilityHidden(true)
                 } else {
                     Text("")
                         .frame(maxWidth: .infinity)
@@ -280,9 +292,24 @@ private struct DayCell: View {
             }
             .padding(.vertical, 6)
             .frame(minHeight: 36)
+            .overlay(
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(Color.blue.opacity(0.6), lineWidth: 1)
+                    .opacity(isToday ? 1 : 0)
+            )
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .disabled(date == nil)
+    }
+}
+
+private struct DaySelection: Identifiable, Equatable {
+    let date: Date
+    var id: String { Self.key(for: date) }
+    static func key(for date: Date) -> String {
+        let day = Calendar.current.startOfDay(for: date)
+        return ISO8601DateFormatter().string(from: day)
     }
 }
 
