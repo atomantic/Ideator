@@ -6,6 +6,7 @@ struct HistoryView: View {
     @State private var searchText = ""
     @State private var selectedCategory: Category?
     @State private var viewMode: ViewMode = .list
+    @State private var lastViewModeBeforeSearch: ViewMode?
     @State private var calendarMonth: Date = Date()
     @State private var daySelection: DaySelection?
     
@@ -93,6 +94,19 @@ struct HistoryView: View {
             .onAppear {
                 loadHistory()
             }
+            .onChange(of: searchText) { newValue in
+                if newValue.isEmpty {
+                    if let prev = lastViewModeBeforeSearch {
+                        viewMode = prev
+                        lastViewModeBeforeSearch = nil
+                    }
+                } else {
+                    if viewMode != .list {
+                        lastViewModeBeforeSearch = viewMode
+                        viewMode = .list
+                    }
+                }
+            }
             .sheet(item: $selectedList) { list in
                 IdeaListDetailView(ideaList: list)
             }
@@ -106,6 +120,7 @@ struct HistoryView: View {
                 Text("Calendar").tag(ViewMode.calendar)
             }
             .pickerStyle(.segmented)
+            .disabled(!searchText.isEmpty)
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
