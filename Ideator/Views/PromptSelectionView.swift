@@ -10,6 +10,7 @@ struct PromptSelectionView: View {
     @State private var selectedFlexibleCategory: FlexibleCategory?
     @State private var searchText = ""
     @State private var showingCustomPrompt = false
+    @State private var showingNoRandomAlert = false
     
     init(promptViewModel: PromptViewModel, ideaListViewModel: IdeaListViewModel, showingIdeaInput: Binding<Bool>) {
         self.promptViewModel = promptViewModel
@@ -106,6 +107,18 @@ struct PromptSelectionView: View {
                     }
                 }
                 
+                // Random within current category
+                ToolbarItem(placement: .topBarTrailing) {
+                    if let flexCategory = selectedFlexibleCategory {
+                        Button {
+                            selectRandomPromptInCategory(flexCategory)
+                        } label: {
+                            Label("Random", systemImage: "dice.fill")
+                        }
+                        .accessibilityIdentifier("randomPromptInCategoryButton")
+                    }
+                }
+                
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
                         Button(action: { showingCustomPrompt = true }) {
@@ -150,6 +163,11 @@ struct PromptSelectionView: View {
                     }
                 }
             }
+            .alert("No unused prompts left", isPresented: $showingNoRandomAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("You've used all prompts in this category. Reset usage in Settings or pick a different one.")
+            }
             .sheet(isPresented: $showingCustomPrompt) {
                 CustomPromptView(
                     ideaListViewModel: ideaListViewModel,
@@ -180,6 +198,14 @@ struct PromptSelectionView: View {
     private func selectRandomPrompt() {
         if let randomPrompt = promptViewModel.getRandomPrompt() {
             selectPrompt(randomPrompt)
+        }
+    }
+    
+    private func selectRandomPromptInCategory(_ flexCategory: FlexibleCategory) {
+        if let randomPrompt = promptViewModel.getRandomPrompt(in: flexCategory) {
+            selectPrompt(randomPrompt)
+        } else {
+            showingNoRandomAlert = true
         }
     }
 }
@@ -245,4 +271,3 @@ struct PromptRow: View {
         .buttonStyle(PlainButtonStyle())
     }
 }
-

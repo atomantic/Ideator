@@ -209,6 +209,14 @@ class PromptService {
         allPrompts.filter { $0.flexibleCategory.id == flexibleCategory.id }
     }
     
+    func getRandomPrompt(for flexibleCategory: FlexibleCategory) -> Prompt? {
+        let available = allPrompts.filter {
+            $0.flexibleCategory.id == flexibleCategory.id &&
+            !usedPromptIds.contains($0.id)
+        }
+        return available.randomElement()
+    }
+    
     func getCategoriesGroupedByPack() -> [(packName: String?, categories: [FlexibleCategory])] {
         var categoryDict: [String?: Set<FlexibleCategory>] = [:]
         

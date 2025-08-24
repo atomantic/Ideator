@@ -98,6 +98,14 @@ class PromptViewModel {
         promptService.getPrompts(for: flexibleCategory)
     }
     
+    func getRandomPrompt(in flexibleCategory: FlexibleCategory) -> Prompt? {
+        let prompt = promptService.getRandomPrompt(for: flexibleCategory)
+        if let prompt {
+            promptService.markPromptAsUsed(prompt)
+        }
+        return prompt
+    }
+    
     func selectFlexibleCategory(_ category: FlexibleCategory) {
         // Set the flexible category
         selectedFlexibleCategory = category

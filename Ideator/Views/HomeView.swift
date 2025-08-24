@@ -68,7 +68,7 @@ struct HomeView: View {
                 )
                 .symbolEffect(.pulse)
             
-            Text("Ready to weave ideas?")
+            Text("Become an idea machine")
                 .font(.title2)
                 .fontWeight(.bold)
             
@@ -154,7 +154,7 @@ struct HomeView: View {
                         .font(.title2)
                     
                     VStack(alignment: .leading) {
-                        Text("Random Prompt")
+                        Text("Random Topic")
                             .font(.headline)
                         Text("Let fate decide your next idea list")
                             .font(.caption)
@@ -188,7 +188,7 @@ struct HomeView: View {
                         .foregroundColor(.purple)
                     
                     VStack(alignment: .leading) {
-                        Text("Create Custom Prompt")
+                        Text("Create Custom Topic")
                             .font(.headline)
                         Text("Write your own creative challenge")
                             .font(.caption)
