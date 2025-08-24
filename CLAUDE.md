@@ -14,6 +14,11 @@ Idea Loom (formerly Ideator) is an iOS SwiftUI app for daily creative brainstorm
 - **Check status**: `git status` (run after changes to ensure clean state)
 - **Commits**: Use concise messages, avoid amending existing commits
 
+### Core Pack Sync
+- **Sync script**: `./sync-core-pack.sh` - Syncs core pack from IdeatorPromptPacks repo
+- **Usage**: Run before releases to update bundled core pack to latest version
+- **Prerequisites**: IdeatorPromptPacks must be cloned in parent directory
+
 ### Testing & Building
 - Tests run automatically via GitHub Actions on push/PR
 - Check `.github/workflows/ci.yml` for CI pipeline details
@@ -51,9 +56,10 @@ Idea Loom (formerly Ideator) is an iOS SwiftUI app for daily creative brainstorm
 ## Prompt Pack System
 
 ### Local Core Pack
-- Located in `Ideator/PromptPacks/Core/`
+- Located in `Ideator/Resources/PromptPacks/Core/`
 - Contains 14 categories including wellness topics
 - TSV format: `text\ttags` (no suggestedCount)
+- Version: Synced from IdeatorPromptPacks using `sync-core-pack.sh`
 
 ### Remote Packs Repository
 - GitHub: https://github.com/atomantic/IdeatorPromptPacks
