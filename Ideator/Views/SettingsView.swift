@@ -272,16 +272,6 @@ struct SettingsView: View {
                     .foregroundColor(.secondary)
             }
             
-            Link(destination: URL(string: "https://github.com/atomantic/idealoom")!) {
-                HStack {
-                    Text("Source Code")
-                    Spacer()
-                    Image(systemName: "arrow.up.right.square")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-            }
-            
             Link(destination: URL(string: "https://github.com/atomantic/IdeatorPromptPacks/issues")!) {
                 HStack {
                     Text("Contact Support")
