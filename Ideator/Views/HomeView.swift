@@ -73,7 +73,7 @@ struct HomeView: View {
             .alert("Pack Updated", isPresented: $showUpdateSuccess) {
                 Button("OK") {}
             } message: {
-                Text("The pack has been successfully updated from GitHub.")
+                Text("The pack has been successfully updated.")
             }
             .alert("Update Failed", isPresented: $showUpdateError) {
                 Button("OK") {}
