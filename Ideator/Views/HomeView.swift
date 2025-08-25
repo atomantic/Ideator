@@ -12,7 +12,15 @@ struct HomeView: View {
     @State private var streakStatus = StreakManager.StreakStatus.neverStarted
     @State private var showingMilestone = false
     @State private var milestoneStreak = 0
+    @State private var downloadingPacks: Set<String> = []
+    @State private var updatingPacks: Set<String> = []
+    @State private var showDownloadError = false
+    @State private var downloadErrorMessage = ""
+    @State private var showUpdateSuccess = false
+    @State private var showUpdateError = false
+    @State private var updateErrorMessage = ""
     
+    @StateObject private var packManager = PackManager.shared
     private let streakManager = StreakManager.shared
     
     var body: some View {
@@ -26,11 +34,16 @@ struct HomeView: View {
                     quickStartSection
                     
                     recentCategoriesSection
+                    
+                    availablePacksSection
                 }
                 .padding()
             }
             .onAppear {
                 updateStreakDisplay()
+                Task {
+                    await packManager.fetchAvailablePacks()
+                }
             }
             .onReceive(NotificationCenter.default.publisher(for: .streakUpdated)) { _ in
                 updateStreakDisplay()
@@ -51,6 +64,21 @@ struct HomeView: View {
                 Button("Awesome!") {}
             } message: {
                 Text(getMilestoneMessage(for: milestoneStreak))
+            }
+            .alert("Download Failed", isPresented: $showDownloadError) {
+                Button("OK") {}
+            } message: {
+                Text(downloadErrorMessage)
+            }
+            .alert("Pack Updated", isPresented: $showUpdateSuccess) {
+                Button("OK") {}
+            } message: {
+                Text("The pack has been successfully updated from GitHub.")
+            }
+            .alert("Update Failed", isPresented: $showUpdateError) {
+                Button("OK") {}
+            } message: {
+                Text(updateErrorMessage)
             }
         }
     }
@@ -222,18 +250,79 @@ struct HomeView: View {
             
             ForEach(Array(groupedCategories.enumerated()), id: \.offset) { index, group in
                 VStack(alignment: .leading, spacing: 12) {
+                    // Determine pack ID for this group
+                    let packId = group.packId ?? "core"
+                    let updateAvailable = packManager.packUpdates[packId]
+                    
                     if let packName = group.packName {
-                        // Show pack name for non-core packs
-                        Text(packName)
-                            .font(.headline)
-                            .padding(.top, index > 0 ? 8 : 0)
+                        // Show pack name for non-core packs with update button if available
+                        HStack {
+                            Text(packName)
+                                .font(.headline)
+                            
+                            if let newVersion = updateAvailable {
+                                if updatingPacks.contains(packId) {
+                                    ProgressView()
+                                        .scaleEffect(0.7)
+                                } else {
+                                    Button(action: {
+                                        updatePack(packId: packId, packName: packName)
+                                    }) {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "arrow.down.circle.fill")
+                                            Text("Update to v\(newVersion)")
+                                        }
+                                        .font(.caption)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(Color.orange.opacity(0.15))
+                                        .foregroundColor(.orange)
+                                        .clipShape(Capsule())
+                                    }
+                                    .buttonStyle(BorderlessButtonStyle())
+                                }
+                            }
+                            
+                            Spacer()
+                        }
+                        .padding(.top, index > 0 ? 8 : 0)
                     } else if index == 0 && groupedCategories.count > 1 {
-                        // Only show "Core" label if there are other packs
-                        Text("Core")
-                            .font(.headline)
+                        // Only show "Core" label if there are other packs with update button if available
+                        HStack {
+                            Text("Core")
+                                .font(.headline)
+                            
+                            if let newVersion = updateAvailable {
+                                if updatingPacks.contains(packId) {
+                                    ProgressView()
+                                        .scaleEffect(0.7)
+                                } else {
+                                    Button(action: {
+                                        updatePack(packId: packId, packName: "Core")
+                                    }) {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "arrow.down.circle.fill")
+                                            Text("Update to v\(newVersion)")
+                                        }
+                                        .font(.caption)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(Color.orange.opacity(0.15))
+                                        .foregroundColor(.orange)
+                                        .clipShape(Capsule())
+                                    }
+                                    .buttonStyle(BorderlessButtonStyle())
+                                }
+                            }
+                            
+                            Spacer()
+                        }
                     }
                     
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                    // OPTION 1: Use 3 columns for compact vertical cards
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                    // OPTION 2: Use 2 columns for horizontal cards (uncomment line below and comment line above)
+                    // LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
                         ForEach(group.categories, id: \.id) { flexCategory in
                             FlexibleCategoryCard(
                                 category: flexCategory,
@@ -254,6 +343,25 @@ struct HomeView: View {
         streakStatus = streakManager.getStreakStatus()
     }
     
+    private func updatePack(packId: String, packName: String) {
+        Task {
+            updatingPacks.insert(packId)
+            do {
+                try await packManager.updatePack(packId)
+                // Reload the installed packs to get the new version
+                packManager.loadInstalledPacks()
+                // Re-check for updates to clear the update indicator
+                await packManager.fetchAvailablePacks()
+                PromptService.shared.reloadPrompts()
+                showUpdateSuccess = true
+            } catch {
+                updateErrorMessage = "Failed to update \(packName): \(error.localizedDescription)"
+                showUpdateError = true
+            }
+            updatingPacks.remove(packId)
+        }
+    }
+    
     private func getMilestoneMessage(for streak: Int) -> String {
         switch streak {
         case 3:
@@ -272,6 +380,38 @@ struct HomeView: View {
             return "ONE FULL YEAR! 365 days of ideas! You are truly extraordinary!"
         default:
             return "Amazing streak of \(streak) days! Keep those creative juices flowing!"
+        }
+    }
+    
+    @ViewBuilder
+    private var availablePacksSection: some View {
+        if !packManager.availablePacks.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Get More Packs")
+                    .font(.headline)
+                
+                ForEach(packManager.availablePacks, id: \.id) { packInfo in
+                    AvailablePackCard(
+                        packInfo: packInfo,
+                        isDownloading: downloadingPacks.contains(packInfo.id),
+                        onDownload: {
+                            Task {
+                                downloadingPacks.insert(packInfo.id)
+                                do {
+                                    try await packManager.downloadPack(packInfo)
+                                    PromptService.shared.reloadPrompts()
+                                    // Refresh available packs to remove downloaded one
+                                    await packManager.fetchAvailablePacks()
+                                } catch {
+                                    downloadErrorMessage = "Failed to download \(packInfo.name): \(error.localizedDescription)"
+                                    showDownloadError = true
+                                }
+                                downloadingPacks.remove(packInfo.id)
+                            }
+                        }
+                    )
+                }
+            }
         }
     }
 }
@@ -307,6 +447,7 @@ struct CategoryCard: View {
     }
 }
 
+// OPTION 1: Compact 3-column vertical layout
 struct FlexibleCategoryCard: View {
     let category: FlexibleCategory
     let count: Int
@@ -314,25 +455,150 @@ struct FlexibleCategoryCard: View {
     
     var body: some View {
         Button(action: action) {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(spacing: 6) {
                 Image(systemName: category.icon)
                     .font(.title2)
                     .foregroundColor(category.colorValue)
                 
                 Text(category.name)
-                    .font(.caption)
+                    .font(.caption2)
                     .fontWeight(.medium)
                     .foregroundColor(.primary)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
                 
-                Text("\(count) prompts")
+                Text("\(count)")
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding()
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .padding(.horizontal, 8)
             .background(Color(UIColor.secondarySystemBackground))
             .cornerRadius(12)
         }
         .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// OPTION 2: Side-by-side horizontal layout (uncomment to use)
+/*
+struct FlexibleCategoryCard: View {
+    let category: FlexibleCategory
+    let count: Int
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Image(systemName: category.icon)
+                    .font(.title2)
+                    .foregroundColor(category.colorValue)
+                    .frame(width: 32)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(category.name)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(2)
+                    
+                    Text("\(count) unused")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+            }
+            .padding(.vertical, 10)
+            .padding(.horizontal, 12)
+            .background(Color(UIColor.secondarySystemBackground))
+            .cornerRadius(12)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+*/
+
+struct AvailablePackCard: View {
+    let packInfo: RemotePackInfo
+    let isDownloading: Bool
+    let onDownload: () -> Void
+    
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Image(systemName: "cube.box.fill")
+                        .font(.title2)
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [.blue, .purple],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(packInfo.name)
+                            .font(.headline)
+                        
+                        Text(packInfo.description)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .lineLimit(2)
+                    }
+                    
+                    Spacer()
+                    
+                    if isDownloading {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                    } else {
+                        Button(action: onDownload) {
+                            Image(systemName: "icloud.and.arrow.down.fill")
+                                .font(.title2)
+                                .foregroundColor(.blue)
+                        }
+                        .buttonStyle(BorderlessButtonStyle())
+                    }
+                }
+                
+                HStack(spacing: 16) {
+                    Label("\(packInfo.categories.count) categories", systemImage: "folder")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                    
+                    Label("\(packInfo.promptCount) prompts", systemImage: "lightbulb")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                    
+                    Spacer()
+                    
+                    Text("by \(packInfo.author)")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                        .italic()
+                }
+            }
+            .padding()
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(UIColor.secondarySystemBackground))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(
+                            LinearGradient(
+                                colors: [.blue.opacity(0.3), .purple.opacity(0.3)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                )
+        )
     }
 }

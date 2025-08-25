@@ -225,10 +225,11 @@ struct PromptRow: View {
     
     var body: some View {
         Button(action: onSelect) {
-            HStack {
+            HStack(spacing: 12) {
                 Image(systemName: prompt.flexibleCategory.icon)
                     .foregroundColor(isUsed ? prompt.flexibleCategory.colorValue.opacity(0.5) : prompt.flexibleCategory.colorValue)
                     .font(.title2)
+                    .frame(width: 32)
                 
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 4) {

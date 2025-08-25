@@ -7,7 +7,6 @@ struct CustomPromptView: View {
     
     @State private var promptText = ""
     @State private var selectedCategory = FlexibleCategory.from(category: .custom)
-    @State private var suggestedCount = 10
     @FocusState private var isTextFieldFocused: Bool
     
     var body: some View {
@@ -32,17 +31,6 @@ struct CustomPromptView: View {
                             }
                         }
                         .pickerStyle(.menu)
-                    }
-                    
-                    Section("Number of Ideas") {
-                        Stepper(value: $suggestedCount, in: 5...20) {
-                            HStack {
-                                Text("Suggested count")
-                                Spacer()
-                                Text("\(suggestedCount)")
-                                    .foregroundColor(.secondary)
-                            }
-                        }
                     }
                 }
                 
@@ -77,34 +65,30 @@ struct CustomPromptView: View {
     
     private func getAllCategories() -> [FlexibleCategory] {
         var categories: [FlexibleCategory] = []
+        var addedIds = Set<String>()
         
         // Add Custom category first
         let customCategory = FlexibleCategory.from(category: .custom)
         categories.append(customCategory)
+        addedIds.insert(customCategory.id)
         
-        // Add other core categories
-        for category in Category.allCases {
-            if category != .custom {
-                categories.append(FlexibleCategory.from(category: category))
-            }
-        }
-        
-        // Add pack categories if available
+        // Get all categories from installed packs (including Core)
         let packManager = PackManager.shared
-        for pack in packManager.installedPacks {
-                for category in pack.categories {
-                    if !categories.contains(where: { $0.id == category.id }) {
-                        categories.append(FlexibleCategory(
-                            id: category.id,
-                            name: category.name,
-                            icon: category.icon,
-                            color: category.color,
-                            packId: pack.id,
-                            packName: pack.name
-                        ))
-                    }
+        for pack in packManager.installedPacks where pack.isEnabled {
+            for category in pack.categories {
+                if !addedIds.contains(category.id) {
+                    categories.append(FlexibleCategory(
+                        id: category.id,
+                        name: category.name,
+                        icon: category.icon,
+                        color: category.color,
+                        packId: pack.id,
+                        packName: pack.id == "core" ? nil : pack.name
+                    ))
+                    addedIds.insert(category.id)
                 }
             }
+        }
         
         // Sort all except Custom (which stays first)
         let customFirst = categories.first!
@@ -115,6 +99,10 @@ struct CustomPromptView: View {
     private func startCustomPrompt() {
         let trimmedText = promptText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedText.isEmpty else { return }
+        
+        // Get the default list size from user settings
+        let defaultListSize = UserDefaults.standard.integer(forKey: "defaultListSize")
+        let suggestedCount = defaultListSize > 0 ? defaultListSize : 10
         
         // Create a custom prompt
         let customPrompt = Prompt(

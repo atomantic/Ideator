@@ -217,15 +217,16 @@ class PromptService {
         return available.randomElement()
     }
     
-    func getCategoriesGroupedByPack() -> [(packName: String?, categories: [FlexibleCategory])] {
-        var categoryDict: [String?: Set<FlexibleCategory>] = [:]
+    func getCategoriesGroupedByPack() -> [(packName: String?, packId: String?, categories: [FlexibleCategory])] {
+        var categoryDict: [String?: (packId: String?, categories: Set<FlexibleCategory>)] = [:]
         
         for prompt in allPrompts {
             let packName = prompt.flexibleCategory.packName
+            let packId = prompt.flexibleCategory.packId
             if categoryDict[packName] == nil {
-                categoryDict[packName] = []
+                categoryDict[packName] = (packId: packId, categories: [])
             }
-            categoryDict[packName]?.insert(prompt.flexibleCategory)
+            categoryDict[packName]?.categories.insert(prompt.flexibleCategory)
         }
         
         // Sort: Core (nil) first, then alphabetically by pack name
@@ -235,7 +236,7 @@ class PromptService {
             return (first.key ?? "") < (second.key ?? "")
         }
         
-        return sorted.map { (packName: $0.key, categories: Array($0.value).sorted { $0.name < $1.name }) }
+        return sorted.map { (packName: $0.key, packId: $0.value.packId, categories: Array($0.value.categories).sorted { $0.name < $1.name }) }
     }
     
     private func migrateCompletedListsToUsedPrompts() {

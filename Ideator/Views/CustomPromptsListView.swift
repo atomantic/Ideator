@@ -92,7 +92,6 @@ struct CustomPromptAddView: View {
     
     @State private var promptText = ""
     @State private var selectedCategory = FlexibleCategory.from(category: .custom)
-    @State private var suggestedCount = 10
     @FocusState private var isTextFieldFocused: Bool
     
     var body: some View {
@@ -114,17 +113,6 @@ struct CustomPromptAddView: View {
                         }
                     }
                     .pickerStyle(.menu)
-                }
-                
-                Section("Number of Ideas") {
-                    Stepper(value: $suggestedCount, in: 5...20) {
-                        HStack {
-                            Text("Suggested count")
-                            Spacer()
-                            Text("\(suggestedCount)")
-                                .foregroundColor(.secondary)
-                        }
-                    }
                 }
             }
             .navigationTitle("Add Custom Prompt")
@@ -190,6 +178,10 @@ struct CustomPromptAddView: View {
     private func savePrompt() {
         let trimmedText = promptText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedText.isEmpty else { return }
+        
+        // Get the default list size from user settings
+        let defaultListSize = UserDefaults.standard.integer(forKey: "defaultListSize")
+        let suggestedCount = defaultListSize > 0 ? defaultListSize : 10
         
         let customPrompt = Prompt(
             text: trimmedText,
