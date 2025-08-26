@@ -36,6 +36,7 @@ struct IdeaInputView: View {
                 
                 VStack(spacing: 16) {
                     promptCard
+                        .padding(.horizontal)
                     
                     // Single input field at the top
                     HStack(spacing: 12) {
@@ -220,6 +221,7 @@ struct IdeaInputView: View {
                     .font(.headline)
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 // Optional help/exemplar guidance
                 if let help = prompt.help, !help.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -230,7 +232,9 @@ struct IdeaInputView: View {
                 }
             }
         }
-        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
         .background(Color(UIColor.secondarySystemBackground))
         .cornerRadius(12)
     }
