@@ -25,7 +25,7 @@ struct HomeView: View {
     
     var body: some View {
         NavigationStack {
-            ScrollView {
+            ScrollView(.vertical, showsIndicators: true) {
                 VStack(spacing: 24) {
                     heroSection
                     
@@ -34,6 +34,7 @@ struct HomeView: View {
                     quickStartSection
                     
                     recentCategoriesSection
+                        .id("categories")
                     
                     availablePacksSection
                 }
@@ -319,10 +320,17 @@ struct HomeView: View {
                         }
                     }
                     
-                    // OPTION 1: Use 3 columns for compact vertical cards
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
-                    // OPTION 2: Use 2 columns for horizontal cards (uncomment line below and comment line above)
-                    // LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                    // OPTION 1: Use 3 columns for compact vertical cards with fixed sizing
+                    LazyVGrid(columns: [
+                        GridItem(.flexible(), spacing: 10),
+                        GridItem(.flexible(), spacing: 10),
+                        GridItem(.flexible(), spacing: 10)
+                    ], spacing: 10) {
+                    // OPTION 2: Use 2 columns for horizontal cards (uncomment lines below and comment lines above)
+                    // LazyVGrid(columns: [
+                    //     GridItem(.flexible(), spacing: 10),
+                    //     GridItem(.flexible(), spacing: 10)
+                    // ], spacing: 10) {
                         ForEach(group.categories, id: \.id) { flexCategory in
                             FlexibleCategoryCard(
                                 category: flexCategory,
@@ -459,6 +467,7 @@ struct FlexibleCategoryCard: View {
                 Image(systemName: category.icon)
                     .font(.title2)
                     .foregroundColor(category.colorValue)
+                    .frame(height: 32)
                 
                 Text(category.name)
                     .font(.caption2)
@@ -467,12 +476,13 @@ struct FlexibleCategoryCard: View {
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
                     .minimumScaleFactor(0.8)
+                    .frame(height: 30)
                 
                 Text("\(count)")
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, minHeight: 100)
             .padding(.vertical, 12)
             .padding(.horizontal, 8)
             .background(Color(UIColor.secondarySystemBackground))
