@@ -364,11 +364,13 @@ struct HistoryRow: View {
                     Image(systemName: ideaList.prompt.category.icon)
                         .foregroundColor(ideaList.prompt.category.colorValue)
                         .font(.title3)
-                    
+
                     Text(ideaList.prompt.formattedTitle)
                         .font(.headline)
                         .foregroundColor(.primary)
-                    
+                        .lineLimit(nil)
+                        .fixedSize(horizontal: false, vertical: true)
+
                     Spacer()
                     
                     Image(systemName: "checkmark.circle.fill")

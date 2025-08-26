@@ -89,12 +89,13 @@ struct DraftRow: View {
                     Image(systemName: draft.prompt.category.icon)
                         .foregroundColor(draft.prompt.category.colorValue)
                         .font(.title3)
-                    
+
                     Text(draft.prompt.formattedTitle)
                         .font(.headline)
                         .foregroundColor(.primary)
-                        .lineLimit(1)
-                    
+                        .lineLimit(nil)
+                        .fixedSize(horizontal: false, vertical: true)
+
                     Spacer()
                 }
                 
