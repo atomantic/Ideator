@@ -39,7 +39,7 @@ struct ContentView: View {
                 .badge(draftCount > 0 ? "\(draftCount)" : nil)
                 .tag(1)
             
-            HistoryView()
+            HistoryView(promptViewModel: promptViewModel)
                 .tabItem {
                     Label("History", systemImage: "clock.fill")
                 }
