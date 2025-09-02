@@ -14,7 +14,7 @@ struct HistoryView: View {
         var lists = completedLists
         
         if let category = selectedCategory {
-            lists = lists.filter { $0.prompt.category == category }
+            lists = lists.filter { $0.prompt.flexibleCategory.toCategory() == category }
         }
         
         if !searchText.isEmpty {
@@ -361,8 +361,8 @@ struct HistoryRow: View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Image(systemName: ideaList.prompt.category.icon)
-                        .foregroundColor(ideaList.prompt.category.colorValue)
+                    Image(systemName: ideaList.prompt.flexibleCategory.icon)
+                        .foregroundColor(ideaList.prompt.flexibleCategory.colorValue)
                         .font(.title3)
                     
                     Text(ideaList.prompt.formattedTitle)
@@ -476,8 +476,8 @@ struct IdeaListDetailView: View {
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Image(systemName: ideaList.prompt.category.icon)
-                    .foregroundColor(ideaList.prompt.category.colorValue)
+                Image(systemName: ideaList.prompt.flexibleCategory.icon)
+                    .foregroundColor(ideaList.prompt.flexibleCategory.colorValue)
                     .font(.title)
                 
                 Text(ideaList.prompt.formattedTitle)
@@ -485,7 +485,7 @@ struct IdeaListDetailView: View {
                     .fontWeight(.bold)
             }
             
-            Label(ideaList.prompt.category.rawValue, systemImage: "tag.fill")
+            Label(ideaList.prompt.flexibleCategory.name, systemImage: "tag.fill")
                 .font(.caption)
                 .foregroundColor(.secondary)
             

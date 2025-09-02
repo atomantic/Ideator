@@ -30,7 +30,7 @@ struct IdeaList: Identifiable, Codable {
     
     var formattedForExport: String {
         var output = "Idea Loom List: \(prompt.formattedTitle)\n"
-        output += "Category: \(prompt.category.rawValue)\n"
+        output += "Category: \(prompt.flexibleCategory.name)\n"
         output += "Created: \(createdDate.formatted(date: .long, time: .shortened))\n\n"
         
         for (index, idea) in ideas.enumerated() {
