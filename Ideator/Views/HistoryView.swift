@@ -1,20 +1,25 @@
 import SwiftUI
 
 struct HistoryView: View {
+    let promptViewModel: PromptViewModel
     @State private var completedLists: [IdeaList] = []
     @State private var selectedList: IdeaList?
     @State private var searchText = ""
-    @State private var selectedCategory: Category?
+    @State private var selectedFlexibleCategory: FlexibleCategory?
     @State private var viewMode: ViewMode = .list
     @State private var lastViewModeBeforeSearch: ViewMode?
     @State private var calendarMonth: Date = Date()
     @State private var daySelection: DaySelection?
     
+    init(promptViewModel: PromptViewModel) {
+        self.promptViewModel = promptViewModel
+    }
+    
     var filteredLists: [IdeaList] {
         var lists = completedLists
         
-        if let category = selectedCategory {
-            lists = lists.filter { $0.prompt.category == category }
+        if let flexCategory = selectedFlexibleCategory {
+            lists = lists.filter { $0.prompt.flexibleCategory.id == flexCategory.id }
         }
         
         if !searchText.isEmpty {
@@ -86,9 +91,66 @@ struct HistoryView: View {
                 if !completedLists.isEmpty {
                     VStack(spacing: 0) {
                         headerControls
-                        categoryFilter
                     }
                     .background(.ultraThinMaterial)
+                }
+            }
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Menu {
+                        // All categories option
+                        Button(action: {
+                            selectedFlexibleCategory = nil
+                        }) {
+                            HStack {
+                                Label("All Categories", systemImage: "square.grid.2x2")
+                                if selectedFlexibleCategory == nil {
+                                    Image(systemName: "checkmark")
+                                        .foregroundColor(.blue)
+                                }
+                            }
+                        }
+                        
+                        Divider()
+                        
+                        // Group categories by pack
+                        let groupedCategories = promptViewModel.getCategoriesGroupedByPack()
+                        ForEach(Array(groupedCategories.enumerated()), id: \.offset) { _, group in
+                            Section(group.packName ?? "Core") {
+                                ForEach(group.categories, id: \.id) { flexCategory in
+                                    Button(action: {
+                                        selectedFlexibleCategory = flexCategory
+                                    }) {
+                                        HStack {
+                                            Label(flexCategory.name, systemImage: flexCategory.icon)
+                                            if selectedFlexibleCategory?.id == flexCategory.id {
+                                                Image(systemName: "checkmark")
+                                                    .foregroundColor(.blue)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            if let selectedCategory = selectedFlexibleCategory {
+                                Image(systemName: selectedCategory.icon)
+                                    .foregroundColor(selectedCategory.colorValue)
+                                Text(selectedCategory.name)
+                                    .font(.caption)
+                            } else {
+                                Text("All")
+                                    .font(.caption)
+                            }
+                            Image(systemName: "chevron.down")
+                                .font(.caption2)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color(UIColor.systemGray5))
+                        .cornerRadius(8)
+                    }
                 }
             }
             .onAppear {
@@ -144,30 +206,6 @@ struct HistoryView: View {
         .padding()
     }
     
-    private var categoryFilter: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                FilterChip(
-                    title: "All",
-                    isSelected: selectedCategory == nil
-                ) {
-                    selectedCategory = nil
-                }
-                
-                ForEach(Category.allCases, id: \.self) { category in
-                    FilterChip(
-                        title: category.rawValue,
-                        isSelected: selectedCategory == category
-                    ) {
-                        selectedCategory = category
-                    }
-                }
-            }
-            .padding(.horizontal)
-            .padding(.vertical, 8)
-        }
-        .background(Color(UIColor.systemGroupedBackground))
-    }
     
     private func loadHistory() {
         completedLists = PersistenceManager.shared.loadCompleted()
@@ -234,12 +272,14 @@ struct HistoryCalendarView: View {
         VStack(spacing: 8) {
             HStack {
                 Button { changeMonth(-1) } label: { Image(systemName: "chevron.left") }
+                    .buttonStyle(.plain)
                 Spacer()
                 Text(month, format: .dateTime.year().month(.wide))
                     .font(.headline)
                     .id(monthInterval.start)
                 Spacer()
                 Button { changeMonth(1) } label: { Image(systemName: "chevron.right") }
+                    .buttonStyle(.plain)
             }
             .padding(.vertical, 4)
             
@@ -361,8 +401,8 @@ struct HistoryRow: View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Image(systemName: ideaList.prompt.category.icon)
-                        .foregroundColor(ideaList.prompt.category.colorValue)
+                    Image(systemName: ideaList.prompt.flexibleCategory.icon)
+                        .foregroundColor(ideaList.prompt.flexibleCategory.colorValue)
                         .font(.title3)
                     
                     Text(ideaList.prompt.formattedTitle)
@@ -411,24 +451,6 @@ struct HistoryRow: View {
     }
 }
 
-struct FilterChip: View {
-    let title: String
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.caption)
-                .fontWeight(.medium)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(isSelected ? Color.blue : Color(UIColor.systemGray5))
-                .foregroundColor(isSelected ? .white : .primary)
-                .clipShape(Capsule())
-        }
-    }
-}
 
 struct IdeaListDetailView: View {
     let ideaList: IdeaList
@@ -476,8 +498,8 @@ struct IdeaListDetailView: View {
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Image(systemName: ideaList.prompt.category.icon)
-                    .foregroundColor(ideaList.prompt.category.colorValue)
+                Image(systemName: ideaList.prompt.flexibleCategory.icon)
+                    .foregroundColor(ideaList.prompt.flexibleCategory.colorValue)
                     .font(.title)
                 
                 Text(ideaList.prompt.formattedTitle)
@@ -485,7 +507,7 @@ struct IdeaListDetailView: View {
                     .fontWeight(.bold)
             }
             
-            Label(ideaList.prompt.category.rawValue, systemImage: "tag.fill")
+            Label(ideaList.prompt.flexibleCategory.name, systemImage: "tag.fill")
                 .font(.caption)
                 .foregroundColor(.secondary)
             
