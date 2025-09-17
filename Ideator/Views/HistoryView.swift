@@ -170,7 +170,10 @@ struct HistoryView: View {
                 }
             }
             .sheet(item: $selectedList) { list in
-                IdeaListDetailView(ideaList: list)
+                IdeaListDetailView(ideaList: list) { updatedList in
+                    loadHistory()
+                    selectedList = updatedList
+                }
             }
         }
     }
@@ -453,36 +456,62 @@ struct HistoryRow: View {
 
 
 struct IdeaListDetailView: View {
-    let ideaList: IdeaList
+    let onUpdate: (IdeaList) -> Void
     @Environment(\.dismiss) private var dismiss
+    @State private var editableList: IdeaList
+    @State private var lastSavedList: IdeaList
     @State private var showingShareSheet = false
-    
+    @State private var isEditing = false
+    @State private var editMode: EditMode = .inactive
+
+    init(ideaList: IdeaList, onUpdate: @escaping (IdeaList) -> Void = { _ in }) {
+        self.onUpdate = onUpdate
+        _editableList = State(initialValue: ideaList)
+        _lastSavedList = State(initialValue: ideaList)
+    }
+
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    headerSection
-                    
-                    Divider()
-                    
-                    ideasSection
+            Group {
+                if isEditing {
+                    editingContent
+                } else {
+                    readOnlyContent
                 }
-                .padding()
             }
             .navigationTitle("Idea List Details")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Done") {
-                        dismiss()
+                    if isEditing {
+                        Button("Cancel") {
+                            cancelEditing()
+                        }
+                    } else {
+                        Button("Done") {
+                            dismiss()
+                        }
                     }
                 }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        showingShareSheet = true
-                    }) {
-                        Image(systemName: "square.and.arrow.up")
+
+                ToolbarItemGroup(placement: .navigationBarTrailing) {
+                    if isEditing {
+                        Button("Save") {
+                            saveChanges()
+                        }
+                        .disabled(!hasChanges)
+                    } else {
+                        Button {
+                            showingShareSheet = true
+                        } label: {
+                            Image(systemName: "square.and.arrow.up")
+                        }
+
+                        Button {
+                            startEditing()
+                        } label: {
+                            Image(systemName: "pencil")
+                        }
                     }
                 }
             }
@@ -490,60 +519,152 @@ struct IdeaListDetailView: View {
         .sheet(isPresented: $showingShareSheet) {
             if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                let _ = windowScene.windows.first?.rootViewController {
-                ShareSheet(activityItems: [ideaList.formattedForExport])
+                ShareSheet(activityItems: [editableList.formattedForExport])
+            }
+        }
+        .onChange(of: isEditing) { editing in
+            withAnimation {
+                editMode = editing ? .active : .inactive
             }
         }
     }
-    
+
+    private var readOnlyContent: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                headerSection
+
+                Divider()
+
+                ideasDisplaySection
+            }
+            .padding()
+        }
+    }
+
+    private var editingContent: some View {
+        List {
+            Section {
+                headerSection
+            }
+
+            Section(header: Text("Ideas")) {
+                ForEach(Array(editableList.ideas.indices), id: \.self) { index in
+                    HStack(alignment: .top, spacing: 12) {
+                        Text("\(index + 1).")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                            .frame(width: 28, alignment: .trailing)
+
+                        TextField("Idea \(index + 1)", text: bindingForIdea(at: index), axis: .vertical)
+                            .lineLimit(1...4)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                    .padding(.vertical, 4)
+                }
+                .onMove(perform: moveIdeas)
+            }
+        }
+        .listStyle(.insetGrouped)
+        .environment(\.editMode, $editMode)
+    }
+
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Image(systemName: ideaList.prompt.flexibleCategory.icon)
-                    .foregroundColor(ideaList.prompt.flexibleCategory.colorValue)
+                Image(systemName: editableList.prompt.flexibleCategory.icon)
+                    .foregroundColor(editableList.prompt.flexibleCategory.colorValue)
                     .font(.title)
-                
-                Text(ideaList.prompt.formattedTitle)
+
+                Text(editableList.prompt.formattedTitle)
                     .font(.title2)
                     .fontWeight(.bold)
             }
-            
-            Label(ideaList.prompt.flexibleCategory.name, systemImage: "tag.fill")
+
+            Label(editableList.prompt.flexibleCategory.name, systemImage: "tag.fill")
                 .font(.caption)
                 .foregroundColor(.secondary)
-            
+
             Label(
-                ideaList.createdDate.formatted(date: .long, time: .shortened),
+                editableList.createdDate.formatted(date: .long, time: .shortened),
                 systemImage: "calendar"
             )
             .font(.caption)
             .foregroundColor(.secondary)
         }
     }
-    
-    private var ideasSection: some View {
+
+    private var ideasDisplaySection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Ideas")
                 .font(.headline)
-            
-            ForEach(Array(ideaList.ideas.enumerated()), id: \.offset) { index, idea in
-                if !idea.isEmpty {
+
+            ForEach(Array(editableList.ideas.enumerated()), id: \.offset) { index, idea in
+                let trimmed = idea.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trimmed.isEmpty {
                     HStack(alignment: .top, spacing: 8) {
                         Text("\(index + 1).")
                             .font(.body)
                             .fontWeight(.medium)
                             .foregroundColor(.secondary)
                             .frame(width: 30, alignment: .trailing)
-                        
-                        Text(idea)
+
+                        Text(trimmed)
                             .font(.body)
                             .fixedSize(horizontal: false, vertical: true)
-                        
+
                         Spacer()
                     }
                     .padding(.vertical, 4)
                 }
             }
         }
+    }
+
+    private var hasChanges: Bool {
+        editableList.ideas != lastSavedList.ideas
+    }
+
+    private func bindingForIdea(at index: Int) -> Binding<String> {
+        Binding(
+            get: {
+                guard editableList.ideas.indices.contains(index) else { return "" }
+                return editableList.ideas[index]
+            },
+            set: { newValue in
+                guard editableList.ideas.indices.contains(index) else { return }
+                editableList.ideas[index] = newValue
+            }
+        )
+    }
+
+    private func moveIdeas(from offsets: IndexSet, to destination: Int) {
+        editableList.ideas.move(fromOffsets: offsets, toOffset: destination)
+    }
+
+    private func startEditing() {
+        lastSavedList = editableList
+        isEditing = true
+    }
+
+    private func cancelEditing() {
+        editableList = lastSavedList
+        isEditing = false
+    }
+
+    private func saveChanges() {
+        var updatedList = editableList
+        updatedList.ideas = updatedList.ideas.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+        updatedList.modifiedDate = Date()
+        updatedList.isComplete = true
+
+        editableList = updatedList
+        lastSavedList = updatedList
+
+        PersistenceManager.shared.saveCompleted(updatedList)
+        onUpdate(updatedList)
+
+        isEditing = false
     }
 }
 
