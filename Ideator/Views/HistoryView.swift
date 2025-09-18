@@ -463,11 +463,13 @@ struct IdeaListDetailView: View {
     @State private var showingShareSheet = false
     @State private var isEditing = false
     @State private var editMode: EditMode = .inactive
+    @State private var ideaIdentifiers: [UUID] = []
 
     init(ideaList: IdeaList, onUpdate: @escaping (IdeaList) -> Void = { _ in }) {
         self.onUpdate = onUpdate
         _editableList = State(initialValue: ideaList)
         _lastSavedList = State(initialValue: ideaList)
+        _ideaIdentifiers = State(initialValue: ideaList.ideas.map { _ in UUID() })
     }
 
     var body: some View {
@@ -549,7 +551,7 @@ struct IdeaListDetailView: View {
             }
 
             Section(header: Text("Ideas")) {
-                ForEach(Array(editableList.ideas.indices), id: \.self) { index in
+                ForEach(Array(zip(ideaIdentifiers.indices, ideaIdentifiers)), id: \.1) { index, _ in
                     HStack(alignment: .top, spacing: 12) {
                         Text("\(index + 1).")
                             .font(.body)
@@ -563,6 +565,16 @@ struct IdeaListDetailView: View {
                     .padding(.vertical, 4)
                 }
                 .onMove(perform: moveIdeas)
+                .onDelete(perform: deleteIdeas)
+
+                Button(action: addNewIdea) {
+                    HStack {
+                        Image(systemName: "plus.circle.fill")
+                            .foregroundColor(.accentColor)
+                        Text("Add Idea")
+                            .foregroundColor(.accentColor)
+                    }
+                }
             }
         }
         .listStyle(.insetGrouped)
@@ -640,15 +652,28 @@ struct IdeaListDetailView: View {
 
     private func moveIdeas(from offsets: IndexSet, to destination: Int) {
         editableList.ideas.move(fromOffsets: offsets, toOffset: destination)
+        ideaIdentifiers.move(fromOffsets: offsets, toOffset: destination)
+    }
+
+    private func deleteIdeas(at offsets: IndexSet) {
+        editableList.ideas.remove(atOffsets: offsets)
+        ideaIdentifiers.remove(atOffsets: offsets)
+    }
+
+    private func addNewIdea() {
+        editableList.ideas.append("")
+        ideaIdentifiers.append(UUID())
     }
 
     private func startEditing() {
         lastSavedList = editableList
+        ideaIdentifiers = editableList.ideas.map { _ in UUID() }
         isEditing = true
     }
 
     private func cancelEditing() {
         editableList = lastSavedList
+        ideaIdentifiers = editableList.ideas.map { _ in UUID() }
         isEditing = false
     }
 
