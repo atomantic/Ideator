@@ -37,25 +37,7 @@ struct SettingsView: View {
         .alert("Clear All Data", isPresented: $showingClearDataAlert) {
             Button("Cancel", role: .cancel) {}
             Button("Clear", role: .destructive) {
-                PersistenceManager.shared.clearAll()
-                promptViewModel.resetUsedPrompts()
-                PackManager.shared.clearAllPackData()
-                PromptService.shared.reloadPrompts()
-                StreakManager.shared.resetAllStats()
-                
-                // Reset onboarding state for testing
-                UserDefaults.standard.set(false, forKey: "hasCompletedOnboarding")
-                
-                // Also reset notification preferences
-                UserDefaults.standard.set(false, forKey: "enableNotifications")
-                UserDefaults.standard.removeObject(forKey: "notificationHour")
-                UserDefaults.standard.removeObject(forKey: "notificationMinute")
-                
-                // Cancel any pending notifications
-                UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["daily-prompt"])
-                
-                // Show onboarding immediately
-                onShowOnboarding?()
+                resetAllData()
             }
         } message: {
             Text("This will delete all drafts, completed lists, and downloaded prompt packs. The Core pack will be reinstalled fresh. The app will show the introduction again on next launch. This action cannot be undone.")
@@ -295,6 +277,28 @@ struct SettingsView: View {
         }
     }
     
+    private func resetAllData() {
+        PersistenceManager.shared.clearAll()
+        promptViewModel.resetUsedPrompts()
+        PackManager.shared.clearAllPackData()
+        PromptService.shared.reloadPrompts()
+        StreakManager.shared.resetAllStats()
+
+        // Reset onboarding state
+        UserDefaults.standard.set(false, forKey: "hasCompletedOnboarding")
+
+        // Reset notification preferences
+        UserDefaults.standard.set(false, forKey: "enableNotifications")
+        UserDefaults.standard.removeObject(forKey: "notificationHour")
+        UserDefaults.standard.removeObject(forKey: "notificationMinute")
+
+        // Cancel any pending notifications
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["daily-prompt"])
+
+        // Show onboarding immediately
+        onShowOnboarding?()
+    }
+
     private func requestNotificationPermission() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
             if granted {
