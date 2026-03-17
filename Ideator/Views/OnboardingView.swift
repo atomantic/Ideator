@@ -14,7 +14,10 @@ struct OnboardingView: View {
     @AppStorage("enableNotifications") private var notificationsEnabled = false
     @AppStorage("notificationHour") private var notificationHour = 9
     @AppStorage("notificationMinute") private var notificationMinute = 0
-    
+    @ScaledMetric(relativeTo: .largeTitle) private var heroIconSize: CGFloat = 80
+    @ScaledMetric(relativeTo: .largeTitle) private var packsIconSize: CGFloat = 50
+    @ScaledMetric(relativeTo: .largeTitle) private var notificationIconSize: CGFloat = 60
+
     private let packManager = PackManager.shared
     
     init(isPresented: Binding<Bool>) {
@@ -65,7 +68,7 @@ struct OnboardingView: View {
             Spacer()
             
             Image(systemName: "lightbulb.fill")
-                .font(.system(size: 80))
+                .font(.system(size: heroIconSize))
                 .foregroundStyle(
                     LinearGradient(
                         colors: [.yellow, .orange],
@@ -167,7 +170,7 @@ struct OnboardingView: View {
             Spacer(minLength: 20)
             
             Image(systemName: "square.stack.3d.up.fill")
-                .font(.system(size: 50))
+                .font(.system(size: packsIconSize))
                 .foregroundColor(.purple)
                 .symbolEffect(.pulse)
             
@@ -233,7 +236,7 @@ struct OnboardingView: View {
             Spacer()
             
             Image(systemName: "bell.badge.fill")
-                .font(.system(size: 60))
+                .font(.system(size: notificationIconSize))
                 .foregroundColor(.blue)
                 .symbolEffect(.bounce)
             
