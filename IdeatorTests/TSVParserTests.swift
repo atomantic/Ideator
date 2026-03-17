@@ -52,6 +52,38 @@ final class TSVParserTests: XCTestCase {
         XCTAssertNotEqual(withoutSlug.id, withSlug.id)
     }
 
+    func testParseEmptyTSV_headerOnly_returnsNoPrompts() {
+        let tsv = """
+        text\thelp\tslug
+        """
+        let cat = FlexibleCategory(id: "test.cat", name: "Test", icon: "star", color: "blue", packId: "test", packName: "Test Pack")
+        let prompts = TSVParser.parse(tsv: tsv, flexibleCategory: cat)
+        XCTAssertEqual(prompts.count, 0)
+    }
+
+    func testParseExtraColumns_ignoresExtra() {
+        let tsv = """
+        text\thelp\tslug\textra
+        Make tea\t(e.g., lemon)\tmake-tea\tignored
+        """
+        let cat = FlexibleCategory(id: "test.cat", name: "Test", icon: "star", color: "blue", packId: "test", packName: "Test Pack")
+        let prompts = TSVParser.parse(tsv: tsv, flexibleCategory: cat)
+        XCTAssertEqual(prompts.count, 1)
+        XCTAssertEqual(prompts[0].text, "Make tea")
+        XCTAssertEqual(prompts[0].slug, "make-tea")
+    }
+
+    func testParseEmptySlug_treatedAsNil() {
+        let tsv = """
+        text\thelp\tslug
+        Make tea\t(e.g., lemon)\t
+        """
+        let cat = FlexibleCategory(id: "test.cat", name: "Test", icon: "star", color: "blue", packId: "test", packName: "Test Pack")
+        let prompts = TSVParser.parse(tsv: tsv, flexibleCategory: cat)
+        XCTAssertEqual(prompts.count, 1)
+        XCTAssertNil(prompts[0].slug)
+    }
+
     func testSlugBasedUUIDisDeterministic() {
         let cat = FlexibleCategory(id: "test.cat", name: "Test", icon: "star", color: "blue", packId: "test", packName: "Test Pack")
         let prompt1 = Prompt(text: "Make tea", flexibleCategory: cat, slug: "make-tea")
