@@ -6,23 +6,46 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Idea Loom (formerly Ideator) is an iOS SwiftUI app for daily creative brainstorming through guided prompts. Users generate lists of 10 ideas based on creative prompts and can export them to Apple Notes. Built with Xcode for iOS 18.2+.
 
-## Important Commands
+## Build Commands
 
-**Note**: This is an Xcode project that cannot be built locally in Claude Code. All builds and tests run in GitHub Actions.
+```bash
+# Build
+xcodebuild build -project Ideator.xcodeproj -scheme Ideator \
+  -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.6' CODE_SIGNING_ALLOWED=NO
 
-### Version Control
-- **Check status**: `git status` (run after changes to ensure clean state)
-- **Commits**: Use concise messages, avoid amending existing commits
+# Run tests
+xcodebuild test -project Ideator.xcodeproj -scheme Ideator \
+  -only-testing:IdeatorTests \
+  -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.6' CODE_SIGNING_ALLOWED=NO
+```
+
+## Git Workflow
+
+After every feature or bug fix:
+
+1. **Build and test** — verify `xcodebuild build` and `xcodebuild test` pass
+2. **`/simplify`** — run code review for reuse, quality, and efficiency; fix issues found
+3. **`/do:review`** — deep code review against best practices
+4. **`/do:push`** — commit and push to GitHub
+5. **`/release`** — when ready for TestFlight, run the local deploy (see below)
+
+## TestFlight Deployment
+
+Local deploy via `./deploy.sh` (used when CI build credits are exhausted):
+
+```bash
+./deploy.sh              # full: tests + archive + upload
+./deploy.sh --skip-tests # skip tests for faster iteration
+```
+
+Requires `.env` file with App Store Connect API credentials (see `.env.example`).
+
+CI/CD via GitHub Actions (`.github/workflows/ci.yml`) deploys automatically on push to `main`, `testflight`, or `release/*` branches.
 
 ### Core Pack Sync
 - **Sync script**: `./sync-core-pack.sh` - Syncs core pack from IdeatorPromptPacks repo
 - **Usage**: Run before releases to update bundled core pack to latest version
 - **Prerequisites**: IdeatorPromptPacks must be cloned in parent directory
-
-### Testing & Building
-- Tests run automatically via GitHub Actions on push/PR
-- Check `.github/workflows/ci.yml` for CI pipeline details
-- No local builds possible - rely on GitHub Actions
 
 ## Architecture
 
@@ -76,7 +99,8 @@ Idea Loom (formerly Ideator) is an iOS SwiftUI app for daily creative brainstorm
 ### TSV Format
 Prompt files use tab-separated values:
 1. text: The prompt text
-2. tags: Pipe-separated tags (e.g., `creativity|ideas|brainstorming`)
+2. help: Helper hint shown in parentheses
+3. slug: Stable identifier for the prompt (used for deterministic UUID generation — allows text to be revised without breaking user data)
 
 ### Important Guidelines
 - Prompts should be completable without external research
@@ -92,11 +116,10 @@ Prompt files use tab-separated values:
 
 ## Development Notes
 
-1. **No local Xcode operations** - Cannot run xcodebuild or simulators locally
-2. **Follow Swift conventions** - Standard Swift style
-3. **Preserve existing patterns** - Match code style when editing
-4. **GitHub Actions validation** - PRs verified on macOS runners
-5. **Asset updates** - Use Xcode on macOS for `Assets.xcassets` changes
+1. **Follow Swift conventions** - Standard Swift style
+2. **Preserve existing patterns** - Match code style when editing
+3. **GitHub Actions validation** - PRs verified on macOS runners
+4. **Asset updates** - Use Xcode on macOS for `Assets.xcassets` changes
 
 ## CI/CD Pipeline
 
