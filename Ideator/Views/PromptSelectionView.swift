@@ -11,6 +11,7 @@ struct PromptSelectionView: View {
     @State private var searchText = ""
     @State private var showingCustomPrompt = false
     @State private var showingNoRandomAlert = false
+    @State private var customPromptIds: Set<UUID> = []
     
     init(promptViewModel: PromptViewModel, ideaListViewModel: IdeaListViewModel, showingIdeaInput: Binding<Bool>) {
         self.promptViewModel = promptViewModel
@@ -41,8 +42,7 @@ struct PromptSelectionView: View {
     }
     
     private func isCustomPrompt(_ prompt: Prompt) -> Bool {
-        let customPrompts = PersistenceManager.shared.loadCustomPrompts()
-        return customPrompts.contains(where: { $0.id == prompt.id })
+        customPromptIds.contains(prompt.id)
     }
     
     var body: some View {
@@ -167,6 +167,9 @@ struct PromptSelectionView: View {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text("You've used all prompts in this category. Reset usage in Settings or pick a different one.")
+            }
+            .onAppear {
+                customPromptIds = Set(PersistenceManager.shared.loadCustomPrompts().map(\.id))
             }
             .sheet(isPresented: $showingCustomPrompt) {
                 CustomPromptView(
