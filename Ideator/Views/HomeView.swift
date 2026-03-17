@@ -42,9 +42,9 @@ struct HomeView: View {
             }
             .onAppear {
                 updateStreakDisplay()
-                Task {
-                    await packManager.fetchAvailablePacks()
-                }
+            }
+            .task {
+                await packManager.fetchAvailablePacks()
             }
             .onReceive(NotificationCenter.default.publisher(for: .streakUpdated)) { _ in
                 updateStreakDisplay()
@@ -248,78 +248,36 @@ struct HomeView: View {
     private var recentCategoriesSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             let groupedCategories = promptViewModel.getCategoriesGroupedByPack()
-            
-            ForEach(Array(groupedCategories.enumerated()), id: \.offset) { index, group in
+
+            ForEach(Array(groupedCategories.enumerated()), id: \.element.packId) { index, group in
                 VStack(alignment: .leading, spacing: 12) {
                     // Determine pack ID for this group
                     let packId = group.packId ?? "core"
                     let updateAvailable = packManager.packUpdates[packId]
-                    
+
                     if let packName = group.packName {
                         // Show pack name for non-core packs with update button if available
                         HStack {
                             Text(packName)
                                 .font(.headline)
-                            
-                            if let newVersion = updateAvailable {
-                                if updatingPacks.contains(packId) {
-                                    ProgressView()
-                                        .scaleEffect(0.7)
-                                } else {
-                                    Button(action: {
-                                        updatePack(packId: packId, packName: packName)
-                                    }) {
-                                        HStack(spacing: 4) {
-                                            Image(systemName: "arrow.down.circle.fill")
-                                            Text("Update to v\(newVersion)")
-                                        }
-                                        .font(.caption)
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 4)
-                                        .background(Color.orange.opacity(0.15))
-                                        .foregroundColor(.orange)
-                                        .clipShape(Capsule())
-                                    }
-                                    .buttonStyle(BorderlessButtonStyle())
-                                }
-                            }
-                            
+
+                            packUpdateButton(packId: packId, packName: packName, newVersion: updateAvailable)
+
                             Spacer()
                         }
                         .padding(.top, index > 0 ? 8 : 0)
                     } else if index == 0 && groupedCategories.count > 1 {
-                        // Only show "Core" label if there are other packs with update button if available
+                        // Only show "Core" label if there are other packs
                         HStack {
                             Text("Core")
                                 .font(.headline)
-                            
-                            if let newVersion = updateAvailable {
-                                if updatingPacks.contains(packId) {
-                                    ProgressView()
-                                        .scaleEffect(0.7)
-                                } else {
-                                    Button(action: {
-                                        updatePack(packId: packId, packName: "Core")
-                                    }) {
-                                        HStack(spacing: 4) {
-                                            Image(systemName: "arrow.down.circle.fill")
-                                            Text("Update to v\(newVersion)")
-                                        }
-                                        .font(.caption)
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 4)
-                                        .background(Color.orange.opacity(0.15))
-                                        .foregroundColor(.orange)
-                                        .clipShape(Capsule())
-                                    }
-                                    .buttonStyle(BorderlessButtonStyle())
-                                }
-                            }
-                            
+
+                            packUpdateButton(packId: packId, packName: "Core", newVersion: updateAvailable)
+
                             Spacer()
                         }
                     }
-                    
+
                     // OPTION 1: Use 3 columns for compact vertical cards with fixed sizing
                     LazyVGrid(columns: [
                         GridItem(.flexible(), spacing: 10),
@@ -342,6 +300,32 @@ struct HomeView: View {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func packUpdateButton(packId: String, packName: String, newVersion: String?) -> some View {
+        if let newVersion {
+            if updatingPacks.contains(packId) {
+                ProgressView()
+                    .scaleEffect(0.7)
+            } else {
+                Button(action: {
+                    updatePack(packId: packId, packName: packName)
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.down.circle.fill")
+                        Text("Update to v\(newVersion)")
+                    }
+                    .font(.caption)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.orange.opacity(0.15))
+                    .foregroundColor(.orange)
+                    .clipShape(Capsule())
+                }
+                .buttonStyle(BorderlessButtonStyle())
             }
         }
     }
