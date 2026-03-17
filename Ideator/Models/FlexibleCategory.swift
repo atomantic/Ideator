@@ -1,17 +1,10 @@
 import Foundation
 import SwiftUI
 
-// A flexible category that can represent both built-in and pack categories
-struct FlexibleCategory: Identifiable, Hashable, Codable {
-    let id: String
-    let name: String
-    let icon: String
-    let color: String
-    let packId: String? // nil for core categories
-    let packName: String? // nil for core categories
-    
-    var colorValue: Color {
-        switch color.lowercased() {
+extension Color {
+    /// Convert a color name string to a SwiftUI Color.
+    static func from(name: String) -> Color {
+        switch name.lowercased() {
         case "blue": return .blue
         case "purple": return .purple
         case "orange": return .orange
@@ -26,6 +19,20 @@ struct FlexibleCategory: Identifiable, Hashable, Codable {
         case "gray", "grey": return .gray
         default: return .blue
         }
+    }
+}
+
+// A flexible category that can represent both built-in and pack categories
+struct FlexibleCategory: Identifiable, Hashable, Codable {
+    let id: String
+    let name: String
+    let icon: String
+    let color: String
+    let packId: String? // nil for core categories
+    let packName: String? // nil for core categories
+    
+    var colorValue: Color {
+        Color.from(name: color)
     }
     
     // Create from built-in Category enum
@@ -52,6 +59,49 @@ struct FlexibleCategory: Identifiable, Hashable, Codable {
         )
     }
     
+    /// Returns all available categories: Custom first, then installed pack categories, sorted by name.
+    static func allCategories() -> [FlexibleCategory] {
+        var categories: [FlexibleCategory] = []
+        var addedIds = Set<String>()
+
+        // Add Custom category first
+        let customCategory = FlexibleCategory.from(category: .custom)
+        categories.append(customCategory)
+        addedIds.insert(customCategory.id)
+
+        // Add all core categories
+        for category in Category.allCases where category != .custom {
+            let flex = FlexibleCategory.from(category: category)
+            if !addedIds.contains(flex.id) {
+                categories.append(flex)
+                addedIds.insert(flex.id)
+            }
+        }
+
+        // Add pack categories from installed packs
+        let packManager = PackManager.shared
+        for pack in packManager.installedPacks where pack.isEnabled {
+            for category in pack.categories {
+                if !addedIds.contains(category.id) {
+                    categories.append(FlexibleCategory(
+                        id: category.id,
+                        name: category.name,
+                        icon: category.icon,
+                        color: category.color,
+                        packId: pack.id,
+                        packName: pack.id == "core" ? nil : pack.name
+                    ))
+                    addedIds.insert(category.id)
+                }
+            }
+        }
+
+        // Sort all except Custom (which stays first)
+        guard let customFirst = categories.first else { return categories }
+        let rest = Array(categories.dropFirst()).sorted { $0.name < $1.name }
+        return [customFirst] + rest
+    }
+
     // Try to convert to built-in Category enum (for backwards compatibility)
     func toCategory() -> Category? {
         // Remove pack prefix if present

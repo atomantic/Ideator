@@ -64,36 +64,7 @@ struct CustomPromptView: View {
     }
     
     private func getAllCategories() -> [FlexibleCategory] {
-        var categories: [FlexibleCategory] = []
-        var addedIds = Set<String>()
-        
-        // Add Custom category first
-        let customCategory = FlexibleCategory.from(category: .custom)
-        categories.append(customCategory)
-        addedIds.insert(customCategory.id)
-        
-        // Get all categories from installed packs (including Core)
-        let packManager = PackManager.shared
-        for pack in packManager.installedPacks where pack.isEnabled {
-            for category in pack.categories {
-                if !addedIds.contains(category.id) {
-                    categories.append(FlexibleCategory(
-                        id: category.id,
-                        name: category.name,
-                        icon: category.icon,
-                        color: category.color,
-                        packId: pack.id,
-                        packName: pack.id == "core" ? nil : pack.name
-                    ))
-                    addedIds.insert(category.id)
-                }
-            }
-        }
-        
-        // Sort all except Custom (which stays first)
-        let customFirst = categories.first!
-        let rest = Array(categories.dropFirst()).sorted { $0.name < $1.name }
-        return [customFirst] + rest
+        FlexibleCategory.allCategories()
     }
     
     private func startCustomPrompt() {

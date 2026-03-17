@@ -59,22 +59,6 @@ enum Category: String, CaseIterable, Codable {
     }
     
     var colorValue: Color {
-        switch self {
-        case .personalDevelopment: return .blue
-        case .professional: return .purple
-        case .creative: return .orange
-        case .lifestyle: return .pink
-        case .relationships: return .red
-        case .entertainment: return .yellow
-        case .travel: return .green
-        case .learning: return .indigo
-        case .financial: return .mint
-        case .socialImpact: return .teal
-        case .health: return .red
-        case .mindfulness: return .green
-        case .selfCare: return .purple
-        case .gratitude: return .orange
-        case .custom: return .purple
-        }
+        Color.from(name: color)
     }
 }

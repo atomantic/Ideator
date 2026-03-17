@@ -9,7 +9,7 @@ struct IdeaInputView: View {
     @State private var showingExportSheet = false
     @State private var showingSkipAlert = false
     @State private var currentHelpTip = "Enter an idea..."
-    @State private var helpTimer: Timer?
+    @State private var helpTimerActive = false
     
     let helpTips = [
         "Get silly with it!",
@@ -51,9 +51,9 @@ struct IdeaInputView: View {
                             }
                             .onChange(of: isInputFocused) { _, focused in
                                 if focused {
-                                    startHelpTimer()
+                                    helpTimerActive = true
                                 } else {
-                                    stopHelpTimer()
+                                    helpTimerActive = false
                                 }
                             }
                             .submitLabel(.done)
@@ -160,10 +160,29 @@ struct IdeaInputView: View {
         }
         .onAppear {
             isInputFocused = true
-            startHelpTimer()
+            helpTimerActive = true
         }
         .onDisappear {
-            stopHelpTimer()
+            helpTimerActive = false
+        }
+        .task(id: helpTimerActive) {
+            guard helpTimerActive else { return }
+            currentHelpTip = "Enter an idea..."
+            do {
+                try await Task.sleep(for: .seconds(3))
+                withAnimation {
+                    currentHelpTip = helpTips.randomElement() ?? "Enter an idea..."
+                }
+                while !Task.isCancelled {
+                    try await Task.sleep(for: .seconds(5))
+                    withAnimation {
+                        let newTip = helpTips.filter { $0 != currentHelpTip }.randomElement() ?? helpTips.randomElement() ?? "Enter an idea..."
+                        currentHelpTip = newTip
+                    }
+                }
+            } catch {
+                // Task cancelled — expected on disappear or timer reset
+            }
         }
         .alert("Skip This Prompt?", isPresented: $showingSkipAlert) {
             Button("Cancel", role: .cancel) {}
@@ -253,40 +272,14 @@ struct IdeaInputView: View {
         dismiss()
     }
     
-    private func startHelpTimer() {
-        stopHelpTimer()
-        currentHelpTip = "Enter an idea..."
-        
-        // Show first tip after 3 seconds, then cycle through tips every 5 seconds
-        helpTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { timer in
-            withAnimation {
-                // First firing (3 seconds) - show random help tip
-                if currentHelpTip == "Enter an idea..." {
-                    currentHelpTip = helpTips.randomElement() ?? "Enter an idea..."
-                    // Change interval to 5 seconds for cycling
-                    timer.fireDate = Date().addingTimeInterval(5.0)
-                } else {
-                    // Get a different tip
-                    let newTip = helpTips.filter { $0 != currentHelpTip }.randomElement() ?? helpTips.randomElement() ?? "Enter an idea..."
-                    currentHelpTip = newTip
-                }
-            }
-        }
-    }
-    
     private func resetHelpTimer() {
-        stopHelpTimer()
+        helpTimerActive = false
         currentHelpTip = "Enter an idea..."
-        
+
         // Only restart if input is still empty and focused
         if currentInput.isEmpty && isInputFocused {
-            startHelpTimer()
+            helpTimerActive = true
         }
-    }
-    
-    private func stopHelpTimer() {
-        helpTimer?.invalidate()
-        helpTimer = nil
     }
 }
 
@@ -389,9 +382,8 @@ struct ExportView: View {
                 
                 Button("Done") {
                     // Handle prompt usage based on toggle
-                    if !markPromptAsUsed, let promptViewModel = promptViewModel {
-                        // User wants to keep prompt active, so unmark it if it was marked
-                        promptViewModel.unmarkPromptAsUsed(ideaList.prompt)
+                    if markPromptAsUsed, let promptViewModel = promptViewModel {
+                        promptViewModel.markPromptAsUsed(ideaList.prompt)
                     }
                     onComplete()
                 }

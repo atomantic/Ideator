@@ -139,40 +139,7 @@ struct CustomPromptAddView: View {
     }
     
     private func getAllCategories() -> [FlexibleCategory] {
-        var categories: [FlexibleCategory] = []
-        
-        // Add Custom category first
-        let customCategory = FlexibleCategory.from(category: .custom)
-        categories.append(customCategory)
-        
-        // Add other core categories
-        for category in Category.allCases {
-            if category != .custom {
-                categories.append(FlexibleCategory.from(category: category))
-            }
-        }
-        
-        // Add pack categories if available
-        let packManager = PackManager.shared
-        for pack in packManager.installedPacks {
-                for category in pack.categories {
-                    if !categories.contains(where: { $0.id == category.id }) {
-                        categories.append(FlexibleCategory(
-                            id: category.id,
-                            name: category.name,
-                            icon: category.icon,
-                            color: category.color,
-                            packId: pack.id,
-                            packName: pack.name
-                        ))
-                    }
-                }
-            }
-        
-        // Sort all except Custom (which stays first)
-        let customFirst = categories.first!
-        let rest = Array(categories.dropFirst()).sorted { $0.name < $1.name }
-        return [customFirst] + rest
+        FlexibleCategory.allCategories()
     }
     
     private func savePrompt() {

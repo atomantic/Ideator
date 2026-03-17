@@ -79,7 +79,7 @@ struct ContentView: View {
           .onReceive(NotificationCenter.default.publisher(for: .promptsReloaded)) { _ in
               // Reload prompts and force HomeView rebuild to reflect new categories
               promptViewModel.loadPrompts()
-              packsVersion &+= 1
+              packsVersion += 1
           }
           .sheet(isPresented: $showingPromptSelection) {
               PromptSelectionView(

@@ -68,8 +68,6 @@ class IdeaListViewModel {
         ideaList.ideas = ideas
         currentIdeaList = ideaList
         persistenceManager.saveCompleted(ideaList)
-        // Mark the prompt as used when completing the list
-        PromptService.shared.markPromptAsUsed(ideaList.prompt)
         isComplete = true
         
         // Post notification for streak tracking
