@@ -36,6 +36,7 @@ struct DraftsView: View {
             Image(systemName: "doc.text")
                 .font(.system(size: 80))
                 .foregroundColor(.gray)
+                .accessibilityHidden(true)
             
             Text("No Drafts Yet")
                 .font(.title2)
