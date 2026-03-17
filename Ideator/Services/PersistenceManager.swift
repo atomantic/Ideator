@@ -1,4 +1,7 @@
 import Foundation
+import os.log
+
+private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "net.shadowpuppet.ideator", category: "PersistenceManager")
 
 class PersistenceManager {
     static let shared = PersistenceManager()
@@ -63,7 +66,7 @@ class PersistenceManager {
             let data = try JSONEncoder().encode(object)
             UserDefaults.standard.set(data, forKey: key)
         } catch {
-            print("Failed to save \(key): \(error)")
+            logger.error("Failed to save \(key): \(error.localizedDescription)")
         }
     }
     
@@ -75,7 +78,7 @@ class PersistenceManager {
         do {
             return try JSONDecoder().decode(T.self, from: data)
         } catch {
-            print("Failed to load \(key): \(error)")
+            logger.error("Failed to load \(key): \(error.localizedDescription)")
             return nil
         }
     }
