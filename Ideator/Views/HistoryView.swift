@@ -196,6 +196,7 @@ struct HistoryView: View {
             Image(systemName: "clock.arrow.circlepath")
                 .font(.system(size: 80))
                 .foregroundColor(.gray)
+                .accessibilityHidden(true)
             
             Text("No Completed Lists")
                 .font(.title2)
@@ -247,20 +248,23 @@ struct HistoryCalendarView: View {
     let onSelectDay: (Date) -> Void
     
     private var monthInterval: DateInterval {
-        Calendar.current.dateInterval(of: .month, for: month)!
+        Calendar.current.dateInterval(of: .month, for: month)
+            ?? DateInterval(start: month, end: month)
     }
-    
+
     private var days: [Date?] {
         let calendar = Calendar.current
         let start = monthInterval.start
-        let range = calendar.range(of: .day, in: .month, for: start)!
+        guard let range = calendar.range(of: .day, in: .month, for: start) else {
+            return []
+        }
         let firstWeekday = calendar.component(.weekday, from: start) // 1..7
         let leadingEmpty = (firstWeekday - calendar.firstWeekday + 7) % 7
         let total = leadingEmpty + range.count
         return (0..<total).map { index in
             if index < leadingEmpty { return nil }
             let dayOffset = index - leadingEmpty
-            return calendar.date(byAdding: .day, value: dayOffset, to: start)!
+            return calendar.date(byAdding: .day, value: dayOffset, to: start)
         }
     }
     
