@@ -105,7 +105,12 @@ struct FlexibleCategory: Identifiable, Hashable, Codable {
     // Try to convert to built-in Category enum (for backwards compatibility)
     func toCategory() -> Category? {
         // Remove pack prefix if present
-        let categoryId = packId != nil ? String(id.dropFirst(packId!.count + 1)) : id
+        let categoryId: String
+        if let packId = packId, id.hasPrefix("\(packId).") {
+            categoryId = String(id.dropFirst(packId.count + 1))
+        } else {
+            categoryId = id
+        }
         
         switch categoryId {
         case "personaldevelopment": return .personalDevelopment

@@ -1,6 +1,7 @@
 import Foundation
+import Combine
 
-class StreakManager {
+class StreakManager: ObservableObject {
     static let shared = StreakManager()
     
     @Published var currentStreak: Int = 0
@@ -160,7 +161,10 @@ class StreakManager {
 
         let today = calendar.startOfDay(for: Date())
         // Only reconstruct if latest completion is today or yesterday (active streak)
-        let yesterday = calendar.date(byAdding: .day, value: -1, to: today)!
+        guard let yesterday = calendar.date(byAdding: .day, value: -1, to: today) else {
+            UserDefaults.standard.set(true, forKey: migrationFlag)
+            return
+        }
         guard latestDay == today || latestDay == yesterday else {
             // No active streak; still set totals
             totalCompletedLists = completed.count
@@ -182,7 +186,7 @@ class StreakManager {
         var longest = 0
         var visited: Set<Date> = []
         for day in completionDays {
-            let prevDay = calendar.date(byAdding: .day, value: -1, to: day)!
+            guard let prevDay = calendar.date(byAdding: .day, value: -1, to: day) else { continue }
             if completionDays.contains(prevDay) { continue } // Not a run start
             var runLen = 0
             var runCursor = day

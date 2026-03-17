@@ -35,8 +35,10 @@ class PromptService {
     
     private func loadPromptsFromCategory(pack: PromptPack, category: PackCategory) -> [Prompt]? {
         // Load from documents directory (all packs are now stored there)
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, 
-                                                    in: .userDomainMask).first!
+        guard let documentsPath = FileManager.default.urls(for: .documentDirectory,
+                                                            in: .userDomainMask).first else {
+            return nil
+        }
         let packDir = documentsPath.appendingPathComponent("PromptPacks/\(pack.id)")
         let fileURL = packDir.appendingPathComponent(category.file)
         
