@@ -1,29 +1,29 @@
-text	help
-AI companions that will become common household members	(name + personality quirk)
-Changes to the identity of humanity	(tech that shifts “self”)
-Cities that will be built on other planets	(feature that solves a problem)
-Clothing materials that don't exist yet	(property + use case)
-Cultural movements that will emerge in the next decade	(slogan + spark)
-Diseases that will be eradicated in my lifetime	(breakthrough + enabler)
-Educational methods that will replace traditional schooling	(learn by doing X)
-Extinct professions of the future	(what replaces it)
-Foods that will be grown in labs	(taste + advantage)
-Forms of entertainment that haven't been invented yet	(sense + social angle)
-Great events that have not happened yet	(why it will matter)
-Home gadgets that will exist someday	(annoyance it removes)
-Jobs of the future	(title + daily task)
-New forms of art enabled by future technology	(tool + audience reaction)
-New religions or belief systems that will emerge	(core value + ritual)
-Obsolete technologies that will puzzle future generations	(what makes them say “why?”)
-Reasons next year will be great	(what do you want to happen?)
-Resolutions	(e.g., sleep more)
-Slang terms of the future	(who uses it and when)
-Social media platforms of the next generation	(mode + incentive)
-Sports that will be invented in the next century	(goal + physics twist)
-Subscription services I will have in the future	(what it delivers + cadence)
-Things that are currently on an exponential	(e.g., number of books published)
-Transportation methods that will replace cars	(context + energy source)
-Unexpected ways climate change will reshape daily life	(mundane thing that shifts)
-Virtual experiences that will feel completely real	(sense that finally convinces)
-Ways people will modify their bodies	(benefit + tradeoff)
-Ways to leave a legacy in the world	(person you’ll lift up)
+text	help	slug
+AI companions that will become common household members	(name + personality quirk)	ai-companions-that-will-become-common-household-members
+Changes to the identity of humanity	(tech that shifts “self”)	changes-to-the-identity-of-humanity
+Cities that will be built on other planets	(feature that solves a problem)	cities-that-will-be-built-on-other-planets
+Clothing materials that don't exist yet	(property + use case)	clothing-materials-that-dont-exist-yet
+Cultural movements that will emerge in the next decade	(slogan + spark)	cultural-movements-that-will-emerge-in-the-next-decade
+Diseases that will be eradicated in my lifetime	(breakthrough + enabler)	diseases-that-will-be-eradicated-in-my-lifetime
+Educational methods that will replace traditional schooling	(learn by doing X)	educational-methods-that-will-replace-traditional-schooling
+Extinct professions of the future	(what replaces it)	extinct-professions-of-the-future
+Foods that will be grown in labs	(taste + advantage)	foods-that-will-be-grown-in-labs
+Forms of entertainment that haven't been invented yet	(sense + social angle)	forms-of-entertainment-that-havent-been-invented-yet
+Great events that have not happened yet	(why it will matter)	great-events-that-have-not-happened-yet
+Home gadgets that will exist someday	(annoyance it removes)	home-gadgets-that-will-exist-someday
+Jobs of the future	(title + daily task)	jobs-of-the-future
+New forms of art enabled by future technology	(tool + audience reaction)	new-forms-of-art-enabled-by-future-technology
+New religions or belief systems that will emerge	(core value + ritual)	new-religions-or-belief-systems-that-will-emerge
+Obsolete technologies that will puzzle future generations	(what makes them say “why?”)	obsolete-technologies-that-will-puzzle-future-generations
+Reasons next year will be great	(what do you want to happen?)	reasons-next-year-will-be-great
+Resolutions	(e.g., sleep more)	resolutions
+Slang terms of the future	(who uses it and when)	slang-terms-of-the-future
+Social media platforms of the next generation	(mode + incentive)	social-media-platforms-of-the-next-generation
+Sports that will be invented in the next century	(goal + physics twist)	sports-that-will-be-invented-in-the-next-century
+Subscription services I will have in the future	(what it delivers + cadence)	subscription-services-i-will-have-in-the-future
+Things that are currently on an exponential	(e.g., number of books published)	things-that-are-currently-on-an-exponential
+Transportation methods that will replace cars	(context + energy source)	transportation-methods-that-will-replace-cars
+Unexpected ways climate change will reshape daily life	(mundane thing that shifts)	unexpected-ways-climate-change-will-reshape-daily-life
+Virtual experiences that will feel completely real	(sense that finally convinces)	virtual-experiences-that-will-feel-completely-real
+Ways people will modify their bodies	(benefit + tradeoff)	ways-people-will-modify-their-bodies
+Ways to leave a legacy in the world	(person you’ll lift up)	ways-to-leave-a-legacy-in-the-world

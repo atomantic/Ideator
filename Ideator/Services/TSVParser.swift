@@ -11,11 +11,14 @@ struct TSVParser {
             let text = parts.first?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
             guard !text.isEmpty else { return nil }
             let help = parts.count > 1 ? parts[1].trimmingCharacters(in: .whitespacesAndNewlines) : nil
+            let slugRaw = parts.count > 2 ? parts[2].trimmingCharacters(in: .whitespacesAndNewlines) : nil
+            let slug = (slugRaw?.isEmpty == true) ? nil : slugRaw
             return Prompt(
                 text: text,
                 flexibleCategory: flexibleCategory,
                 suggestedCount: 10,
-                help: help
+                help: help,
+                slug: slug
             )
         }
     }

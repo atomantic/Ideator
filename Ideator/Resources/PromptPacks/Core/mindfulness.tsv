@@ -1,16 +1,16 @@
-text	help
-Intentions for tomorrow	(one word to guide your day)
-Micro-meditations I can repeat	(e.g., 3 breaths)
-Mindful activities for this week	(tea, walk, or breath—pick one)
-Moments today when I felt present	(name the sensory detail)
-Peaceful environments	(light + sound + smell)
-Places in my home that feel calm	(e.g., a corner)
-Sensations I'm noticing right now	(name 3 without judging)
-Sounds heard in the monring upon waking	(e.g., birds chirping)
-Things I can savor today	(e.g., one sip)
-Thoughts I can let go of	(“I notice I’m thinking…”)
-Triggers I want to be aware of	(event → helpful response)
-Ways to close the day gently	(e.g., low light)
-Ways to ground myself when anxious	(5‑4‑3‑2‑1 senses)
-When I feel least myself	(situation + gentle boundary)
-When I feel most myself	(situation + ritual to amplify)
+text	help	slug
+Intentions for tomorrow	(one word to guide your day)	intentions-for-tomorrow
+Micro-meditations I can repeat	(e.g., 3 breaths)	micro-meditations-i-can-repeat
+Mindful activities for this week	(tea, walk, or breath—pick one)	mindful-activities-for-this-week
+Moments today when I felt present	(name the sensory detail)	moments-today-when-i-felt-present
+Peaceful environments	(light + sound + smell)	peaceful-environments
+Places in my home that feel calm	(e.g., a corner)	places-in-my-home-that-feel-calm
+Sensations I'm noticing right now	(name 3 without judging)	sensations-im-noticing-right-now
+Sounds heard in the monring upon waking	(e.g., birds chirping)	sounds-heard-in-the-monring-upon-waking
+Things I can savor today	(e.g., one sip)	things-i-can-savor-today
+Thoughts I can let go of	(“I notice I’m thinking…”)	thoughts-i-can-let-go-of
+Triggers I want to be aware of	(event → helpful response)	triggers-i-want-to-be-aware-of
+Ways to close the day gently	(e.g., low light)	ways-to-close-the-day-gently
+Ways to ground myself when anxious	(5‑4‑3‑2‑1 senses)	ways-to-ground-myself-when-anxious
+When I feel least myself	(situation + gentle boundary)	when-i-feel-least-myself
+When I feel most myself	(situation + ritual to amplify)	when-i-feel-most-myself

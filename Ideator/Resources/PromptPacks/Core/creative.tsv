@@ -1,30 +1,31 @@
-text	help
-Album cover concepts	(genre + one symbol)
-Alternative history twists	(change one tiny event)
-Alternative uses for everyday objects	(e.g., toothbrush as tiny paintbrush)
-Animations to create with stop-motion	(e.g., breakfast making itself)
-App ideas that solve real problems	(who struggles + 1‑tap fix)
-Architecture ideas for small spaces	(problem + folding solution)
-Art projects to try	(medium + playful constraint)
-Character design prompts	(trait + silhouette shape)
-Collage themes	(source material + constraint)
-Creative challenges to try with friends	(10‑minute timer + weird theme)
-Creative technologies to explore	(tool + one micro‑project)
-Dance choreography ideas	(song + movement motif)
-DIY craft ideas using household items	(what you can build tonight)
-Experimental music genre names	(mash two vibes: "fogwave waltz")
-Fashion upcycling projects	(garment + tool + time)
-Handmade gift ideas	(recipient + inside joke)
-Inventions that would make life easier	(annoyance → gadget to remove it)
-New board game concepts	(core mechanic + one twist)
-Personal zine topics	(niche obsession + fresh lens)
-Photography series concepts	(subject + repeating constraint)
-Podcast episode ideas	(guest + provocative question)
-Printmaking experiments at home	(found texture + two inks)
-Short story concepts	(what if X… then Y)
-Sound design exercises	(everyday object → new ambience)
-Street art	(site‑specific, delightful surprise)
-Things to draw	(combine two objects around you)
-Things to paint	(limited palette + bold shape)
-Unusual materials to sculpt with	(e.g., cardboard + hot glue)
-YouTube video concepts	(hook in five words)
+text	help	slug
+Album cover concepts	(genre + one symbol)	album-cover-concepts
+Alternative history twists	(change one tiny event)	alternative-history-twists
+Alternative uses for everyday objects	(e.g., toothbrush as tiny paintbrush)	alternative-uses-for-everyday-objects
+Animations to create with stop-motion	(e.g., breakfast making itself)	animations-to-create-with-stop-motion
+App ideas that solve real problems	(who struggles + 1‑tap fix)	app-ideas-that-solve-real-problems
+Architecture ideas for small spaces	(problem + folding solution)	architecture-ideas-for-small-spaces
+Art projects to try	(medium + playful constraint)	art-projects-to-try
+Character design prompts	(trait + silhouette shape)	character-design-prompts
+Collage themes	(source material + constraint)	collage-themes
+Creative challenges to try with friends	(10‑minute timer + weird theme)	creative-challenges-to-try-with-friends
+Creative technologies to explore	(tool + one micro‑project)	creative-technologies-to-explore
+Dance choreography ideas	(song + movement motif)	dance-choreography-ideas
+DIY craft ideas using household items	(what you can build tonight)	diy-craft-ideas-using-household-items
+Experimental music genre names	(mash two vibes: "fogwave waltz")	experimental-music-genre-names
+Fashion upcycling projects	(garment + tool + time)	fashion-upcycling-projects
+Handmade gift ideas	(recipient + inside joke)	handmade-gift-ideas
+Inventions that would make life easier	(annoyance → gadget to remove it)	inventions-that-would-make-life-easier
+New board game concepts	(core mechanic + one twist)	new-board-game-concepts
+Personal zine topics	(niche obsession + fresh lens)	personal-zine-topics
+Photography series concepts	(subject + repeating constraint)	photography-series-concepts
+Podcast episode ideas	(guest + provocative question)	podcast-episode-ideas
+Printmaking experiments at home	(found texture + two inks)	printmaking-experiments-at-home
+Short story concepts	(what if X… then Y)	short-story-concepts
+Sound design exercises	(everyday object → new ambience)	sound-design-exercises
+Street art	(site‑specific, delightful surprise)	street-art
+Things I wonder about	(curiosity + follow‑up question)	things-i-wonder-about
+Things to draw	(combine two objects around you)	things-to-draw
+Things to paint	(limited palette + bold shape)	things-to-paint
+Unusual materials to sculpt with	(e.g., cardboard + hot glue)	unusual-materials-to-sculpt-with
+YouTube video concepts	(hook in five words)	youtube-video-concepts

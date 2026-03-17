@@ -1,25 +1,25 @@
-text	help
-Abilities I'm grateful for	(where they helped this week)
-Aspects of my home I love	(a corner + why)
-Challenges that helped me grow	(the gift inside it)
-Foods that comfort me	(dish + who I’d share it with)
-Kindness I received recently	(what happened + how I’ll pass it on)
-Lessons I'm grateful to have learned	(who taught it)
-Little freedoms I enjoy	(choice + how I’ll savor it this week)
-Memories that make me smile	(a sensory detail that returns)
-Music that carried me through	(song + when I’ll play it next)
-Nature moments I want more of	(time + exact spot)
-Opportunities I'm thankful for	(who opened the door)
-Past versions of me to thank	(age + decision they made)
-People I'll text appreciation to today	(3 names + one sentence)
-People who made my life better	(say their specific impact)
-Places I'm grateful to have	(bench, library, trail—plan a visit)
-Simple pleasures	(low‑effort, high‑joy)
-Small joys I experienced today	(tiny but vivid)
-Teachers and mentors to thank	(lesson + one way to pay it forward)
-Thank‑you notes to write	(name + one memory)
-Things about my body I appreciate	(what it lets me do)
-Things future me will thank me for	(prep that removes friction)
-Things that make me happy	(repeatable and easy)
-Tools I use every day	(object + small upgrade/clean)
-Traditions I cherish	(ritual + date to do it)
+text	help	slug
+Abilities I'm grateful for	(where they helped this week)	abilities-im-grateful-for
+Aspects of my home I love	(a corner + why)	aspects-of-my-home-i-love
+Challenges that helped me grow	(the gift inside it)	challenges-that-helped-me-grow
+Foods that comfort me	(dish + who I’d share it with)	foods-that-comfort-me
+Kindness I received recently	(what happened + how I’ll pass it on)	kindness-i-received-recently
+Lessons I'm grateful to have learned	(who taught it)	lessons-im-grateful-to-have-learned
+Little freedoms I enjoy	(choice + how I’ll savor it this week)	little-freedoms-i-enjoy
+Memories that make me smile	(a sensory detail that returns)	memories-that-make-me-smile
+Music that carried me through	(song + when I’ll play it next)	music-that-carried-me-through
+Nature moments I want more of	(time + exact spot)	nature-moments-i-want-more-of
+Opportunities I'm thankful for	(who opened the door)	opportunities-im-thankful-for
+Past versions of me to thank	(age + decision they made)	past-versions-of-me-to-thank
+People I'll text appreciation to today	(3 names + one sentence)	people-ill-text-appreciation-to-today
+People who made my life better	(say their specific impact)	people-who-made-my-life-better
+Places I'm grateful to have	(bench, library, trail—plan a visit)	places-im-grateful-to-have
+Simple pleasures	(low‑effort, high‑joy)	simple-pleasures
+Small joys I experienced today	(tiny but vivid)	small-joys-i-experienced-today
+Teachers and mentors to thank	(lesson + one way to pay it forward)	teachers-and-mentors-to-thank
+Thank‑you notes to write	(name + one memory)	thankyou-notes-to-write
+Things about my body I appreciate	(what it lets me do)	things-about-my-body-i-appreciate
+Things future me will thank me for	(prep that removes friction)	things-future-me-will-thank-me-for
+Things that make me happy	(repeatable and easy)	things-that-make-me-happy
+Tools I use every day	(object + small upgrade/clean)	tools-i-use-every-day
+Traditions I cherish	(ritual + date to do it)	traditions-i-cherish

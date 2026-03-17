@@ -1,14 +1,14 @@
-text	help
-Activities that recharge my energy	(e.g., talking with friends)
-Boundaries I need to set	(“I don’t X after Y o’clock”)
-Comfort activities for bad days	(soft, warm, familiar)
-Fun things that I can do alone	(sing in the shower)
-Hard things to do now to avoid hardship later	(e.g., drive without GPS to stave off brain deterioration)
-Lessons I've learned in the last year	(lesson + one change you made)
-Positive affirmations I need to hear	(present tense + specific)
-Rest activities that aren't sleep	(light play, not screens)
-Self-care rituals to establish	(when + where + how long)
-Things I'm going to do for myself today	(one thing before noon)
-Ways to celebrate small wins	(name it + tiny reward)
-Ways to pamper myself this weekend	(budget a treat)
-Ways to say no without guilt	(“I’m at capacity, thanks”)
+text	help	slug
+Activities that recharge my energy	(e.g., talking with friends)	activities-that-recharge-my-energy
+Boundaries I need to set	(“I don’t X after Y o’clock”)	boundaries-i-need-to-set
+Comfort activities for bad days	(soft, warm, familiar)	comfort-activities-for-bad-days
+Fun things that I can do alone	(sing in the shower)	fun-things-that-i-can-do-alone
+Hard things to do now to avoid hardship later	(e.g., drive without GPS to stave off brain deterioration)	hard-things-to-do-now-to-avoid-hardship-later
+Lessons I've learned in the last year	(lesson + one change you made)	lessons-ive-learned-in-the-last-year
+Positive affirmations I need to hear	(present tense + specific)	positive-affirmations-i-need-to-hear
+Rest activities that aren't sleep	(light play, not screens)	rest-activities-that-arent-sleep
+Self-care rituals to establish	(when + where + how long)	self-care-rituals-to-establish
+Things I'm going to do for myself today	(one thing before noon)	things-im-going-to-do-for-myself-today
+Ways to celebrate small wins	(name it + tiny reward)	ways-to-celebrate-small-wins
+Ways to pamper myself this weekend	(budget a treat)	ways-to-pamper-myself-this-weekend
+Ways to say no without guilt	(“I’m at capacity, thanks”)	ways-to-say-no-without-guilt

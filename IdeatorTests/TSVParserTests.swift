@@ -27,6 +27,36 @@ final class TSVParserTests: XCTestCase {
         XCTAssertEqual(prompts.count, 2)
         XCTAssertEqual(prompts[0].text, "Make tea")
         XCTAssertEqual(prompts[0].help, "(e.g., with lemon)")
+        XCTAssertNil(prompts[0].slug)
+    }
+
+    func testParseThreeColumnTSVWithSlug() {
+        let tsv = """
+        text\thelp\tslug
+        Make tea\t(e.g., with lemon)\tmake-tea
+        Read book\t(e.g., 10 minutes)\tread-book
+        """
+        let cat = FlexibleCategory(id: "test.cat", name: "Test", icon: "star", color: "blue", packId: "test", packName: "Test Pack")
+        let prompts = TSVParser.parse(tsv: tsv, flexibleCategory: cat)
+        XCTAssertEqual(prompts.count, 2)
+        XCTAssertEqual(prompts[0].slug, "make-tea")
+        XCTAssertEqual(prompts[1].slug, "read-book")
+        XCTAssertEqual(prompts[0].text, "Make tea")
+        XCTAssertEqual(prompts[0].help, "(e.g., with lemon)")
+    }
+
+    func testSlugBasedUUIDDiffersFromTextBasedUUID() {
+        let cat = FlexibleCategory(id: "test.cat", name: "Test", icon: "star", color: "blue", packId: "test", packName: "Test Pack")
+        let withoutSlug = Prompt(text: "Make tea", flexibleCategory: cat)
+        let withSlug = Prompt(text: "Make tea", flexibleCategory: cat, slug: "make-tea")
+        XCTAssertNotEqual(withoutSlug.id, withSlug.id)
+    }
+
+    func testSlugBasedUUIDisDeterministic() {
+        let cat = FlexibleCategory(id: "test.cat", name: "Test", icon: "star", color: "blue", packId: "test", packName: "Test Pack")
+        let prompt1 = Prompt(text: "Make tea", flexibleCategory: cat, slug: "make-tea")
+        let prompt2 = Prompt(text: "Brew a cup of tea", flexibleCategory: cat, slug: "make-tea")
+        XCTAssertEqual(prompt1.id, prompt2.id, "Same slug should produce same UUID regardless of text")
     }
 }
 

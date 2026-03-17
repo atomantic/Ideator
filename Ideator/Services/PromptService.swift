@@ -10,6 +10,7 @@ class PromptService {
     private init() {
         loadPromptsFromPacks()
         loadUsedPromptIds()
+        migrateUsedPromptIdsToSlugBased()
         migrateCompletedListsToUsedPrompts()
     }
     
@@ -63,50 +64,50 @@ class PromptService {
     private func loadDefaultPrompts() {
         allPrompts = [
             // Personal Development
-            Prompt(text: "things I want to accomplish this year", category: .personalDevelopment),
-            Prompt(text: "habits I want to develop", category: .personalDevelopment),
-            Prompt(text: "fears I want to overcome", category: .personalDevelopment),
-            Prompt(text: "skills I'd like to master", category: .personalDevelopment),
-            
+            Prompt(text: "things I want to accomplish this year", category: .personalDevelopment, slug: "things-i-want-to-accomplish-this-year"),
+            Prompt(text: "habits I want to develop", category: .personalDevelopment, slug: "habits-i-want-to-develop"),
+            Prompt(text: "fears I want to overcome", category: .personalDevelopment, slug: "fears-i-want-to-overcome"),
+            Prompt(text: "skills I'd like to master", category: .personalDevelopment, slug: "skills-id-like-to-master"),
+
             // Creative
-            Prompt(text: "app ideas to build", category: .creative),
-            Prompt(text: "story ideas I'd love to write", category: .creative),
-            Prompt(text: "art projects to try", category: .creative),
-            
+            Prompt(text: "app ideas to build", category: .creative, slug: "app-ideas-to-build"),
+            Prompt(text: "story ideas I'd love to write", category: .creative, slug: "story-ideas-id-love-to-write"),
+            Prompt(text: "art projects to try", category: .creative, slug: "art-projects-to-try"),
+
             // Professional
-            Prompt(text: "business ideas to explore", category: .professional),
-            Prompt(text: "ways to improve my workspace", category: .professional),
-            Prompt(text: "career goals for the next 5 years", category: .professional),
-            
+            Prompt(text: "business ideas to explore", category: .professional, slug: "business-ideas-to-explore"),
+            Prompt(text: "ways to improve my workspace", category: .professional, slug: "ways-to-improve-my-workspace"),
+            Prompt(text: "career goals for the next 5 years", category: .professional, slug: "career-goals-for-the-next-5-years"),
+
             // Lifestyle
-            Prompt(text: "bucket list adventures", category: .lifestyle),
-            Prompt(text: "recipes to try this month", category: .lifestyle),
-            Prompt(text: "ways to simplify my life", category: .lifestyle),
-            
+            Prompt(text: "bucket list adventures", category: .lifestyle, slug: "bucket-list-adventures"),
+            Prompt(text: "recipes to try this month", category: .lifestyle, slug: "recipes-to-try-this-month"),
+            Prompt(text: "ways to simplify my life", category: .lifestyle, slug: "ways-to-simplify-my-life"),
+
             // Learning
-            Prompt(text: "books to read", category: .learning),
-            Prompt(text: "online courses to take", category: .learning),
-            Prompt(text: "topics to research deeply", category: .learning),
-            
+            Prompt(text: "books to read", category: .learning, slug: "books-to-read"),
+            Prompt(text: "online courses to take", category: .learning, slug: "online-courses-to-take"),
+            Prompt(text: "topics to research deeply", category: .learning, slug: "topics-to-research-deeply"),
+
             // Relationships
-            Prompt(text: "ways to show appreciation to loved ones", category: .relationships),
-            Prompt(text: "qualities I value in friendships", category: .relationships),
-            
+            Prompt(text: "ways to show appreciation to loved ones", category: .relationships, slug: "ways-to-show-appreciation-to-loved-ones"),
+            Prompt(text: "qualities I value in friendships", category: .relationships, slug: "qualities-i-value-in-friendships"),
+
             // Entertainment
-            Prompt(text: "movies to watch this year", category: .entertainment),
-            Prompt(text: "games to play with friends", category: .entertainment),
-            
+            Prompt(text: "movies to watch this year", category: .entertainment, slug: "movies-to-watch-this-year"),
+            Prompt(text: "games to play with friends", category: .entertainment, slug: "games-to-play-with-friends"),
+
             // Travel
-            Prompt(text: "places to visit in my city", category: .travel),
-            Prompt(text: "countries I want to visit", category: .travel),
-            
+            Prompt(text: "places to visit in my city", category: .travel, slug: "places-to-visit-in-my-city"),
+            Prompt(text: "countries I want to visit", category: .travel, slug: "countries-i-want-to-visit"),
+
             // Financial
-            Prompt(text: "ways to save money", category: .financial),
-            Prompt(text: "financial goals for this year", category: .financial),
-            
+            Prompt(text: "ways to save money", category: .financial, slug: "ways-to-save-money"),
+            Prompt(text: "financial goals for this year", category: .financial, slug: "financial-goals-for-this-year"),
+
             // Social Impact
-            Prompt(text: "causes I want to support", category: .socialImpact),
-            Prompt(text: "ways to help my community", category: .socialImpact)
+            Prompt(text: "causes I want to support", category: .socialImpact, slug: "causes-i-want-to-support"),
+            Prompt(text: "ways to help my community", category: .socialImpact, slug: "ways-to-help-my-community")
         ]
     }
     
@@ -239,6 +240,35 @@ class PromptService {
         return sorted.map { (packName: $0.key, packId: $0.value.packId, categories: Array($0.value.categories).sorted { $0.name < $1.name }) }
     }
     
+    private func migrateUsedPromptIdsToSlugBased() {
+        let migrationKey = "SlugBasedIdMigrationCompleted"
+        if UserDefaults.standard.bool(forKey: migrationKey) {
+            return
+        }
+
+        var changed = false
+
+        for prompt in allPrompts {
+            guard prompt.slug != nil else { continue }
+
+            // Compute the old UUID (text-based) — prompt.id is already slug-based
+            let oldId = Prompt.deterministicId(key: prompt.text, categoryId: prompt.flexibleCategory.id)
+            guard oldId != prompt.id else { continue }
+
+            if usedPromptIds.contains(oldId) {
+                usedPromptIds.remove(oldId)
+                usedPromptIds.insert(prompt.id)
+                changed = true
+            }
+        }
+
+        if changed {
+            saveUsedPromptIds()
+        }
+
+        UserDefaults.standard.set(true, forKey: migrationKey)
+    }
+
     private func migrateCompletedListsToUsedPrompts() {
         // Check if migration has already been done
         let migrationKey = "PromptUsageMigrationCompleted"
