@@ -21,6 +21,7 @@ struct HomeView: View {
     @State private var updateErrorMessage = ""
     
     @StateObject private var packManager = PackManager.shared
+    @StateObject private var storeManager = StoreManager.shared
     private let streakManager = StreakManager.shared
     
     var body: some View {
@@ -389,13 +390,26 @@ struct HomeView: View {
                     AvailablePackCard(
                         packInfo: packInfo,
                         isDownloading: downloadingPacks.contains(packInfo.id),
-                        onDownload: {
+                        isPurchasing: storeManager.purchasingPack == packInfo.id,
+                        price: storeManager.product(for: packInfo.id)?.displayPrice,
+                        onPurchaseAndDownload: {
                             Task {
+                                // Purchase first if needed
+                                if !storeManager.isPurchasedOrFree(packInfo.id) {
+                                    let success = await storeManager.purchase(packInfo.id)
+                                    guard success else {
+                                        if storeManager.purchaseError != nil {
+                                            downloadErrorMessage = storeManager.purchaseError ?? "Purchase failed"
+                                            showDownloadError = true
+                                        }
+                                        return
+                                    }
+                                }
+
                                 downloadingPacks.insert(packInfo.id)
                                 do {
                                     try await packManager.downloadPack(packInfo)
                                     PromptService.shared.reloadPrompts()
-                                    // Refresh available packs to remove downloaded one
                                     await packManager.fetchAvailablePacks()
                                 } catch {
                                     downloadErrorMessage = "Failed to download \(packInfo.name): \(error.localizedDescription)"
@@ -522,8 +536,10 @@ struct FlexibleCategoryCard: View {
 struct AvailablePackCard: View {
     let packInfo: RemotePackInfo
     let isDownloading: Bool
-    let onDownload: () -> Void
-    
+    let isPurchasing: Bool
+    let price: String?
+    let onPurchaseAndDownload: () -> Void
+
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 8) {
@@ -537,27 +553,37 @@ struct AvailablePackCard: View {
                                 endPoint: .bottomTrailing
                             )
                         )
-                    
+
                     VStack(alignment: .leading, spacing: 2) {
                         Text(packInfo.name)
                             .font(.headline)
-                        
+
                         Text(packInfo.description)
                             .font(.caption)
                             .foregroundColor(.secondary)
                             .lineLimit(2)
                     }
-                    
+
                     Spacer()
-                    
-                    if isDownloading {
-                        ProgressView()
-                            .scaleEffect(0.8)
+
+                    if isDownloading || isPurchasing {
+                        VStack(spacing: 2) {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                            Text(isPurchasing ? "Buying..." : "Installing...")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
                     } else {
-                        Button(action: onDownload) {
-                            Image(systemName: "icloud.and.arrow.down.fill")
-                                .font(.title2)
-                                .foregroundColor(.blue)
+                        Button(action: onPurchaseAndDownload) {
+                            Text(price ?? "$0.99")
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(Color.blue)
+                                .foregroundColor(.white)
+                                .clipShape(Capsule())
                         }
                         .buttonStyle(BorderlessButtonStyle())
                     }
