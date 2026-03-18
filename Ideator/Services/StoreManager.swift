@@ -6,7 +6,7 @@ private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "net.shad
 
 /// Manages in-app purchases for prompt packs using StoreKit 2
 @MainActor
-class StoreManager: ObservableObject {
+final class StoreManager: ObservableObject {
     static let shared = StoreManager()
 
     /// All available products loaded from App Store
@@ -53,6 +53,7 @@ class StoreManager: ObservableObject {
         Task {
             await loadProducts()
             await refreshPurchaseState()
+            logger.info("🛒 init complete: \(self.purchasedPacks.count) purchased packs, \(self.products.count) products loaded")
         }
     }
 
@@ -132,7 +133,12 @@ class StoreManager: ObservableObject {
     /// Restore purchases from App Store
     func restorePurchases() async {
         logger.info("🛒 restoring purchases...")
-        try? await AppStore.sync()
+        do {
+            try await AppStore.sync()
+        } catch {
+            logger.error("🛒 AppStore.sync() failed: \(error.localizedDescription)")
+            purchaseError = "Failed to restore purchases: \(error.localizedDescription)"
+        }
         await refreshPurchaseState()
         logger.info("🛒 restored \(self.purchasedPacks.count) packs")
     }
@@ -172,11 +178,19 @@ class StoreManager: ObservableObject {
     private func refreshPurchaseState() async {
         // Check all current entitlements
         for await result in Transaction.currentEntitlements {
-            guard let transaction = try? Self.checkVerified(result) else { continue }
-            purchasedPacks.insert(packId(from: transaction.productID))
+            do {
+                let transaction = try Self.checkVerified(result)
+                purchasedPacks.insert(packId(from: transaction.productID))
+            } catch {
+                logger.error("🛒 failed to verify transaction: \(error.localizedDescription)")
+            }
         }
     }
 
+    /// Listens for transaction updates (renewals, revocations) for the app's lifetime.
+    /// Uses [weak self] as a defensive measure, but since StoreManager is a singleton
+    /// (accessed via `shared`), self will never be deallocated during normal execution.
+    /// The deinit cancels this task as a safety net.
     private func listenForTransactions() -> Task<Void, Never> {
         Task.detached { [weak self] in
             for await result in Transaction.updates {
@@ -184,12 +198,10 @@ class StoreManager: ObservableObject {
                 guard let transaction = try? Self.checkVerified(result) else { continue }
                 let packId = self.packId(from: transaction.productID)
 
-                if transaction.revocationDate != nil {
-                    _ = await MainActor.run {
+                await MainActor.run {
+                    if transaction.revocationDate != nil {
                         self.purchasedPacks.remove(packId)
-                    }
-                } else {
-                    _ = await MainActor.run {
+                    } else {
                         self.purchasedPacks.insert(packId)
                     }
                 }

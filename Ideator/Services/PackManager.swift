@@ -3,7 +3,7 @@ import os.log
 
 private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "net.shadowpuppet.ideator", category: "PackManager")
 
-class PackManager: ObservableObject {
+final class PackManager: ObservableObject {
     static let shared = PackManager()
 
     @Published var installedPacks: [PromptPack] = []
@@ -240,6 +240,7 @@ class PackManager: ObservableObject {
     }
 
     func downloadPack(_ packInfo: RemotePackInfo) async throws {
+        try validatePackId(packInfo.id)
         try await requirePurchase(for: packInfo.id)
 
         logger.info("Starting download for pack: \(packInfo.id)")
@@ -356,6 +357,7 @@ class PackManager: ObservableObject {
     }
 
     func updatePack(_ packId: String) async throws {
+        try validatePackId(packId)
         try await requirePurchase(for: packId)
 
         logger.info("Updating pack \(packId) from GitHub...")
@@ -479,6 +481,17 @@ class PackManager: ObservableObject {
         }
     }
 
+    /// Validates that a pack ID is safe for use in file paths and URLs (no path traversal)
+    private func validatePackId(_ packId: String) throws {
+        let allowedCharacters = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-_"))
+        guard !packId.isEmpty,
+              packId.unicodeScalars.allSatisfy({ allowedCharacters.contains($0) }),
+              !packId.contains("..") else {
+            logger.error("Invalid pack ID rejected: \(packId)")
+            throw PackError.invalidPackId
+        }
+    }
+
     @MainActor
     private func requirePurchase(for packId: String) throws {
         guard StoreManager.shared.isPurchasedOrFree(packId) else {
@@ -490,6 +503,7 @@ class PackManager: ObservableObject {
 
 enum PackError: Error {
     case invalidURL
+    case invalidPackId
     case downloadFailed
     case extractionFailed
     case purchaseRequired
