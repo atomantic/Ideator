@@ -1,6 +1,9 @@
 import Foundation
+import os.log
 
-class PromptService {
+private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "net.shadowpuppet.ideator", category: "PromptService")
+
+final class PromptService {
     static let shared = PromptService()
     
     private var allPrompts: [Prompt] = []
@@ -26,7 +29,7 @@ class PromptService {
         }
         
         if prompts.isEmpty {
-            print("No prompts loaded from packs")
+            logger.warning("No prompts loaded from packs")
             loadDefaultPrompts()
         } else {
             self.allPrompts = prompts
@@ -42,7 +45,11 @@ class PromptService {
         let packDir = documentsPath.appendingPathComponent("PromptPacks/\(pack.id)")
         let fileURL = packDir.appendingPathComponent(category.file)
         
-        guard let data = try? String(contentsOf: fileURL, encoding: .utf8) else {
+        let data: String
+        do {
+            data = try String(contentsOf: fileURL, encoding: .utf8)
+        } catch {
+            logger.error("Failed to read TSV file \(fileURL.path): \(error.localizedDescription)")
             return nil
         }
         
@@ -134,15 +141,20 @@ class PromptService {
     }
     
     private func loadUsedPromptIds() {
-        if let data = UserDefaults.standard.data(forKey: "usedPromptIds"),
-           let ids = try? JSONDecoder().decode(Set<UUID>.self, from: data) {
-            usedPromptIds = ids
+        guard let data = UserDefaults.standard.data(forKey: "usedPromptIds") else { return }
+        do {
+            usedPromptIds = try JSONDecoder().decode(Set<UUID>.self, from: data)
+        } catch {
+            logger.error("Failed to decode usedPromptIds: \(error.localizedDescription)")
         }
     }
     
     private func saveUsedPromptIds() {
-        if let data = try? JSONEncoder().encode(usedPromptIds) {
+        do {
+            let data = try JSONEncoder().encode(usedPromptIds)
             UserDefaults.standard.set(data, forKey: "usedPromptIds")
+        } catch {
+            logger.error("Failed to encode usedPromptIds: \(error.localizedDescription)")
         }
     }
     

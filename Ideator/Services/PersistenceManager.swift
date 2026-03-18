@@ -3,7 +3,7 @@ import os.log
 
 private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "net.shadowpuppet.ideator", category: "PersistenceManager")
 
-class PersistenceManager {
+final class PersistenceManager {
     static let shared = PersistenceManager()
     
     private let draftsKey = "ideator_drafts"

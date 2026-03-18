@@ -1,5 +1,8 @@
 import SwiftUI
 import UserNotifications
+import os.log
+
+private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "net.shadowpuppet.ideator", category: "OnboardingView")
 
 struct OnboardingView: View {
     @Binding var isPresented: Bool
@@ -352,7 +355,7 @@ struct OnboardingView: View {
                         do {
                             try await packManager.downloadPack(pack)
                         } catch {
-                            print("Failed to download pack \(packId): \(error)")
+                            logger.error("Failed to download pack \(packId): \(error.localizedDescription)")
                         }
                     }
                 }

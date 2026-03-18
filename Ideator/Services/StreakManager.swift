@@ -1,7 +1,7 @@
 import Foundation
 import Combine
 
-class StreakManager: ObservableObject {
+final class StreakManager: ObservableObject {
     static let shared = StreakManager()
     
     @Published var currentStreak: Int = 0

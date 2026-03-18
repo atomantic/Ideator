@@ -1,6 +1,6 @@
 import Foundation
 
-class ExportManager {
+final class ExportManager {
     static let shared = ExportManager()
 
     private init() {}
