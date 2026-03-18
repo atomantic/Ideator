@@ -1,5 +1,49 @@
 # PLAN.md
 
+## Better Swift Audit - 2026-03-18
+
+Summary: 29 new findings across 11 files. 18 fixed, 11 deferred.
+Platform: iOS | Deployment target: 18.5+
+
+### Security & Secrets
+- [x] **[MEDIUM]** `PackManager.swift` - Pack ID not validated for path traversal — added validatePackId() guard
+- [ ] **[LOW]** `StoreManager.swift` - Purchase data logged without privacy annotation
+
+### Code Quality & Style
+- [x] **[HIGH]** `PromptService.swift:29` - print() instead of logger — replaced with logger.warning()
+- [x] **[HIGH]** `OnboardingView.swift:355` - print() instead of logger — replaced with logger.error()
+- [x] **[MEDIUM]** `PromptService.swift:45,138,144` - try? silently swallowing errors — added do/catch with logging
+- [x] **[MEDIUM]** All singleton classes — Missing `final` keyword — added to 7 classes
+
+### DRY & YAGNI
+- [x] **[MEDIUM]** `PromptPacksView.swift` - Duplicate purchase-then-action pattern — extracted purchaseIfNeeded()
+- [x] **[MEDIUM]** `PromptPacksView.swift` - Duplicate stat labels — extracted PackStatsView component
+- [x] **[MEDIUM]** `PromptPacksView.swift:331` - Hardcoded font size 9 — replaced with .caption2
+
+### Bugs, Performance & Error Handling
+- [x] **[CRITICAL]** `StoreManager.swift:53-56` - Init Task without error logging — added completion log
+- [x] **[HIGH]** `StoreManager.swift:181-199` - Task.detached undocumented lifecycle — added documentation
+- [x] **[MEDIUM]** `StoreManager.swift:135` - try? on AppStore.sync() — replaced with do/catch + UI feedback
+- [x] **[MEDIUM]** `StoreManager.swift:187-195` - Duplicate MainActor.run — consolidated into single call
+- [x] **[MEDIUM]** `StoreManager.swift:175` - try? on transaction verification — replaced with do/catch + logging
+
+### Platform Coverage & SwiftUI Patterns
+- [x] **[HIGH]** `IdeaInputView.swift:201` - Animation without reduce motion — added @Environment check
+- [x] **[MEDIUM]** `OnboardingView.swift` - Symbol effects without reduce motion — added isActive guard
+- [x] **[MEDIUM]** `HomeView.swift` - Decorative icons without accessibilityHidden — added
+- [x] **[MEDIUM]** `OnboardingView.swift` - Hardcoded font sizes in BenefitCard — replaced with semantic fonts
+
+### Test Quality & Coverage — 51 tests passing
+- [ ] **[HIGH][VACUOUS]** `StreakManagerTests.swift` - testMilestone doesn't test real behavior
+- [ ] **[HIGH][VACUOUS]** `ModelTests.swift` - testCategory_colorValue discards result
+- [ ] **[HIGH][WEAK]** `TSVParserTests.swift` - Missing inverse slug test, ragged data
+- [ ] **[MEDIUM][MISSING]** StoreManager — completely untested
+- [ ] **[MEDIUM][MISSING]** PackManager — only isNewerVersion tested
+- [ ] **[MEDIUM][MISSING]** IdeaListViewModel — no state transition tests
+- [ ] **[MEDIUM][MISSING]** PromptViewModel — completely untested
+
+---
+
 ## Better Swift Audit - 2026-03-17
 
 Summary: 74 findings across 20 files. 39 fixed, 35 LOW deferred.
