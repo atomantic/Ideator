@@ -1,8 +1,8 @@
 {
   "id": "core",
   "name": "Core",
-  "version": "1.3.0",
-  "description": "Essential prompt categories for daily ideation including wellness and personal growth",
+  "version": "2.0.0",
+  "description": "Essential prompt categories for daily creative ideation",
   "author": "Idea Loom Team",
   "categories": [
     {
@@ -11,13 +11,6 @@
       "file": "personalDevelopment.tsv",
       "icon": "person.crop.circle.badge.checkmark",
       "color": "blue"
-    },
-    {
-      "id": "professional",
-      "name": "Professional",
-      "file": "professional.tsv",
-      "icon": "briefcase.fill",
-      "color": "purple"
     },
     {
       "id": "creative",
@@ -34,60 +27,11 @@
       "color": "pink"
     },
     {
-      "id": "relationships",
-      "name": "Relationships",
-      "file": "relationships.tsv",
-      "icon": "person.2.fill",
-      "color": "red"
-    },
-    {
       "id": "entertainment",
       "name": "Entertainment",
       "file": "entertainment.tsv",
       "icon": "tv.fill",
       "color": "yellow"
-    },
-    {
-      "id": "travel",
-      "name": "Travel & Adventure",
-      "file": "travel.tsv",
-      "icon": "airplane",
-      "color": "green"
-    },
-    {
-      "id": "financial",
-      "name": "Financial",
-      "file": "financial.tsv",
-      "icon": "dollarsign.circle.fill",
-      "color": "mint"
-    },
-    {
-      "id": "socialImpact",
-      "name": "Social Impact",
-      "file": "socialImpact.tsv",
-      "icon": "globe.americas.fill",
-      "color": "teal"
-    },
-    {
-      "id": "health",
-      "name": "Health & Fitness",
-      "file": "health.tsv",
-      "icon": "heart.circle.fill",
-      "color": "red"
-    },
-    {
-      "id": "mindfulness",
-      "name": "Mindfulness",
-      "file": "mindfulness.tsv",
-      "icon": "leaf.fill",
-      "color": "green"
-    },
-    {
-      "id": "selfcare",
-      "name": "Self Care",
-      "file": "selfcare.tsv",
-      "icon": "sparkles",
-      "color": "purple"
     },
     {
       "id": "gratitude",

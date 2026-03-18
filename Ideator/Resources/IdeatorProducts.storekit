@@ -1,0 +1,139 @@
+{
+  "identifier" : "net.shadowpuppet.ideator.products",
+  "nonRenewableSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "0.99",
+      "familyShareable" : false,
+      "internalID" : "pack.creative.writing",
+      "localizations" : [
+        {
+          "description" : "Advanced prompts for writers, authors, and storytellers",
+          "displayName" : "Creative Writing Pack",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "net.shadowpuppet.ideator.pack.creative.writing",
+      "referenceName" : "Creative Writing Pack",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "0.99",
+      "familyShareable" : false,
+      "internalID" : "pack.disaster.prep",
+      "localizations" : [
+        {
+          "description" : "Prompts for planning and preparing for emergencies and disasters",
+          "displayName" : "Disaster Prep Pack",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "net.shadowpuppet.ideator.pack.disaster.prep",
+      "referenceName" : "Disaster Prep Pack",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "0.99",
+      "familyShareable" : false,
+      "internalID" : "pack.family",
+      "localizations" : [
+        {
+          "description" : "Family activities, parenting, and relationships",
+          "displayName" : "Family & Relationships Pack",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "net.shadowpuppet.ideator.pack.family",
+      "referenceName" : "Family & Relationships Pack",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "0.99",
+      "familyShareable" : false,
+      "internalID" : "pack.impact.finance",
+      "localizations" : [
+        {
+          "description" : "Social impact and financial thinking prompts",
+          "displayName" : "Impact & Finance Pack",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "net.shadowpuppet.ideator.pack.impact.finance",
+      "referenceName" : "Impact & Finance Pack",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "0.99",
+      "familyShareable" : false,
+      "internalID" : "pack.silly",
+      "localizations" : [
+        {
+          "description" : "Playful prompts for outrageous and comedic ideation",
+          "displayName" : "Silly Pack",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "net.shadowpuppet.ideator.pack.silly",
+      "referenceName" : "Silly Pack",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "0.99",
+      "familyShareable" : false,
+      "internalID" : "pack.surreal",
+      "localizations" : [
+        {
+          "description" : "Off-the-wall prompts to spark bizarre, inventive thinking",
+          "displayName" : "Surreal Ideation Pack",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "net.shadowpuppet.ideator.pack.surreal",
+      "referenceName" : "Surreal Ideation Pack",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "0.99",
+      "familyShareable" : false,
+      "internalID" : "pack.tech.startup",
+      "localizations" : [
+        {
+          "description" : "Career growth, entrepreneurs, and startup founders",
+          "displayName" : "Career & Startup Pack",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "net.shadowpuppet.ideator.pack.tech.startup",
+      "referenceName" : "Career & Startup Pack",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "0.99",
+      "familyShareable" : false,
+      "internalID" : "pack.wellness",
+      "localizations" : [
+        {
+          "description" : "Health, mindfulness, and self-care prompts",
+          "displayName" : "Wellness Pack",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "net.shadowpuppet.ideator.pack.wellness",
+      "referenceName" : "Wellness Pack",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_applicationInternalID" : "net.shadowpuppet.ideator",
+    "_developerTeamID" : "TYQ32QCF6K"
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}

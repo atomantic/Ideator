@@ -37,6 +37,12 @@ class PackManager: ObservableObject {
         installEmbeddedCorePackIfNeeded()
 
         loadInstalledPacks()
+
+        // Grandfather any packs installed before IAP was added
+        Task { @MainActor in
+            let installedIds = installedPacks.map(\.id)
+            StoreManager.shared.grandfatherInstalledPacks(installedIds)
+        }
     }
 
     // Determine which ref to use (main or a version tag) based on schema compatibility.
@@ -234,6 +240,8 @@ class PackManager: ObservableObject {
     }
 
     func downloadPack(_ packInfo: RemotePackInfo) async throws {
+        try await requirePurchase(for: packInfo.id)
+
         logger.info("Starting download for pack: \(packInfo.id)")
 
         await updateSelectedRefIfNeeded()
@@ -348,6 +356,8 @@ class PackManager: ObservableObject {
     }
 
     func updatePack(_ packId: String) async throws {
+        try await requirePurchase(for: packId)
+
         logger.info("Updating pack \(packId) from GitHub...")
         await updateSelectedRefIfNeeded()
 
@@ -468,12 +478,21 @@ class PackManager: ObservableObject {
         default: return nil
         }
     }
+
+    @MainActor
+    private func requirePurchase(for packId: String) throws {
+        guard StoreManager.shared.isPurchasedOrFree(packId) else {
+            logger.warning("🛒 pack \(packId) not purchased")
+            throw PackError.purchaseRequired
+        }
+    }
 }
 
 enum PackError: Error {
     case invalidURL
     case downloadFailed
     case extractionFailed
+    case purchaseRequired
 }
 
 // Lightweight schema descriptor fetched from the packs repo

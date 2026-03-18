@@ -1,7 +1,9 @@
 import SwiftUI
+import StoreKit
 
 struct PromptPacksView: View {
     @StateObject private var packManager = PackManager.shared
+    @StateObject private var storeManager = StoreManager.shared
     @State private var downloadingPacks: Set<String> = []
     @State private var updatingPacks: Set<String> = []
     @State private var showUpdateSuccess = false
@@ -9,13 +11,18 @@ struct PromptPacksView: View {
     @State private var updateErrorMessage = ""
     @State private var showDownloadError = false
     @State private var downloadErrorMessage = ""
-    
+    @State private var showPurchaseError = false
+    @State private var isRestoringPurchases = false
+    @State private var showRestoreSuccess = false
+
     var body: some View {
         NavigationStack {
             List {
                 installedPacksSection
-                
+
                 availablePacksSection
+
+                restorePurchasesSection
             }
             .navigationTitle("Prompt Packs")
             .navigationBarTitleDisplayMode(.large)
@@ -40,9 +47,19 @@ struct PromptPacksView: View {
             } message: {
                 Text(downloadErrorMessage)
             }
+            .alert("Purchase Failed", isPresented: $showPurchaseError) {
+                Button("OK") {}
+            } message: {
+                Text(storeManager.purchaseError ?? "An unknown error occurred.")
+            }
+            .alert("Purchases Restored", isPresented: $showRestoreSuccess) {
+                Button("OK") {}
+            } message: {
+                Text("Your purchases have been restored successfully.")
+            }
         }
     }
-    
+
     private var installedPacksSection: some View {
         Section("Installed Packs") {
             ForEach(packManager.installedPacks) { pack in
@@ -50,19 +67,29 @@ struct PromptPacksView: View {
                     pack: pack,
                     isUpdating: updatingPacks.contains(pack.id),
                     updateAvailable: packManager.packUpdates[pack.id],
+                    isPurchased: storeManager.isPurchasedOrFree(pack.id),
+                    isGrandfathered: storeManager.isGrandfathered(pack.id),
                     onToggle: {
                         packManager.togglePack(pack.id, enabled: !pack.isEnabled)
-                        // Reload prompts when toggling packs
                         PromptService.shared.reloadPrompts()
                     },
                     onUpdate: {
                         Task {
+                            // If not purchased, trigger purchase first
+                            if !storeManager.isPurchasedOrFree(pack.id) {
+                                let success = await storeManager.purchase(pack.id)
+                                guard success else {
+                                    if storeManager.purchaseError != nil {
+                                        showPurchaseError = true
+                                    }
+                                    return
+                                }
+                            }
+
                             updatingPacks.insert(pack.id)
                             do {
                                 try await packManager.updatePack(pack.id)
-                                // Reload the installed packs to get the new version
                                 packManager.loadInstalledPacks()
-                                // Re-check for updates to clear the update indicator
                                 await packManager.fetchAvailablePacks()
                                 PromptService.shared.reloadPrompts()
                                 showUpdateSuccess = true
@@ -78,7 +105,7 @@ struct PromptPacksView: View {
             .onDelete { indexSet in
                 for index in indexSet {
                     let pack = packManager.installedPacks[index]
-                    if pack.id != "core" { // Don't allow deleting core pack
+                    if pack.id != "core" {
                         packManager.deletePack(pack.id)
                         PromptService.shared.reloadPrompts()
                     }
@@ -86,7 +113,7 @@ struct PromptPacksView: View {
             }
         }
     }
-    
+
     private var availablePacksSection: some View {
         Section("Available Packs") {
             if packManager.isLoading {
@@ -107,13 +134,24 @@ struct PromptPacksView: View {
                     RemotePackRow(
                         packInfo: packInfo,
                         isDownloading: downloadingPacks.contains(packInfo.id),
-                        onDownload: {
+                        isPurchasing: storeManager.purchasingPack == packInfo.id,
+                        price: storeManager.product(for: packInfo.id)?.displayPrice,
+                        onPurchaseAndDownload: {
                             Task {
+                                // Purchase first
+                                let success = await storeManager.purchase(packInfo.id)
+                                guard success else {
+                                    if storeManager.purchaseError != nil {
+                                        showPurchaseError = true
+                                    }
+                                    return
+                                }
+
+                                // Then download
                                 downloadingPacks.insert(packInfo.id)
                                 do {
                                     try await packManager.downloadPack(packInfo)
                                     PromptService.shared.reloadPrompts()
-                                    // Refresh available packs to remove downloaded one
                                     await packManager.fetchAvailablePacks()
                                 } catch {
                                     downloadErrorMessage = "Failed to download \(packInfo.name): \(error.localizedDescription)"
@@ -127,51 +165,105 @@ struct PromptPacksView: View {
             }
         }
     }
+
+    private var restorePurchasesSection: some View {
+        Section {
+            Button {
+                Task {
+                    isRestoringPurchases = true
+                    await storeManager.restorePurchases()
+                    isRestoringPurchases = false
+                    showRestoreSuccess = true
+                }
+            } label: {
+                HStack {
+                    if isRestoringPurchases {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                    }
+                    Text("Restore Purchases")
+                }
+            }
+            .disabled(isRestoringPurchases)
+        } footer: {
+            Text("Restore previously purchased packs on this device or a new device.")
+                .font(.caption2)
+        }
+    }
 }
 
 struct PackRow: View {
     let pack: PromptPack
     let isUpdating: Bool
-    let updateAvailable: String? // New version if update is available
+    let updateAvailable: String?
+    let isPurchased: Bool
+    let isGrandfathered: Bool
     let onToggle: () -> Void
     let onUpdate: () -> Void
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(pack.name)
-                        .font(.headline)
-                    
+                    HStack(spacing: 6) {
+                        Text(pack.name)
+                            .font(.headline)
+
+                        if isGrandfathered {
+                            Text("FREE")
+                                .font(.system(size: 9, weight: .bold))
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 2)
+                                .background(Color.green.opacity(0.15))
+                                .foregroundColor(.green)
+                                .clipShape(Capsule())
+                        }
+                    }
+
                     Text(pack.description)
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .lineLimit(2)
                 }
-                
+
                 Spacer()
-                
+
                 Toggle("", isOn: Binding(
                     get: { pack.isEnabled },
                     set: { _ in onToggle() }
                 ))
                 .labelsHidden()
             }
-            
+
             HStack {
                 Label("\(pack.categories.count) categories", systemImage: "folder")
                     .font(.caption2)
                     .foregroundColor(.secondary)
-                
+
                 Label("\(pack.totalPrompts) prompts", systemImage: "lightbulb")
                     .font(.caption2)
                     .foregroundColor(.secondary)
-                
+
                 Spacer()
-                
+
                 if let newVersion = updateAvailable {
-                    // Show update button for any pack including core
-                    if isUpdating {
+                    if !isPurchased {
+                        // Update available but not purchased — show purchase prompt
+                        Button(action: onUpdate) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "lock.fill")
+                                    .font(.caption2)
+                                Text("Purchase to Update")
+                            }
+                            .font(.caption2)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(Color.blue.opacity(0.15))
+                            .foregroundColor(.blue)
+                            .clipShape(Capsule())
+                        }
+                        .buttonStyle(BorderlessButtonStyle())
+                    } else if isUpdating {
                         ProgressView()
                             .scaleEffect(0.7)
                     } else {
@@ -196,7 +288,6 @@ struct PackRow: View {
                         .buttonStyle(BorderlessButtonStyle())
                     }
                 } else {
-                    // Show version for all packs
                     HStack(spacing: 4) {
                         Text("v\(pack.version)")
                             .font(.caption2)
@@ -213,47 +304,59 @@ struct PackRow: View {
 struct RemotePackRow: View {
     let packInfo: RemotePackInfo
     let isDownloading: Bool
-    let onDownload: () -> Void
-    
+    let isPurchasing: Bool
+    let price: String?
+    let onPurchaseAndDownload: () -> Void
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(packInfo.name)
                         .font(.headline)
-                    
+
                     Text(packInfo.description)
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .lineLimit(2)
                 }
-                
+
                 Spacer()
-                
-                if isDownloading {
-                    ProgressView()
-                        .scaleEffect(0.8)
+
+                if isDownloading || isPurchasing {
+                    VStack(spacing: 2) {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                        Text(isPurchasing ? "Buying..." : "Installing...")
+                            .font(.system(size: 9))
+                            .foregroundColor(.secondary)
+                    }
                 } else {
-                    Button(action: onDownload) {
-                        Image(systemName: "icloud.and.arrow.down")
-                            .font(.body)
-                            .foregroundColor(.blue)
+                    Button(action: onPurchaseAndDownload) {
+                        Text(price ?? "$0.99")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .clipShape(Capsule())
                     }
                     .buttonStyle(BorderlessButtonStyle())
                 }
             }
-            
+
             HStack {
                 Label("\(packInfo.categories.count) categories", systemImage: "folder")
                     .font(.caption2)
                     .foregroundColor(.secondary)
-                
+
                 Label("\(packInfo.promptCount) prompts", systemImage: "lightbulb")
                     .font(.caption2)
                     .foregroundColor(.secondary)
-                
+
                 Spacer()
-                
+
                 Text("by \(packInfo.author)")
                     .font(.caption2)
                     .foregroundColor(.secondary)
