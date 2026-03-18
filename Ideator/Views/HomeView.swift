@@ -96,6 +96,7 @@ struct HomeView: View {
                     )
                 )
                 .symbolEffect(.pulse)
+                .accessibilityHidden(true)
             
             Text("Become an idea machine")
                 .font(.title2)
@@ -117,6 +118,7 @@ struct HomeView: View {
                     Image(systemName: "flame.fill")
                         .font(.title2)
                         .foregroundColor(currentStreak > 0 ? .orange : .gray)
+                        .accessibilityHidden(true)
                     
                     Text("\(currentStreak)")
                         .font(.largeTitle)
@@ -147,6 +149,7 @@ struct HomeView: View {
                     Image(systemName: "trophy.fill")
                         .font(.title2)
                         .foregroundColor(streakManager.longestStreak > 0 ? .yellow : .gray)
+                        .accessibilityHidden(true)
                     
                     Text("\(streakManager.longestStreak)")
                         .font(.largeTitle)

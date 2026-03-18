@@ -17,6 +17,7 @@ struct OnboardingView: View {
     @AppStorage("enableNotifications") private var notificationsEnabled = false
     @AppStorage("notificationHour") private var notificationHour = 9
     @AppStorage("notificationMinute") private var notificationMinute = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ScaledMetric(relativeTo: .largeTitle) private var heroIconSize: CGFloat = 80
     @ScaledMetric(relativeTo: .largeTitle) private var packsIconSize: CGFloat = 50
     @ScaledMetric(relativeTo: .largeTitle) private var notificationIconSize: CGFloat = 60
@@ -79,8 +80,8 @@ struct OnboardingView: View {
                         endPoint: .bottomTrailing
                     )
                 )
-                .symbolEffect(.pulse)
-            
+                .symbolEffect(.pulse, isActive: !reduceMotion)
+
             VStack(spacing: 16) {
                 Text("Welcome to Idea Loom")
                     .font(.largeTitle)
@@ -175,8 +176,8 @@ struct OnboardingView: View {
             Image(systemName: "square.stack.3d.up.fill")
                 .font(.system(size: packsIconSize))
                 .foregroundColor(.purple)
-                .symbolEffect(.pulse)
-            
+                .symbolEffect(.pulse, isActive: !reduceMotion)
+
             VStack(spacing: 12) {
                 Text("Expand Your Horizons")
                     .font(.title)
@@ -241,7 +242,7 @@ struct OnboardingView: View {
             Image(systemName: "bell.badge.fill")
                 .font(.system(size: notificationIconSize))
                 .foregroundColor(.blue)
-                .symbolEffect(.bounce)
+                .symbolEffect(.bounce, isActive: !reduceMotion)
             
             VStack(spacing: 16) {
                 Text("Build Your Daily Habit")
@@ -443,13 +444,13 @@ struct BenefitCard: View {
                 .frame(height: 40)
             
             Text(title)
-                .font(.system(size: 15, weight: .bold))
+                .font(.subheadline.bold())
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
                 .foregroundColor(.primary)
-            
+
             Text(description)
-                .font(.system(size: 14))
+                .font(.caption)
                 .multilineTextAlignment(.center)
                 .foregroundColor(.primary.opacity(0.7))
                 .lineLimit(3)

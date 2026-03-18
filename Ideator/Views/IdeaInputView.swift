@@ -4,6 +4,7 @@ struct IdeaInputView: View {
     @Bindable var viewModel: IdeaListViewModel
     let promptViewModel: PromptViewModel?
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @FocusState private var isInputFocused: Bool
     @State private var currentInput = ""
     @State private var showingExportSheet = false
@@ -198,7 +199,7 @@ struct IdeaInputView: View {
         let trimmedInput = currentInput.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedInput.isEmpty else { return }
         
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+        withAnimation(reduceMotion ? .none : .spring(response: 0.3, dampingFraction: 0.8)) {
             viewModel.addIdea(trimmedInput)
         }
         

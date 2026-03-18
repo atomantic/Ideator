@@ -60,6 +60,19 @@ struct PromptPacksView: View {
         }
     }
 
+    private func purchaseIfNeeded(_ packId: String) async -> Bool {
+        if !storeManager.isPurchasedOrFree(packId) {
+            let success = await storeManager.purchase(packId)
+            guard success else {
+                if storeManager.purchaseError != nil {
+                    showPurchaseError = true
+                }
+                return false
+            }
+        }
+        return true
+    }
+
     private var installedPacksSection: some View {
         Section("Installed Packs") {
             ForEach(packManager.installedPacks) { pack in
@@ -75,16 +88,7 @@ struct PromptPacksView: View {
                     },
                     onUpdate: {
                         Task {
-                            // If not purchased, trigger purchase first
-                            if !storeManager.isPurchasedOrFree(pack.id) {
-                                let success = await storeManager.purchase(pack.id)
-                                guard success else {
-                                    if storeManager.purchaseError != nil {
-                                        showPurchaseError = true
-                                    }
-                                    return
-                                }
-                            }
+                            guard await purchaseIfNeeded(pack.id) else { return }
 
                             updatingPacks.insert(pack.id)
                             do {
@@ -138,16 +142,8 @@ struct PromptPacksView: View {
                         price: storeManager.product(for: packInfo.id)?.displayPrice,
                         onPurchaseAndDownload: {
                             Task {
-                                // Purchase first
-                                let success = await storeManager.purchase(packInfo.id)
-                                guard success else {
-                                    if storeManager.purchaseError != nil {
-                                        showPurchaseError = true
-                                    }
-                                    return
-                                }
+                                guard await purchaseIfNeeded(packInfo.id) else { return }
 
-                                // Then download
                                 downloadingPacks.insert(packInfo.id)
                                 do {
                                     try await packManager.downloadPack(packInfo)
@@ -189,6 +185,21 @@ struct PromptPacksView: View {
             Text("Restore previously purchased packs on this device or a new device.")
                 .font(.caption2)
         }
+    }
+}
+
+struct PackStatsView: View {
+    let categoryCount: Int
+    let promptCount: Int
+
+    var body: some View {
+        Label("\(categoryCount) categories", systemImage: "folder")
+            .font(.caption2)
+            .foregroundColor(.secondary)
+
+        Label("\(promptCount) prompts", systemImage: "lightbulb")
+            .font(.caption2)
+            .foregroundColor(.secondary)
     }
 }
 
@@ -236,13 +247,7 @@ struct PackRow: View {
             }
 
             HStack {
-                Label("\(pack.categories.count) categories", systemImage: "folder")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-
-                Label("\(pack.totalPrompts) prompts", systemImage: "lightbulb")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+                PackStatsView(categoryCount: pack.categories.count, promptCount: pack.totalPrompts)
 
                 Spacer()
 
@@ -328,7 +333,7 @@ struct RemotePackRow: View {
                         ProgressView()
                             .scaleEffect(0.8)
                         Text(isPurchasing ? "Buying..." : "Installing...")
-                            .font(.system(size: 9))
+                            .font(.caption2)
                             .foregroundColor(.secondary)
                     }
                 } else {
@@ -347,13 +352,7 @@ struct RemotePackRow: View {
             }
 
             HStack {
-                Label("\(packInfo.categories.count) categories", systemImage: "folder")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-
-                Label("\(packInfo.promptCount) prompts", systemImage: "lightbulb")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+                PackStatsView(categoryCount: packInfo.categories.count, promptCount: packInfo.promptCount)
 
                 Spacer()
 
