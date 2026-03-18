@@ -1,7 +1,7 @@
 {
   "id": "core",
   "name": "Core",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Essential prompt categories for daily creative ideation",
   "author": "Idea Loom Team",
   "categories": [
@@ -46,6 +46,13 @@
       "file": "future.tsv",
       "icon": "sparkle",
       "color": "cyan"
+    },
+    {
+      "id": "travel",
+      "name": "Travel & Adventure",
+      "file": "travel.tsv",
+      "icon": "airplane",
+      "color": "teal"
     }
   ]
 }

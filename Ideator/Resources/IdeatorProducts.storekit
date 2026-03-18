@@ -40,7 +40,7 @@
       "internalID" : "pack.family",
       "localizations" : [
         {
-          "description" : "Family activities, parenting, and relationships",
+          "description" : "Prompts for family activities, parenting, and relationships",
           "displayName" : "Family & Relationships Pack",
           "locale" : "en_US"
         }
@@ -55,7 +55,7 @@
       "internalID" : "pack.impact.finance",
       "localizations" : [
         {
-          "description" : "Social impact and financial thinking prompts",
+          "description" : "Prompts for social impact, world change, and financial thinking",
           "displayName" : "Impact & Finance Pack",
           "locale" : "en_US"
         }
@@ -100,7 +100,7 @@
       "internalID" : "pack.tech.startup",
       "localizations" : [
         {
-          "description" : "Career growth, entrepreneurs, and startup founders",
+          "description" : "Prompts for career growth, entrepreneurs, and startup founders",
           "displayName" : "Career & Startup Pack",
           "locale" : "en_US"
         }
@@ -115,7 +115,7 @@
       "internalID" : "pack.wellness",
       "localizations" : [
         {
-          "description" : "Health, mindfulness, and self-care prompts",
+          "description" : "Prompts for health, mindfulness, and self-care",
           "displayName" : "Wellness Pack",
           "locale" : "en_US"
         }

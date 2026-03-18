@@ -1,29 +1,35 @@
-text	help	slug
-AI companions that will become common household members	(name + personality quirk)	ai-companions-that-will-become-common-household-members
-Changes to the identity of humanity	(tech that shifts “self”)	changes-to-the-identity-of-humanity
-Cities that will be built on other planets	(feature that solves a problem)	cities-that-will-be-built-on-other-planets
-Clothing materials that don't exist yet	(property + use case)	clothing-materials-that-dont-exist-yet
-Cultural movements that will emerge in the next decade	(slogan + spark)	cultural-movements-that-will-emerge-in-the-next-decade
-Diseases that will be eradicated in my lifetime	(breakthrough + enabler)	diseases-that-will-be-eradicated-in-my-lifetime
-Educational methods that will replace traditional schooling	(learn by doing X)	educational-methods-that-will-replace-traditional-schooling
-Extinct professions of the future	(what replaces it)	extinct-professions-of-the-future
-Foods that will be grown in labs	(taste + advantage)	foods-that-will-be-grown-in-labs
-Forms of entertainment that haven't been invented yet	(sense + social angle)	forms-of-entertainment-that-havent-been-invented-yet
-Great events that have not happened yet	(why it will matter)	great-events-that-have-not-happened-yet
-Home gadgets that will exist someday	(annoyance it removes)	home-gadgets-that-will-exist-someday
-Jobs of the future	(title + daily task)	jobs-of-the-future
-New forms of art enabled by future technology	(tool + audience reaction)	new-forms-of-art-enabled-by-future-technology
-New religions or belief systems that will emerge	(core value + ritual)	new-religions-or-belief-systems-that-will-emerge
-Obsolete technologies that will puzzle future generations	(what makes them say “why?”)	obsolete-technologies-that-will-puzzle-future-generations
-Reasons next year will be great	(what do you want to happen?)	reasons-next-year-will-be-great
-Resolutions	(e.g., sleep more)	resolutions
-Slang terms of the future	(who uses it and when)	slang-terms-of-the-future
-Social media platforms of the next generation	(mode + incentive)	social-media-platforms-of-the-next-generation
-Sports that will be invented in the next century	(goal + physics twist)	sports-that-will-be-invented-in-the-next-century
-Subscription services I will have in the future	(what it delivers + cadence)	subscription-services-i-will-have-in-the-future
-Things that are currently on an exponential	(e.g., number of books published)	things-that-are-currently-on-an-exponential
-Transportation methods that will replace cars	(context + energy source)	transportation-methods-that-will-replace-cars
-Unexpected ways climate change will reshape daily life	(mundane thing that shifts)	unexpected-ways-climate-change-will-reshape-daily-life
-Virtual experiences that will feel completely real	(sense that finally convinces)	virtual-experiences-that-will-feel-completely-real
-Ways people will modify their bodies	(benefit + tradeoff)	ways-people-will-modify-their-bodies
-Ways to leave a legacy in the world	(person you’ll lift up)	ways-to-leave-a-legacy-in-the-world
+text	help
+AI companions that will become common household members	(name + personality quirk) ai-companions-that-will-become-common-household-members
+Changes I'd make if I could restart this year today	(one per area of life) changes-id-make-if-i-could-restart-this-year-today
+Changes to the identity of humanity	(tech that shifts “self”) changes-to-the-identity-of-humanity
+Cities that will be built on other planets	(feature that solves a problem) cities-that-will-be-built-on-other-planets
+Clothing materials that don't exist yet	(property + use case) clothing-materials-that-dont-exist-yet
+Cultural movements that will emerge in the next decade	(slogan + spark) cultural-movements-that-will-emerge-in-the-next-decade
+Daily habits that will seem primitive in 50 years	(habit + future replacement) daily-habits-that-will-seem-primitive-in-50-years
+Diseases that will be eradicated in my lifetime	(breakthrough + enabler) diseases-that-will-be-eradicated-in-my-lifetime
+Educational methods that will replace traditional schooling	(learn by doing X) educational-methods-that-will-replace-traditional-schooling
+Extinct professions of the future	(what replaces it) extinct-professions-of-the-future
+Foods that will be grown in labs	(taste + advantage) foods-that-will-be-grown-in-labs
+Forms of entertainment that haven't been invented yet	(sense + social angle) forms-of-entertainment-that-havent-been-invented-yet
+Great events that have not happened yet	(why it will matter) great-events-that-have-not-happened-yet
+Home gadgets that will exist someday	(annoyance it removes) home-gadgets-that-will-exist-someday
+Jobs of the future	(title + daily task) jobs-of-the-future
+New forms of art enabled by future technology	(tool + audience reaction) new-forms-of-art-enabled-by-future-technology
+New religions or belief systems that will emerge	(core value + ritual) new-religions-or-belief-systems-that-will-emerge
+Obsolete technologies that will puzzle future generations	(what makes them say “why?”) obsolete-technologies-that-will-puzzle-future-generations
+Predictions I’m most confident about for 2030	(bet + evidence) predictions-im-most-confident-about-for-2030
+Reasons next year will be great	(what do you want to happen?) reasons-next-year-will-be-great
+Slang terms of the future	(who uses it and when) slang-terms-of-the-future
+Social media platforms of the next generation	(mode + incentive) social-media-platforms-of-the-next-generation
+Sports that will be invented in the next century	(goal + physics twist) sports-that-will-be-invented-in-the-next-century
+Subscription services I will have in the future	(what it delivers + cadence) subscription-services-i-will-have-in-the-future
+Technologies that will merge into one device	(devices + what unifies them) technologies-that-will-merge-into-one-device
+Things from today that will be in museums someday	(object + plaque text) things-from-today-that-will-be-in-museums-someday
+Things I’ll be nostalgic for that don’t exist yet	(experience + why it fades) things-ill-be-nostalgic-for-that-dont-exist-yet
+Things my grandkids will find hilariously outdated about my life	(object + their reaction) things-my-grandkids-will-find-hilariously-outdated-about-my-life
+Things that feel like they're doubling every year	(tech, cost, speed, etc.) things-that-feel-like-theyre-doubling-every-year
+Transportation methods that will replace cars	(context + energy source) transportation-methods-that-will-replace-cars
+Unexpected ways climate change will reshape daily life	(mundane thing that shifts) unexpected-ways-climate-change-will-reshape-daily-life
+Virtual experiences that will feel completely real	(sense that finally convinces) virtual-experiences-that-will-feel-completely-real
+Ways people will modify their bodies	(benefit + tradeoff) ways-people-will-modify-their-bodies
+Ways to leave a legacy in the world	(person you’ll lift up) ways-to-leave-a-legacy-in-the-world
