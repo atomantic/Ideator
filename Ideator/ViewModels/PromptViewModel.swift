@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-@Observable
+@MainActor @Observable
 class PromptViewModel {
     var prompts: [Prompt] = []
     var categories: [Category] = Category.allCases

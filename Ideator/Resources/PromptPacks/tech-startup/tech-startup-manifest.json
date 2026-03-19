@@ -1,0 +1,51 @@
+{
+  "id": "tech-startup",
+  "name": "Career & Startup",
+  "version": "1.5.0",
+  "description": "Prompts for career growth, entrepreneurs, and startup founders",
+  "author": "Idea Loom",
+  "categories": [
+    {
+      "id": "professional",
+      "name": "Professional",
+      "file": "professional.tsv",
+      "icon": "briefcase.fill",
+      "color": "purple"
+    },
+    {
+      "id": "startup",
+      "name": "Startup Ideas",
+      "file": "startup.tsv",
+      "icon": "lightbulb.circle.fill",
+      "color": "yellow"
+    },
+    {
+      "id": "product",
+      "name": "Product Development",
+      "file": "product.tsv",
+      "icon": "cube.box.fill",
+      "color": "blue"
+    },
+    {
+      "id": "marketing",
+      "name": "Marketing & Growth",
+      "file": "marketing.tsv",
+      "icon": "megaphone.fill",
+      "color": "green"
+    },
+    {
+      "id": "funding",
+      "name": "Funding & Investment",
+      "file": "funding.tsv",
+      "icon": "dollarsign.circle.fill",
+      "color": "mint"
+    },
+    {
+      "id": "team",
+      "name": "Team Building",
+      "file": "team.tsv",
+      "icon": "person.3.fill",
+      "color": "purple"
+    }
+  ]
+}

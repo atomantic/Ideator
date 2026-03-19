@@ -3,6 +3,7 @@ import os.log
 
 private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "net.shadowpuppet.ideator", category: "PromptService")
 
+@MainActor
 final class PromptService {
     static let shared = PromptService()
     
@@ -19,15 +20,15 @@ final class PromptService {
     
     private func loadPromptsFromPacks() {
         var prompts: [Prompt] = []
-        
-        for pack in packManager.installedPacks where pack.isEnabled {
+
+        for pack in packManager.purchasedPacks where pack.isEnabled {
             for category in pack.categories {
                 if let categoryPrompts = loadPromptsFromCategory(pack: pack, category: category) {
                     prompts.append(contentsOf: categoryPrompts)
                 }
             }
         }
-        
+
         if prompts.isEmpty {
             logger.warning("No prompts loaded from packs")
             loadDefaultPrompts()
@@ -35,16 +36,14 @@ final class PromptService {
             self.allPrompts = prompts
         }
     }
-    
+
     private func loadPromptsFromCategory(pack: PromptPack, category: PackCategory) -> [Prompt]? {
-        // Load from documents directory (all packs are now stored there)
-        guard let documentsPath = FileManager.default.urls(for: .documentDirectory,
-                                                            in: .userDomainMask).first else {
+        let tsvName = category.file.replacingOccurrences(of: ".tsv", with: "")
+        guard let fileURL = Bundle.main.url(forResource: tsvName, withExtension: "tsv") else {
+            logger.error("TSV file not found in bundle: \(category.file)")
             return nil
         }
-        let packDir = documentsPath.appendingPathComponent("PromptPacks/\(pack.id)")
-        let fileURL = packDir.appendingPathComponent(category.file)
-        
+
         let data: String
         do {
             data = try String(contentsOf: fileURL, encoding: .utf8)
@@ -52,8 +51,7 @@ final class PromptService {
             logger.error("Failed to read TSV file \(fileURL.path): \(error.localizedDescription)")
             return nil
         }
-        
-        // Create flexible category for this pack category
+
         let flexibleCategory = FlexibleCategory.from(
             packCategory: category,
             packId: pack.id,
@@ -61,13 +59,11 @@ final class PromptService {
         )
         return TSVParser.parse(tsv: data, flexibleCategory: flexibleCategory)
     }
-    
+
     func reloadPrompts() {
-        packManager.loadInstalledPacks()
+        packManager.loadAllPacks()
         loadPromptsFromPacks()
-        DispatchQueue.main.async {
-            NotificationCenter.default.post(name: .promptsReloaded, object: nil)
-        }
+        NotificationCenter.default.post(name: .promptsReloaded, object: nil)
     }
     
     private func loadDefaultPrompts() {
@@ -118,26 +114,6 @@ final class PromptService {
             Prompt(text: "causes I want to support", category: .socialImpact, slug: "causes-i-want-to-support"),
             Prompt(text: "ways to help my community", category: .socialImpact, slug: "ways-to-help-my-community")
         ]
-    }
-    
-    private func categoryFromString(_ string: String) -> Category {
-        switch string {
-        case "personalDevelopment": return .personalDevelopment
-        case "professional": return .professional
-        case "creative": return .creative
-        case "lifestyle": return .lifestyle
-        case "relationships": return .relationships
-        case "entertainment": return .entertainment
-        case "travel": return .travel
-        case "learning": return .learning
-        case "financial": return .financial
-        case "socialImpact": return .socialImpact
-        case "health": return .health
-        case "mindfulness": return .mindfulness
-        case "selfcare", "selfCare": return .selfCare
-        case "gratitude": return .gratitude
-        default: return .personalDevelopment
-        }
     }
     
     private func loadUsedPromptIds() {

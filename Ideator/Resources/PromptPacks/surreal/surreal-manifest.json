@@ -1,0 +1,44 @@
+{
+  "id": "surreal",
+  "name": "Surreal Ideation",
+  "version": "1.4.0",
+  "description": "Off-the-wall prompts to spark bizarre, inventive thinking",
+  "author": "Idea Loom",
+  "categories": [
+    {
+      "id": "absurd-inventions",
+      "name": "Absurd Inventions",
+      "file": "absurd-inventions.tsv",
+      "icon": "gearshape.2.fill",
+      "color": "pink"
+    },
+    {
+      "id": "dream-logic",
+      "name": "Dream Logic",
+      "file": "dream-logic.tsv",
+      "icon": "cloud.moon.fill",
+      "color": "indigo"
+    },
+    {
+      "id": "alternate-realities",
+      "name": "Alternate Realities",
+      "file": "alternate-realities.tsv",
+      "icon": "globe.desk",
+      "color": "teal"
+    },
+    {
+      "id": "unexpected-mashups",
+      "name": "Unexpected Mashups",
+      "file": "unexpected-mashups.tsv",
+      "icon": "puzzlepiece.extension.fill",
+      "color": "yellow"
+    },
+    {
+      "id": "alien-perspectives",
+      "name": "Alien Perspectives",
+      "file": "alien-perspectives.tsv",
+      "icon": "antenna.radiowaves.left.and.right",
+      "color": "green"
+    }
+  ]
+}

@@ -115,7 +115,7 @@ final class ModelTests: XCTestCase {
         XCTAssertEqual(flex.packName, "Tech Startup")
     }
 
-    func testFlexibleCategory_allCategories_isNonEmpty_withCustomFirst() {
+    @MainActor func testFlexibleCategory_allCategories_isNonEmpty_withCustomFirst() {
         let categories = FlexibleCategory.allCategories()
         XCTAssertGreaterThan(categories.count, 0)
         XCTAssertEqual(categories[0].name, "Custom")

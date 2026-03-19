@@ -91,7 +91,7 @@ struct SettingsView: View {
                         .foregroundColor(.blue)
                     Text("Prompt Packs")
                     Spacer()
-                    Text("\(PackManager.shared.installedPacks.filter { $0.isEnabled }.count) active")
+                    Text("\(PackManager.shared.purchasedPacks.filter { $0.isEnabled }.count) active")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -280,7 +280,7 @@ struct SettingsView: View {
     private func resetAllData() {
         PersistenceManager.shared.clearAll()
         promptViewModel.resetUsedPrompts()
-        PackManager.shared.clearAllPackData()
+        UserDefaults.standard.removeObject(forKey: "enabledPacks")
         PromptService.shared.reloadPrompts()
         StreakManager.shared.resetAllStats()
 

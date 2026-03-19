@@ -5,47 +5,39 @@ struct HomeView: View {
     let ideaListViewModel: IdeaListViewModel
     @Binding var showingPromptSelection: Bool
     @Binding var showingIdeaInput: Bool
-    
+
     @State private var animateGradient = false
     @State private var showingCustomPrompt = false
     @State private var currentStreak = 0
     @State private var streakStatus = StreakManager.StreakStatus.neverStarted
     @State private var showingMilestone = false
     @State private var milestoneStreak = 0
-    @State private var downloadingPacks: Set<String> = []
-    @State private var updatingPacks: Set<String> = []
-    @State private var showDownloadError = false
-    @State private var downloadErrorMessage = ""
-    @State private var showUpdateSuccess = false
-    @State private var showUpdateError = false
-    @State private var updateErrorMessage = ""
-    
+    @State private var showPurchaseError = false
+    @State private var purchaseErrorMessage = ""
+
     @StateObject private var packManager = PackManager.shared
     @StateObject private var storeManager = StoreManager.shared
     private let streakManager = StreakManager.shared
-    
+
     var body: some View {
         NavigationStack {
             ScrollView(.vertical, showsIndicators: true) {
                 VStack(spacing: 24) {
                     heroSection
-                    
+
                     streakSection
-                    
+
                     quickStartSection
-                    
+
                     recentCategoriesSection
                         .id("categories")
-                    
+
                     availablePacksSection
                 }
                 .padding()
             }
             .onAppear {
                 updateStreakDisplay()
-            }
-            .task {
-                await packManager.fetchAvailablePacks()
             }
             .onReceive(NotificationCenter.default.publisher(for: .streakUpdated)) { _ in
                 updateStreakDisplay()
@@ -67,24 +59,14 @@ struct HomeView: View {
             } message: {
                 Text(getMilestoneMessage(for: milestoneStreak))
             }
-            .alert("Download Failed", isPresented: $showDownloadError) {
+            .alert("Purchase Failed", isPresented: $showPurchaseError) {
                 Button("OK") {}
             } message: {
-                Text(downloadErrorMessage)
-            }
-            .alert("Pack Updated", isPresented: $showUpdateSuccess) {
-                Button("OK") {}
-            } message: {
-                Text("The pack has been successfully updated.")
-            }
-            .alert("Update Failed", isPresented: $showUpdateError) {
-                Button("OK") {}
-            } message: {
-                Text(updateErrorMessage)
+                Text(purchaseErrorMessage)
             }
         }
     }
-    
+
     private var heroSection: some View {
         VStack(spacing: 16) {
             Image(systemName: "lightbulb.fill")
@@ -98,11 +80,11 @@ struct HomeView: View {
                 )
                 .symbolEffect(.pulse)
                 .accessibilityHidden(true)
-            
+
             Text("Become an idea machine")
                 .font(.title2)
                 .fontWeight(.bold)
-            
+
             Text("Choose a prompt and start ideating")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
@@ -110,26 +92,25 @@ struct HomeView: View {
         }
         .padding(.vertical, 8)
     }
-    
+
     private var streakSection: some View {
         HStack(spacing: 16) {
-            // Current Streak Card
             VStack(spacing: 8) {
                 HStack {
                     Image(systemName: "flame.fill")
                         .font(.title2)
                         .foregroundColor(currentStreak > 0 ? .orange : .gray)
                         .accessibilityHidden(true)
-                    
+
                     Text("\(currentStreak)")
                         .font(.largeTitle)
                         .fontWeight(.bold)
                 }
-                
+
                 Text("Day Streak")
                     .font(.caption)
                     .foregroundColor(.secondary)
-                
+
                 Text(streakStatus.emoji + " " + streakStatus.message)
                     .font(.caption2)
                     .foregroundColor(.secondary)
@@ -143,24 +124,23 @@ struct HomeView: View {
                 RoundedRectangle(cornerRadius: 12)
                     .fill(Color(UIColor.secondarySystemBackground))
             )
-            
-            // Longest Streak Card
+
             VStack(spacing: 8) {
                 HStack {
                     Image(systemName: "trophy.fill")
                         .font(.title2)
                         .foregroundColor(streakManager.longestStreak > 0 ? .yellow : .gray)
                         .accessibilityHidden(true)
-                    
+
                     Text("\(streakManager.longestStreak)")
                         .font(.largeTitle)
                         .fontWeight(.bold)
                 }
-                
+
                 Text("Best Streak")
                     .font(.caption)
                     .foregroundColor(.secondary)
-                
+
                 Text("\(streakManager.totalCompletedLists) total lists")
                     .font(.caption2)
                     .foregroundColor(.secondary)
@@ -173,7 +153,7 @@ struct HomeView: View {
             )
         }
     }
-    
+
     private var quickStartSection: some View {
         VStack(spacing: 12) {
             Button(action: {
@@ -185,7 +165,7 @@ struct HomeView: View {
                 HStack {
                     Image(systemName: "dice.fill")
                         .font(.title2)
-                    
+
                     VStack(alignment: .leading) {
                         Text("Random Topic")
                             .font(.headline)
@@ -193,9 +173,9 @@ struct HomeView: View {
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
-                    
+
                     Spacer()
-                    
+
                     Image(systemName: "chevron.right")
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -211,7 +191,7 @@ struct HomeView: View {
                 .cornerRadius(12)
             }
             .buttonStyle(PlainButtonStyle())
-            
+
             Button(action: {
                 showingCustomPrompt = true
             }) {
@@ -219,7 +199,7 @@ struct HomeView: View {
                     Image(systemName: "sparkles")
                         .font(.title2)
                         .foregroundColor(.purple)
-                    
+
                     VStack(alignment: .leading) {
                         Text("Create Custom Topic")
                             .font(.headline)
@@ -227,9 +207,9 @@ struct HomeView: View {
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
-                    
+
                     Spacer()
-                    
+
                     Image(systemName: "chevron.right")
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -247,52 +227,27 @@ struct HomeView: View {
             .buttonStyle(PlainButtonStyle())
         }
     }
-    
-    
+
     private var recentCategoriesSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             let groupedCategories = promptViewModel.getCategoriesGroupedByPack()
 
             ForEach(Array(groupedCategories.enumerated()), id: \.element.packId) { index, group in
                 VStack(alignment: .leading, spacing: 12) {
-                    // Determine pack ID for this group
-                    let packId = group.packId ?? "core"
-                    let updateAvailable = packManager.packUpdates[packId]
-
                     if let packName = group.packName {
-                        // Show pack name for non-core packs with update button if available
-                        HStack {
-                            Text(packName)
-                                .font(.headline)
-
-                            packUpdateButton(packId: packId, packName: packName, newVersion: updateAvailable)
-
-                            Spacer()
-                        }
-                        .padding(.top, index > 0 ? 8 : 0)
+                        Text(packName)
+                            .font(.headline)
+                            .padding(.top, index > 0 ? 8 : 0)
                     } else if index == 0 && groupedCategories.count > 1 {
-                        // Only show "Core" label if there are other packs
-                        HStack {
-                            Text("Core")
-                                .font(.headline)
-
-                            packUpdateButton(packId: packId, packName: "Core", newVersion: updateAvailable)
-
-                            Spacer()
-                        }
+                        Text("Core")
+                            .font(.headline)
                     }
 
-                    // OPTION 1: Use 3 columns for compact vertical cards with fixed sizing
                     LazyVGrid(columns: [
                         GridItem(.flexible(), spacing: 10),
                         GridItem(.flexible(), spacing: 10),
                         GridItem(.flexible(), spacing: 10)
                     ], spacing: 10) {
-                    // OPTION 2: Use 2 columns for horizontal cards (uncomment lines below and comment lines above)
-                    // LazyVGrid(columns: [
-                    //     GridItem(.flexible(), spacing: 10),
-                    //     GridItem(.flexible(), spacing: 10)
-                    // ], spacing: 10) {
                         ForEach(group.categories, id: \.id) { flexCategory in
                             FlexibleCategoryCard(
                                 category: flexCategory,
@@ -308,56 +263,11 @@ struct HomeView: View {
         }
     }
 
-    @ViewBuilder
-    private func packUpdateButton(packId: String, packName: String, newVersion: String?) -> some View {
-        if let newVersion {
-            if updatingPacks.contains(packId) {
-                ProgressView()
-                    .scaleEffect(0.7)
-            } else {
-                Button(action: {
-                    updatePack(packId: packId, packName: packName)
-                }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "arrow.down.circle.fill")
-                        Text("Update to v\(newVersion)")
-                    }
-                    .font(.caption)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.orange.opacity(0.15))
-                    .foregroundColor(.orange)
-                    .clipShape(Capsule())
-                }
-                .buttonStyle(BorderlessButtonStyle())
-            }
-        }
-    }
-    
     private func updateStreakDisplay() {
         currentStreak = streakManager.currentStreak
         streakStatus = streakManager.getStreakStatus()
     }
-    
-    private func updatePack(packId: String, packName: String) {
-        Task {
-            updatingPacks.insert(packId)
-            do {
-                try await packManager.updatePack(packId)
-                // Reload the installed packs to get the new version
-                packManager.loadInstalledPacks()
-                // Re-check for updates to clear the update indicator
-                await packManager.fetchAvailablePacks()
-                PromptService.shared.reloadPrompts()
-                showUpdateSuccess = true
-            } catch {
-                updateErrorMessage = "Failed to update \(packName): \(error.localizedDescription)"
-                showUpdateError = true
-            }
-            updatingPacks.remove(packId)
-        }
-    }
-    
+
     private func getMilestoneMessage(for streak: Int) -> String {
         switch streak {
         case 3:
@@ -378,44 +288,29 @@ struct HomeView: View {
             return "Amazing streak of \(streak) days! Keep those creative juices flowing!"
         }
     }
-    
+
     @ViewBuilder
     private var availablePacksSection: some View {
-        if !packManager.availablePacks.isEmpty {
+        let unpurchased = packManager.unpurchasedPacks
+        if !unpurchased.isEmpty {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Get More Packs")
                     .font(.headline)
-                
-                ForEach(packManager.availablePacks, id: \.id) { packInfo in
-                    AvailablePackCard(
-                        packInfo: packInfo,
-                        isDownloading: downloadingPacks.contains(packInfo.id),
-                        isPurchasing: storeManager.purchasingPack == packInfo.id,
-                        price: storeManager.product(for: packInfo.id)?.displayPrice,
-                        onPurchaseAndDownload: {
-                            Task {
-                                // Purchase first if needed
-                                if !storeManager.isPurchasedOrFree(packInfo.id) {
-                                    let success = await storeManager.purchase(packInfo.id)
-                                    guard success else {
-                                        if storeManager.purchaseError != nil {
-                                            downloadErrorMessage = storeManager.purchaseError ?? "Purchase failed"
-                                            showDownloadError = true
-                                        }
-                                        return
-                                    }
-                                }
 
-                                downloadingPacks.insert(packInfo.id)
-                                do {
-                                    try await packManager.downloadPack(packInfo)
+                ForEach(unpurchased) { pack in
+                    AvailablePackCard(
+                        pack: pack,
+                        isPurchasing: storeManager.purchasingPack == pack.id,
+                        price: storeManager.product(for: pack.id)?.displayPrice,
+                        onPurchase: {
+                            Task {
+                                let success = await storeManager.purchase(pack.id)
+                                if success {
                                     PromptService.shared.reloadPrompts()
-                                    await packManager.fetchAvailablePacks()
-                                } catch {
-                                    downloadErrorMessage = "Failed to download \(packInfo.name): \(error.localizedDescription)"
-                                    showDownloadError = true
+                                } else if let error = storeManager.purchaseError {
+                                    purchaseErrorMessage = error
+                                    showPurchaseError = true
                                 }
-                                downloadingPacks.remove(packInfo.id)
                             }
                         }
                     )
@@ -430,19 +325,19 @@ struct CategoryCard: View {
     let category: Category
     let count: Int
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 8) {
                 Image(systemName: category.icon)
                     .font(.title2)
                     .foregroundColor(category.colorValue)
-                
+
                 Text(category.rawValue)
                     .font(.caption)
                     .fontWeight(.medium)
                     .foregroundColor(.primary)
-                
+
                 Text("\(count) prompts")
                     .font(.caption2)
                     .foregroundColor(.secondary)
@@ -461,7 +356,7 @@ struct FlexibleCategoryCard: View {
     let category: FlexibleCategory
     let count: Int
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             VStack(spacing: 6) {
@@ -469,7 +364,7 @@ struct FlexibleCategoryCard: View {
                     .font(.title2)
                     .foregroundColor(category.colorValue)
                     .frame(height: 32)
-                
+
                 Text(category.name)
                     .font(.caption2)
                     .fontWeight(.medium)
@@ -478,7 +373,7 @@ struct FlexibleCategoryCard: View {
                     .lineLimit(2)
                     .minimumScaleFactor(0.8)
                     .frame(height: 30)
-                
+
                 Text("\(count)")
                     .font(.caption2)
                     .foregroundColor(.secondary)
@@ -493,52 +388,11 @@ struct FlexibleCategoryCard: View {
     }
 }
 
-// OPTION 2: Side-by-side horizontal layout (uncomment to use)
-/*
-struct FlexibleCategoryCard: View {
-    let category: FlexibleCategory
-    let count: Int
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 12) {
-                Image(systemName: category.icon)
-                    .font(.title2)
-                    .foregroundColor(category.colorValue)
-                    .frame(width: 32)
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(category.name)
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .foregroundColor(.primary)
-                        .multilineTextAlignment(.leading)
-                        .lineLimit(2)
-                    
-                    Text("\(count) unused")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                }
-                
-                Spacer()
-            }
-            .padding(.vertical, 10)
-            .padding(.horizontal, 12)
-            .background(Color(UIColor.secondarySystemBackground))
-            .cornerRadius(12)
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-}
-*/
-
 struct AvailablePackCard: View {
-    let packInfo: RemotePackInfo
-    let isDownloading: Bool
+    let pack: PromptPack
     let isPurchasing: Bool
     let price: String?
-    let onPurchaseAndDownload: () -> Void
+    let onPurchase: () -> Void
 
     var body: some View {
         HStack {
@@ -555,10 +409,10 @@ struct AvailablePackCard: View {
                         )
 
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(packInfo.name)
+                        Text(pack.name)
                             .font(.headline)
 
-                        Text(packInfo.description)
+                        Text(pack.description)
                             .font(.caption)
                             .foregroundColor(.secondary)
                             .lineLimit(2)
@@ -566,41 +420,25 @@ struct AvailablePackCard: View {
 
                     Spacer()
 
-                    if isDownloading || isPurchasing {
-                        VStack(spacing: 2) {
-                            ProgressView()
-                                .scaleEffect(0.8)
-                            Text(isPurchasing ? "Buying..." : "Installing...")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                        }
+                    if isPurchasing {
+                        PurchasingIndicator()
                     } else {
-                        Button(action: onPurchaseAndDownload) {
-                            Text(price ?? "$0.99")
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(Color.blue)
-                                .foregroundColor(.white)
-                                .clipShape(Capsule())
-                        }
-                        .buttonStyle(BorderlessButtonStyle())
+                        PurchaseButton(price: price, action: onPurchase)
                     }
                 }
-                
+
                 HStack(spacing: 16) {
-                    Label("\(packInfo.categories.count) categories", systemImage: "folder")
+                    Label("\(pack.categories.count) categories", systemImage: "folder")
                         .font(.caption2)
                         .foregroundColor(.secondary)
-                    
-                    Label("\(packInfo.promptCount) prompts", systemImage: "lightbulb")
+
+                    Label("\(pack.totalPrompts) prompts", systemImage: "lightbulb")
                         .font(.caption2)
                         .foregroundColor(.secondary)
-                    
+
                     Spacer()
-                    
-                    Text("by \(packInfo.author)")
+
+                    Text("by \(pack.author)")
                         .font(.caption2)
                         .foregroundColor(.secondary)
                         .italic()

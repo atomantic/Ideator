@@ -1,0 +1,51 @@
+{
+  "id": "creative-writing",
+  "name": "Creative Writing",
+  "version": "1.3.0",
+  "description": "Advanced prompts for writers, authors, and storytellers",
+  "author": "Idea Loom",
+  "categories": [
+    {
+      "id": "characters",
+      "name": "Character Development",
+      "file": "characters.tsv",
+      "icon": "person.crop.circle.fill",
+      "color": "orange"
+    },
+    {
+      "id": "writing",
+      "name": "Writing Prompts",
+      "file": "writing.tsv",
+      "icon": "pencil",
+      "color": "yellow"
+    },
+    {
+      "id": "plots",
+      "name": "Plot Ideas",
+      "file": "plots.tsv",
+      "icon": "book.closed.fill",
+      "color": "red"
+    },
+    {
+      "id": "worldbuilding",
+      "name": "World Building",
+      "file": "worldbuilding.tsv",
+      "icon": "globe",
+      "color": "blue"
+    },
+    {
+      "id": "dialogue",
+      "name": "Dialogue & Scenes",
+      "file": "dialogue.tsv",
+      "icon": "bubble.left.and.bubble.right.fill",
+      "color": "green"
+    },
+    {
+      "id": "genres",
+      "name": "Genre Exploration",
+      "file": "genres.tsv",
+      "icon": "books.vertical.fill",
+      "color": "purple"
+    }
+  ]
+}

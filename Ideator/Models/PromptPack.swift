@@ -8,16 +8,15 @@ struct PromptPack: Identifiable, Codable {
     let author: String
     var categories: [PackCategory]
     var isEnabled: Bool = true
-    var isDownloaded: Bool = true
-    
+
     var totalPrompts: Int {
         categories.reduce(0) { $0 + ($1.promptCount ?? 0) }
     }
-    
+
     enum CodingKeys: String, CodingKey {
         case id, name, version, description, author, categories
     }
-    
+
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(String.self, forKey: .id)
@@ -27,7 +26,6 @@ struct PromptPack: Identifiable, Codable {
         author = try container.decode(String.self, forKey: .author)
         categories = try container.decode([PackCategory].self, forKey: .categories)
         isEnabled = true
-        isDownloaded = true
     }
 }
 
@@ -38,15 +36,4 @@ struct PackCategory: Codable {
     let icon: String
     let color: String
     var promptCount: Int? = nil
-}
-
-struct RemotePackInfo: Codable {
-    let id: String
-    let name: String
-    let version: String
-    let description: String
-    let author: String
-    let downloadUrl: String
-    let promptCount: Int
-    let categories: [String]
 }

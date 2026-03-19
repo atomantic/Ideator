@@ -1,0 +1,30 @@
+{
+  "id": "wellness",
+  "name": "Wellness",
+  "version": "1.4.0",
+  "description": "Prompts for health, mindfulness, and self-care",
+  "author": "Idea Loom",
+  "categories": [
+    {
+      "id": "health",
+      "name": "Health & Fitness",
+      "file": "health.tsv",
+      "icon": "heart.circle.fill",
+      "color": "red"
+    },
+    {
+      "id": "mindfulness",
+      "name": "Mindfulness",
+      "file": "mindfulness.tsv",
+      "icon": "leaf.fill",
+      "color": "green"
+    },
+    {
+      "id": "selfcare",
+      "name": "Self Care",
+      "file": "selfcare.tsv",
+      "icon": "sparkles",
+      "color": "purple"
+    }
+  ]
+}

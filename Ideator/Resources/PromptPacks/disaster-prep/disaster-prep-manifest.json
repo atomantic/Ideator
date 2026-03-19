@@ -1,0 +1,44 @@
+{
+  "id": "disaster-prep",
+  "name": "Disaster Prep",
+  "version": "1.3.0",
+  "description": "Prompts for planning and preparing for emergencies and disasters",
+  "author": "Idea Loom",
+  "categories": [
+    {
+      "id": "riskScenarios",
+      "name": "Risk Scenarios",
+      "file": "riskScenarios.tsv",
+      "icon": "exclamationmark.octagon.fill",
+      "color": "red"
+    },
+    {
+      "id": "emergencyActions",
+      "name": "Emergency Actions",
+      "file": "emergencyActions.tsv",
+      "icon": "bolt.fill",
+      "color": "orange"
+    },
+    {
+      "id": "survivalSupplies",
+      "name": "Survival Supplies",
+      "file": "survivalSupplies.tsv",
+      "icon": "backpack.fill",
+      "color": "green"
+    },
+    {
+      "id": "communicationCoordination",
+      "name": "Communication & Coordination",
+      "file": "communicationCoordination.tsv",
+      "icon": "bubble.left.and.bubble.right.fill",
+      "color": "purple"
+    },
+    {
+      "id": "recoveryRebuild",
+      "name": "Recovery & Rebuild",
+      "file": "recoveryRebuild.tsv",
+      "icon": "hammer.fill",
+      "color": "gray"
+    }
+  ]
+}

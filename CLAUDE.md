@@ -42,10 +42,11 @@ Requires `.env` file with App Store Connect API credentials (see `.env.example`)
 
 CI/CD via GitHub Actions (`.github/workflows/ci.yml`) deploys automatically on push to `main`, `testflight`, or `release/*` branches.
 
-### Core Pack Sync
-- **Sync script**: `./sync-core-pack.sh` - Syncs core pack from IdeatorPromptPacks repo
-- **Usage**: Run before releases to update bundled core pack to latest version
+### Pack Sync
+- **Sync script**: `./sync-packs.sh` - Syncs all packs from IdeatorPromptPacks repo
+- **Usage**: Run before releases to update bundled packs to latest version
 - **Prerequisites**: IdeatorPromptPacks must be cloned in parent directory
+- **Note**: Manifests are renamed to `{packId}-manifest.json` to avoid Xcode flat-bundle collisions
 
 ## Architecture
 
@@ -61,14 +62,14 @@ CI/CD via GitHub Actions (`.github/workflows/ci.yml`) deploys automatically on p
   - `HomeView.swift`: Dashboard with quick actions
   - `IdeaInputView.swift`: Core ideation interface
   - `PromptSelectionView.swift`: Browse and select prompts
-  - `PromptPacksView.swift`: Manage downloadable packs
+  - `PromptPacksView.swift`: Manage and purchase prompt packs
   - `DraftsView.swift`: Saved drafts management
   - `HistoryView.swift`: Completed lists history
   - `SettingsView.swift`: App preferences
 
 - **Services** (`Ideator/Services/`): Core services
   - `PromptService.swift`: Loads and manages prompts
-  - `PackManager.swift`: Downloads and updates prompt packs
+  - `PackManager.swift`: Loads bundled prompt packs, manages enabled state
   - `PersistenceManager.swift`: UserDefaults persistence
   - `ExportManager.swift`: Export to Apple Notes
 
@@ -78,21 +79,21 @@ CI/CD via GitHub Actions (`.github/workflows/ci.yml`) deploys automatically on p
 
 ## Prompt Pack System
 
-### Local Core Pack
-- Located in `Ideator/Resources/PromptPacks/Core/`
-- Contains 14 categories including wellness topics
-- TSV format: `text\ttags` (no suggestedCount)
-- Version: Synced from IdeatorPromptPacks using `sync-core-pack.sh`
+### Bundled Packs
+- All packs are bundled in `Ideator/Resources/PromptPacks/`
+- Core pack is free; other packs require IAP ($0.99 each)
+- Manifests named `{packId}-manifest.json` to avoid Xcode flat-bundle collisions
+- Packs: core, creative-writing, disaster-prep, family, impact-finance, silly, surreal, tech-startup, wellness
 
-### Remote Packs Repository
+### Source Repository
 - GitHub: https://github.com/atomantic/IdeatorPromptPacks
 - Structure: `packs/{pack-id}/manifest.json` + category TSV files
-- Available packs: Tech Startup, Creative Writing, Family
+- Sync to app bundle using `./sync-packs.sh`
 
 ### Pack Management
-- Core pack can be updated from GitHub
-- Additional packs downloadable in-app
-- Packs stored in app's Documents directory
+- Purchase unlocks pack instantly (no download needed)
+- StoreKit 2 handles IAP; StoreManager tracks purchased state
+- PackManager loads all packs from app bundle, filters by purchase state
 
 ## Working with Prompts
 
@@ -135,12 +136,11 @@ Prompt files use tab-separated values:
 
 ## Key Features
 
-1. **Daily Prompts**: 100+ creative prompts across categories
-2. **Modular Packs**: Download additional prompt packs
+1. **Daily Prompts**: 200+ creative prompts across categories (Core pack)
+2. **Premium Packs**: 8 additional packs purchasable via IAP ($0.99 each)
 3. **Draft Management**: Save and continue idea lists
 4. **Export**: Share to Apple Notes
 5. **Progress Tracking**: Track unused prompts
-6. **GitHub Updates**: Update packs directly from GitHub
 
 ## Testing
 

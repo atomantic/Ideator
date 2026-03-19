@@ -60,7 +60,7 @@ struct FlexibleCategory: Identifiable, Hashable, Codable {
     }
     
     /// Returns all available categories: Custom first, then installed pack categories, sorted by name.
-    static func allCategories() -> [FlexibleCategory] {
+    @MainActor static func allCategories() -> [FlexibleCategory] {
         var categories: [FlexibleCategory] = []
         var addedIds = Set<String>()
 
@@ -80,7 +80,7 @@ struct FlexibleCategory: Identifiable, Hashable, Codable {
 
         // Add pack categories from installed packs
         let packManager = PackManager.shared
-        for pack in packManager.installedPacks where pack.isEnabled {
+        for pack in packManager.purchasedPacks where pack.isEnabled {
             for category in pack.categories {
                 if !addedIds.contains(category.id) {
                     categories.append(FlexibleCategory(

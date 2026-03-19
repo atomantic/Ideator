@@ -1,0 +1,23 @@
+{
+  "id": "impact-finance",
+  "name": "Impact & Finance",
+  "version": "1.4.0",
+  "description": "Prompts for social impact, world change, and financial thinking",
+  "author": "Idea Loom",
+  "categories": [
+    {
+      "id": "socialImpact",
+      "name": "Social Impact",
+      "file": "socialImpact.tsv",
+      "icon": "globe.americas.fill",
+      "color": "teal"
+    },
+    {
+      "id": "financial",
+      "name": "Financial",
+      "file": "financial.tsv",
+      "icon": "dollarsign.circle.fill",
+      "color": "mint"
+    }
+  ]
+}

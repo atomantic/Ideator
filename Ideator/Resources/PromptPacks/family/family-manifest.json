@@ -1,0 +1,44 @@
+{
+  "id": "family",
+  "name": "Family & Relationships",
+  "version": "1.5.0",
+  "description": "Prompts for family activities, parenting, and relationships",
+  "author": "Idea Loom",
+  "categories": [
+    {
+      "id": "activities",
+      "name": "Family Activities",
+      "file": "activities.tsv",
+      "icon": "figure.2.and.child.holdinghands",
+      "color": "blue"
+    },
+    {
+      "id": "parenting",
+      "name": "Parenting Ideas",
+      "file": "parenting.tsv",
+      "icon": "heart.text.square.fill",
+      "color": "red"
+    },
+    {
+      "id": "traditions",
+      "name": "Family Traditions",
+      "file": "traditions.tsv",
+      "icon": "star.circle.fill",
+      "color": "yellow"
+    },
+    {
+      "id": "education",
+      "name": "Learning Together",
+      "file": "education.tsv",
+      "icon": "book.fill",
+      "color": "green"
+    },
+    {
+      "id": "relationships",
+      "name": "Relationships",
+      "file": "relationships.tsv",
+      "icon": "person.2.fill",
+      "color": "red"
+    }
+  ]
+}
