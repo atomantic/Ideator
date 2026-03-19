@@ -315,6 +315,8 @@ struct HomeView: View {
                         }
                     )
                 }
+
+                RestorePurchasesButton()
             }
         }
     }

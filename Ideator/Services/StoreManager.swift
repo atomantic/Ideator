@@ -130,17 +130,21 @@ final class StoreManager: ObservableObject {
         }
     }
 
-    /// Restore purchases from App Store
-    func restorePurchases() async {
+    /// Restore purchases from App Store. Returns true if successful.
+    func restorePurchases() async -> Bool {
         logger.info("🛒 restoring purchases...")
         do {
             try await AppStore.sync()
         } catch {
             logger.error("🛒 AppStore.sync() failed: \(error.localizedDescription)")
             purchaseError = "Failed to restore purchases: \(error.localizedDescription)"
+            return false
         }
+        let before = purchasedPacks
         await refreshPurchaseState()
-        logger.info("🛒 restored \(self.purchasedPacks.count) packs")
+        let changed = purchasedPacks != before
+        logger.info("🛒 restored \(self.purchasedPacks.count) packs, changed=\(changed)")
+        return true
     }
 
     /// Grandfathers currently installed non-core packs (call once during migration)

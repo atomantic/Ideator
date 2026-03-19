@@ -5,8 +5,6 @@ struct PromptPacksView: View {
     @StateObject private var packManager = PackManager.shared
     @StateObject private var storeManager = StoreManager.shared
     @State private var showPurchaseError = false
-    @State private var isRestoringPurchases = false
-    @State private var showRestoreSuccess = false
 
     var body: some View {
         NavigationStack {
@@ -23,11 +21,6 @@ struct PromptPacksView: View {
                 Button("OK") {}
             } message: {
                 Text(storeManager.purchaseError ?? "An unknown error occurred.")
-            }
-            .alert("Purchases Restored", isPresented: $showRestoreSuccess) {
-                Button("OK") {}
-            } message: {
-                Text("Your purchases have been restored successfully.")
             }
         }
     }
@@ -80,24 +73,7 @@ struct PromptPacksView: View {
 
     private var restorePurchasesSection: some View {
         Section {
-            Button {
-                Task {
-                    isRestoringPurchases = true
-                    await storeManager.restorePurchases()
-                    PromptService.shared.reloadPrompts()
-                    isRestoringPurchases = false
-                    showRestoreSuccess = true
-                }
-            } label: {
-                HStack {
-                    if isRestoringPurchases {
-                        ProgressView()
-                            .scaleEffect(0.8)
-                    }
-                    Text("Restore Purchases")
-                }
-            }
-            .disabled(isRestoringPurchases)
+            RestorePurchasesButton()
         } footer: {
             Text("Restore previously purchased packs on this device or a new device.")
                 .font(.caption2)
@@ -110,17 +86,22 @@ struct PurchaseButton: View {
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            Text(price ?? "$0.99")
-                .font(.caption)
-                .fontWeight(.semibold)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .clipShape(Capsule())
+        if let price {
+            Button(action: action) {
+                Text(price)
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .clipShape(Capsule())
+            }
+            .buttonStyle(BorderlessButtonStyle())
+        } else {
+            ProgressView()
+                .scaleEffect(0.7)
         }
-        .buttonStyle(BorderlessButtonStyle())
     }
 }
 
@@ -202,6 +183,60 @@ struct PackRow: View {
             }
         }
         .padding(.vertical, 4)
+    }
+}
+
+struct RestorePurchasesButton: View {
+    var onRestore: () async -> Bool = {
+        await StoreManager.shared.restorePurchases()
+    }
+    var onRestoreComplete: () -> Void = {
+        PromptService.shared.reloadPrompts()
+    }
+
+    @State private var isRestoring = false
+    @State private var showRestoreSuccess = false
+    @State private var showRestoreError = false
+    @State private var restoreErrorMessage = ""
+
+    var body: some View {
+        Button {
+            Task {
+                isRestoring = true
+                let success = await onRestore()
+                if success {
+                    onRestoreComplete()
+                    showRestoreSuccess = true
+                } else {
+                    restoreErrorMessage = StoreManager.shared.purchaseError ?? "Unable to restore purchases."
+                    showRestoreError = true
+                }
+                isRestoring = false
+            }
+        } label: {
+            HStack(spacing: 6) {
+                if isRestoring {
+                    ProgressView()
+                        .scaleEffect(0.7)
+                }
+                Text("Restore Purchases")
+                    .font(.subheadline)
+                    .foregroundColor(.blue)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+        }
+        .disabled(isRestoring)
+        .alert("Purchases Restored", isPresented: $showRestoreSuccess) {
+            Button("OK") {}
+        } message: {
+            Text("Your purchases have been restored successfully.")
+        }
+        .alert("Restore Failed", isPresented: $showRestoreError) {
+            Button("OK") {}
+        } message: {
+            Text(restoreErrorMessage)
+        }
     }
 }
 
