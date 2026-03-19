@@ -4,6 +4,10 @@ import os.log
 
 private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "net.shadowpuppet.ideator", category: "StoreManager")
 
+enum ProductLoadState {
+    case idle, loading, loaded, failed
+}
+
 /// Manages in-app purchases for prompt packs using StoreKit 2
 @MainActor
 final class StoreManager: ObservableObject {
@@ -19,6 +23,8 @@ final class StoreManager: ObservableObject {
     @Published var purchaseError: String?
     /// Cached set of grandfathered pack IDs
     @Published private(set) var grandfatheredPacks: Set<String> = []
+    /// Product loading state
+    @Published var productLoadState: ProductLoadState = .idle
 
     nonisolated private let productIdPrefix = "net.shadowpuppet.ideator.pack."
     private let grandfatheredKey = "grandfatheredPacks"
@@ -54,6 +60,16 @@ final class StoreManager: ObservableObject {
             await loadProducts()
             await refreshPurchaseState()
             logger.info("🛒 init complete: \(self.purchasedPacks.count) purchased packs, \(self.products.count) products loaded")
+
+            // Auto-retry once after 3 seconds if products failed to load
+            if productLoadState == .failed {
+                try? await Task.sleep(for: .seconds(3))
+                await loadProducts()
+                if productLoadState == .loaded {
+                    await refreshPurchaseState()
+                    logger.info("🛒 retry succeeded: \(self.products.count) products loaded")
+                }
+            }
         }
     }
 
@@ -167,14 +183,18 @@ final class StoreManager: ObservableObject {
 
     // MARK: - Private
 
-    private func loadProducts() async {
+    func loadProducts() async {
+        guard productLoadState != .loading else { return }
+        productLoadState = .loading
         do {
             let storeProducts = try await Product.products(for: purchasablePackIds)
             for product in storeProducts {
                 products[product.id] = product
             }
+            productLoadState = storeProducts.isEmpty ? .failed : .loaded
             logger.info("🛒 loaded \(storeProducts.count) products")
         } catch {
+            productLoadState = .failed
             logger.error("🛒 failed to load products: \(error.localizedDescription)")
         }
     }

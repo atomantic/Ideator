@@ -302,6 +302,7 @@ struct HomeView: View {
                         pack: pack,
                         isPurchasing: storeManager.purchasingPack == pack.id,
                         price: storeManager.product(for: pack.id)?.displayPrice,
+                        loadState: storeManager.productLoadState,
                         onPurchase: {
                             Task {
                                 let success = await storeManager.purchase(pack.id)
@@ -311,6 +312,11 @@ struct HomeView: View {
                                     purchaseErrorMessage = error
                                     showPurchaseError = true
                                 }
+                            }
+                        },
+                        onRetry: {
+                            Task {
+                                await storeManager.loadProducts()
                             }
                         }
                     )
@@ -394,7 +400,9 @@ struct AvailablePackCard: View {
     let pack: PromptPack
     let isPurchasing: Bool
     let price: String?
+    let loadState: ProductLoadState
     let onPurchase: () -> Void
+    let onRetry: () -> Void
 
     var body: some View {
         HStack {
@@ -425,7 +433,7 @@ struct AvailablePackCard: View {
                     if isPurchasing {
                         PurchasingIndicator()
                     } else {
-                        PurchaseButton(price: price, action: onPurchase)
+                        PurchaseButton(price: price, loadState: loadState, action: onPurchase, onRetry: onRetry)
                     }
                 }
 

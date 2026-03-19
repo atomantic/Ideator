@@ -55,6 +55,7 @@ struct PromptPacksView: View {
                         pack: pack,
                         isPurchasing: storeManager.purchasingPack == pack.id,
                         price: storeManager.product(for: pack.id)?.displayPrice,
+                        loadState: storeManager.productLoadState,
                         onPurchase: {
                             Task {
                                 let success = await storeManager.purchase(pack.id)
@@ -63,6 +64,11 @@ struct PromptPacksView: View {
                                 } else if storeManager.purchaseError != nil {
                                     showPurchaseError = true
                                 }
+                            }
+                        },
+                        onRetry: {
+                            Task {
+                                await storeManager.loadProducts()
                             }
                         }
                     )
@@ -83,7 +89,9 @@ struct PromptPacksView: View {
 
 struct PurchaseButton: View {
     let price: String?
+    let loadState: ProductLoadState
     let action: () -> Void
+    let onRetry: () -> Void
 
     var body: some View {
         if let price {
@@ -98,9 +106,21 @@ struct PurchaseButton: View {
                     .clipShape(Capsule())
             }
             .buttonStyle(BorderlessButtonStyle())
-        } else {
+        } else if loadState == .loading || loadState == .idle {
             ProgressView()
                 .scaleEffect(0.7)
+        } else if loadState == .failed {
+            Button(action: onRetry) {
+                Text("Retry")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Color.orange)
+                    .foregroundColor(.white)
+                    .clipShape(Capsule())
+            }
+            .buttonStyle(BorderlessButtonStyle())
         }
     }
 }
@@ -244,7 +264,9 @@ struct PurchasablePackRow: View {
     let pack: PromptPack
     let isPurchasing: Bool
     let price: String?
+    let loadState: ProductLoadState
     let onPurchase: () -> Void
+    let onRetry: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -264,7 +286,7 @@ struct PurchasablePackRow: View {
                 if isPurchasing {
                     PurchasingIndicator()
                 } else {
-                    PurchaseButton(price: price, action: onPurchase)
+                    PurchaseButton(price: price, loadState: loadState, action: onPurchase, onRetry: onRetry)
                 }
             }
 
