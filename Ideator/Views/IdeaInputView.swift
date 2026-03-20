@@ -89,6 +89,9 @@ struct IdeaInputView: View {
                                         text: idea,
                                         onDelete: {
                                             viewModel.removeIdea(at: index)
+                                        },
+                                        onUpdate: { newText in
+                                            viewModel.updateIdea(at: index, with: newText)
                                         }
                                     )
                                     .transition(.asymmetric(
@@ -288,7 +291,12 @@ struct IdeaRow: View {
     let index: Int
     let text: String
     let onDelete: () -> Void
-    
+    var onUpdate: ((String) -> Void)? = nil
+
+    @State private var isEditing = false
+    @State private var editText = ""
+    @FocusState private var isEditFocused: Bool
+
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             Text("\(index + 1).")
@@ -296,14 +304,38 @@ struct IdeaRow: View {
                 .foregroundColor(.secondary)
                 .frame(width: 30, alignment: .trailing)
                 .padding(.top, 8)
-            
-            Text(text)
-                .font(.body)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(12)
-                .background(Color(UIColor.secondarySystemBackground))
-                .cornerRadius(8)
-            
+
+            if isEditing {
+                TextField("", text: $editText)
+                    .font(.body)
+                    .focused($isEditFocused)
+                    .onSubmit { commitEdit() }
+                    .submitLabel(.done)
+                    .textFieldStyle(PlainTextFieldStyle())
+                    .padding(12)
+                    .background(Color(UIColor.systemBackground))
+                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.blue, lineWidth: 2)
+                    )
+                    .onChange(of: isEditFocused) { _, focused in
+                        if !focused { commitEdit() }
+                    }
+            } else {
+                Text(text)
+                    .font(.body)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(12)
+                    .background(Color(UIColor.secondarySystemBackground))
+                    .cornerRadius(8)
+                    .onTapGesture {
+                        editText = text
+                        isEditing = true
+                        isEditFocused = true
+                    }
+            }
+
             Button(action: onDelete) {
                 Image(systemName: "xmark.circle.fill")
                     .font(.title3)
@@ -311,6 +343,14 @@ struct IdeaRow: View {
             }
             .padding(.top, 8)
         }
+    }
+
+    private func commitEdit() {
+        let trimmed = editText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty && trimmed != text {
+            onUpdate?(trimmed)
+        }
+        isEditing = false
     }
 }
 

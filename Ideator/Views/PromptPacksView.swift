@@ -69,6 +69,7 @@ struct PromptPacksView: View {
                         onRetry: {
                             Task {
                                 await storeManager.loadProducts()
+                                await storeManager.refreshPurchaseState()
                             }
                         }
                     )
@@ -109,7 +110,8 @@ struct PurchaseButton: View {
         } else if loadState == .loading || loadState == .idle {
             ProgressView()
                 .scaleEffect(0.7)
-        } else if loadState == .failed {
+        } else {
+            // .failed or .loaded with missing product
             Button(action: onRetry) {
                 Text("Retry")
                     .font(.caption)

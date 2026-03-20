@@ -1,6 +1,8 @@
 import SwiftUI
 import UserNotifications
 
+private enum PromoResult { case success, invalid }
+
 struct SettingsView: View {
     let promptViewModel: PromptViewModel
     var onShowOnboarding: (() -> Void)?
@@ -11,16 +13,21 @@ struct SettingsView: View {
     @State private var showingResetAlert = false
     @State private var showingClearDataAlert = false
     @State private var notificationTime = Date()
-    
+    @State private var promoCode = ""
+    @State private var promoResult: PromoResult?
+    @StateObject private var storeManager = StoreManager.shared
+
     var body: some View {
         NavigationStack {
             Form {
                 preferencesSection
-                
+
                 promptManagementSection
-                
+
+                promoCodeSection
+
                 dataSection
-                
+
                 aboutSection
             }
             .navigationTitle("Settings")
@@ -277,6 +284,37 @@ struct SettingsView: View {
         }
     }
     
+    @ViewBuilder
+    private var promoCodeSection: some View {
+        if storeManager.isPromoUnlocked {
+            Section("Promo Code") {
+                Label("All packs unlocked", systemImage: "checkmark.seal.fill")
+                    .foregroundColor(.green)
+            }
+        } else {
+            Section("Promo Code") {
+                HStack {
+                    TextField("Enter code", text: $promoCode)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+
+                    Button("Redeem") {
+                        let success = storeManager.redeemPromoCode(promoCode)
+                        promoResult = success ? .success : .invalid
+                        if success { promoCode = "" }
+                    }
+                    .disabled(promoCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+
+                if let result = promoResult {
+                    Text(result == .success ? "All packs unlocked!" : "Invalid code")
+                        .font(.caption)
+                        .foregroundColor(result == .success ? .green : .red)
+                }
+            }
+        }
+    }
+
     private func resetAllData() {
         PersistenceManager.shared.clearAll()
         promptViewModel.resetUsedPrompts()

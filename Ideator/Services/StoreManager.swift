@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 import StoreKit
 import os.log
@@ -51,6 +52,11 @@ final class StoreManager: ObservableObject {
         let grandfathered = UserDefaults.standard.stringArray(forKey: grandfatheredKey) ?? []
         grandfatheredPacks = Set(grandfathered)
         purchasedPacks = grandfatheredPacks.union(freePacks)
+
+        // Restore promo-unlocked packs
+        if UserDefaults.standard.bool(forKey: promoRedeemedKey) {
+            purchasedPacks.formUnion(allPremiumPackIds)
+        }
 
         // Start listening for transaction updates (renewals, revocations, etc.)
         transactionListener = listenForTransactions()
@@ -181,6 +187,43 @@ final class StoreManager: ObservableObject {
         grandfatheredPacks.contains(packId)
     }
 
+    /// Whether all packs have been unlocked via promo code
+    var isPromoUnlocked: Bool {
+        UserDefaults.standard.bool(forKey: promoRedeemedKey)
+    }
+
+    // MARK: - Promo Code Redemption
+
+    private let promoRedeemedKey = "promoAllPacksRedeemed"
+
+    /// SHA-256 hash of the accepted promo code
+    private let promoCodeHash = "0de3377df105a021a7eea2eba374c6c5c81baa0f2397c9c2b69052b6742417cb"
+
+    /// All non-core pack IDs (hyphenated format used by PackManager)
+    private let allPremiumPackIds: [String] = [
+        "creative-writing", "disaster-prep", "family",
+        "impact-finance", "silly", "surreal",
+        "tech-startup", "wellness"
+    ]
+
+    /// Validate and redeem a promo code. Returns true if the code was valid.
+    func redeemPromoCode(_ code: String) -> Bool {
+        let trimmed = code.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let hash = SHA256.hash(data: Data(trimmed.utf8))
+        let hexHash = hash.compactMap { String(format: "%02x", $0) }.joined()
+
+        guard hexHash == promoCodeHash else {
+            logger.info("🛒 promo code rejected")
+            return false
+        }
+
+        UserDefaults.standard.set(true, forKey: promoRedeemedKey)
+        purchasedPacks.formUnion(allPremiumPackIds)
+        PromptService.shared.reloadPrompts()
+        logger.info("🛒 promo code redeemed — all packs unlocked")
+        return true
+    }
+
     // MARK: - Private
 
     func loadProducts() async {
@@ -199,7 +242,7 @@ final class StoreManager: ObservableObject {
         }
     }
 
-    private func refreshPurchaseState() async {
+    func refreshPurchaseState() async {
         // Check all current entitlements
         for await result in Transaction.currentEntitlements {
             do {
