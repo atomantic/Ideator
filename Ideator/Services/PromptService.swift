@@ -9,11 +9,13 @@ final class PromptService {
     
     private var allPrompts: [Prompt] = []
     private var usedPromptIds: Set<UUID> = []
+    private var favoritePromptIds: Set<UUID> = []
     private let packManager = PackManager.shared
     
     private init() {
         loadPromptsFromPacks()
         loadUsedPromptIds()
+        loadFavoritePromptIds()
         migrateUsedPromptIdsToSlugBased()
         migrateCompletedListsToUsedPrompts()
     }
@@ -179,6 +181,37 @@ final class PromptService {
     
     func isPromptUsed(_ prompt: Prompt) -> Bool {
         usedPromptIds.contains(prompt.id)
+    }
+
+    // MARK: - Favorites
+
+    private func loadFavoritePromptIds() {
+        favoritePromptIds = PersistenceManager.shared.loadFavoritePromptIds()
+    }
+
+    private func saveFavoritePromptIds() {
+        PersistenceManager.shared.saveFavoritePromptIds(favoritePromptIds)
+    }
+
+    func toggleFavorite(_ prompt: Prompt) {
+        if favoritePromptIds.contains(prompt.id) {
+            favoritePromptIds.remove(prompt.id)
+        } else {
+            favoritePromptIds.insert(prompt.id)
+        }
+        saveFavoritePromptIds()
+    }
+
+    func isPromptFavorited(_ prompt: Prompt) -> Bool {
+        favoritePromptIds.contains(prompt.id)
+    }
+
+    func getFavoritePromptIds() -> Set<UUID> {
+        favoritePromptIds
+    }
+
+    func getFavoritePrompts() -> [Prompt] {
+        allPrompts.filter { favoritePromptIds.contains($0.id) }
     }
     
     func getUnusedPromptsCount(for category: Category? = nil) -> Int {

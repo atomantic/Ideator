@@ -1,5 +1,25 @@
 # PLAN.md
 
+## Roadmap
+
+### Features
+1. [x] **Favorites / bookmarking** — heart button on prompt rows, favorites section on Home, filter in prompt selection
+2. [ ] **Prompt of the Day widget** — iOS WidgetKit widget showing a daily prompt; tapping opens the app to that prompt
+3. [ ] **Share individual ideas** — share a single idea as text/image card, not just full lists
+4. [ ] **Streaks & gamification** — surface milestone celebrations (badges, confetti) when hitting streak goals
+
+### Quality (deferred audit items)
+5. [ ] **Fix vacuous tests** — StreakManagerTests.testMilestone, ModelTests.testCategory_colorValue
+6. [ ] **Add missing test coverage** — StoreManager, PackManager, IdeaListViewModel, PromptViewModel
+7. [ ] **Standardize @Observable** — remove ObservableObject/StateObject, go all-in on @Observable (iOS 18.5+)
+8. [ ] **Extract business logic from views** — ContentView.onAppear and HomeView async logic → coordinators
+
+### Content
+9. [ ] **New pack themes** — professional-development, humor/comedy-writing, cooking/food, relationships
+10. [ ] **Seasonal/timely prompts** — rotating prompts tied to seasons or holidays
+
+---
+
 ## Better Swift Audit - 2026-03-18
 
 Summary: 29 new findings across 11 files. 18 fixed, 11 deferred.

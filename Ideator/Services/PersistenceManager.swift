@@ -9,7 +9,8 @@ final class PersistenceManager {
     private let draftsKey = "ideator_drafts"
     private let completedKey = "ideator_completed"
     private let customPromptsKey = "custom_prompts"
-    
+    private let favoritePromptIdsKey = "favorite_prompt_ids"
+
     private init() {}
     
     func saveDraft(_ ideaList: IdeaList) {
@@ -87,6 +88,17 @@ final class PersistenceManager {
         UserDefaults.standard.removeObject(forKey: draftsKey)
         UserDefaults.standard.removeObject(forKey: completedKey)
         UserDefaults.standard.removeObject(forKey: customPromptsKey)
+        UserDefaults.standard.removeObject(forKey: favoritePromptIdsKey)
+    }
+
+    // MARK: - Favorite Prompts
+
+    func loadFavoritePromptIds() -> Set<UUID> {
+        load(forKey: favoritePromptIdsKey) ?? []
+    }
+
+    func saveFavoritePromptIds(_ ids: Set<UUID>) {
+        save(ids, forKey: favoritePromptIdsKey)
     }
     
     // Custom Prompts Management

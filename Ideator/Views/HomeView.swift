@@ -29,6 +29,8 @@ struct HomeView: View {
 
                     quickStartSection
 
+                    favoritesSection
+
                     recentCategoriesSection
                         .id("categories")
 
@@ -225,6 +227,66 @@ struct HomeView: View {
                 .cornerRadius(12)
             }
             .buttonStyle(PlainButtonStyle())
+        }
+    }
+
+    @ViewBuilder
+    private var favoritesSection: some View {
+        let favorites = promptViewModel.getFavoritePrompts()
+        if !favorites.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Image(systemName: "heart.fill")
+                        .foregroundColor(.red)
+                    Text("Favorites")
+                        .font(.headline)
+                }
+
+                ForEach(favorites.prefix(5)) { prompt in
+                    Button {
+                        ideaListViewModel.startNewList(with: prompt)
+                        promptViewModel.markPromptAsUsed(prompt)
+                        showingIdeaInput = true
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: prompt.flexibleCategory.icon)
+                                .foregroundColor(prompt.flexibleCategory.colorValue)
+                                .font(.body)
+                                .frame(width: 24)
+
+                            Text(prompt.formattedTitle)
+                                .font(.subheadline)
+                                .foregroundColor(.primary)
+                                .lineLimit(1)
+
+                            Spacer()
+
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundColor(.secondary.opacity(0.5))
+                        }
+                        .padding(.vertical, 6)
+                        .padding(.horizontal, 12)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+
+                if favorites.count > 5 {
+                    Button {
+                        showingPromptSelection = true
+                    } label: {
+                        Text("See all \(favorites.count) favorites")
+                            .font(.caption)
+                            .foregroundColor(.accentColor)
+                    }
+                    .padding(.horizontal, 12)
+                }
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(UIColor.secondarySystemBackground))
+            )
         }
     }
 

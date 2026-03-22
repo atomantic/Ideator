@@ -11,6 +11,7 @@ struct PromptSelectionView: View {
     @State private var searchText = ""
     @State private var showingCustomPrompt = false
     @State private var showingNoRandomAlert = false
+    @State private var showingFavoritesOnly = false
     @State private var customPromptIds: Set<UUID> = []
     
     init(promptViewModel: PromptViewModel, ideaListViewModel: IdeaListViewModel, showingIdeaInput: Binding<Bool>) {
@@ -24,18 +25,20 @@ struct PromptSelectionView: View {
     
     var filteredPrompts: [Prompt] {
         let prompts: [Prompt]
-        if let flexCategory = selectedFlexibleCategory {
+        if showingFavoritesOnly {
+            prompts = promptViewModel.getFavoritePrompts()
+        } else if let flexCategory = selectedFlexibleCategory {
             prompts = promptViewModel.getPrompts(for: flexCategory)
         } else if let category = selectedCategory {
             prompts = promptViewModel.getPromptsForCategory(category)
         } else {
             prompts = promptViewModel.prompts
         }
-        
+
         if searchText.isEmpty {
             return prompts
         } else {
-            return prompts.filter { 
+            return prompts.filter {
                 $0.text.localizedCaseInsensitiveContains(searchText)
             }
         }
@@ -48,16 +51,10 @@ struct PromptSelectionView: View {
     var body: some View {
         NavigationStack {
             List {
-                if selectedFlexibleCategory != nil || searchText.isEmpty == false {
-                    // Single category or search results - no sections needed
+                if showingFavoritesOnly || selectedFlexibleCategory != nil || searchText.isEmpty == false {
+                    // Favorites, single category, or search results - no sections needed
                     ForEach(filteredPrompts) { prompt in
-                        PromptRow(
-                            prompt: prompt,
-                            isUsed: promptViewModel.isPromptUsed(prompt),
-                            isCustom: isCustomPrompt(prompt)
-                        ) {
-                            selectPrompt(prompt)
-                        }
+                        promptRow(for: prompt)
                     }
                 } else {
                     // All categories - group by pack/category
@@ -65,12 +62,12 @@ struct PromptSelectionView: View {
                         "\(prompt.flexibleCategory.packName ?? "Core")|\(prompt.flexibleCategory.name)"
                     }
                     let sortedGroups = groupedPrompts.keys.sorted()
-                    
+
                     ForEach(sortedGroups, id: \.self) { groupKey in
                         let components = groupKey.split(separator: "|").map(String.init)
                         let packName = components[0]
                         let categoryName = components[1]
-                        
+
                         Section(header: HStack {
                             Text(packName)
                                 .font(.caption)
@@ -84,13 +81,7 @@ struct PromptSelectionView: View {
                                 .foregroundColor(.secondary)
                         }) {
                             ForEach(groupedPrompts[groupKey] ?? []) { prompt in
-                                PromptRow(
-                                    prompt: prompt,
-                                    isUsed: promptViewModel.isPromptUsed(prompt),
-                                    isCustom: isCustomPrompt(prompt)
-                                ) {
-                                    selectPrompt(prompt)
-                                }
+                                promptRow(for: prompt)
                             }
                         }
                     }
@@ -124,17 +115,28 @@ struct PromptSelectionView: View {
                         Button(action: { showingCustomPrompt = true }) {
                             Label("Create Custom Prompt", systemImage: "plus.circle.fill")
                         }
-                        
+
                         Button(action: selectRandomPrompt) {
                             Label("Random from All", systemImage: "dice.fill")
                         }
-                        
+
                         Divider()
-                        
+
+                        Button(action: {
+                            showingFavoritesOnly.toggle()
+                            if showingFavoritesOnly {
+                                selectedCategory = nil
+                                selectedFlexibleCategory = nil
+                            }
+                        }) {
+                            Label(showingFavoritesOnly ? "Show All" : "Favorites", systemImage: showingFavoritesOnly ? "heart.slash" : "heart.fill")
+                        }
+
                         // All categories option
                         Button(action: {
                             selectedCategory = nil
                             selectedFlexibleCategory = nil
+                            showingFavoritesOnly = false
                             promptViewModel.selectCategory(nil)
                         }) {
                             Label("All Categories", systemImage: "square.grid.2x2")
@@ -180,8 +182,24 @@ struct PromptSelectionView: View {
         }
     }
     
+    @ViewBuilder
+    private func promptRow(for prompt: Prompt) -> some View {
+        PromptRow(
+            prompt: prompt,
+            isUsed: promptViewModel.isPromptUsed(prompt),
+            isCustom: isCustomPrompt(prompt),
+            isFavorited: promptViewModel.isPromptFavorited(prompt),
+            onSelect: { selectPrompt(prompt) },
+            onToggleFavorite: {
+                promptViewModel.toggleFavorite(prompt)
+            }
+        )
+    }
+
     private var navigationTitle: String {
-        if let flexCategory = selectedFlexibleCategory {
+        if showingFavoritesOnly {
+            return "Favorites"
+        } else if let flexCategory = selectedFlexibleCategory {
             return flexCategory.name
         } else if searchText.isEmpty {
             return "All Prompts"
@@ -193,7 +211,7 @@ struct PromptSelectionView: View {
     
     private func selectPrompt(_ prompt: Prompt) {
         ideaListViewModel.startNewList(with: prompt)
-        PromptService.shared.markPromptAsUsed(prompt)
+        promptViewModel.markPromptAsUsed(prompt)
         dismiss()
         showingIdeaInput = true
     }
@@ -217,61 +235,71 @@ struct PromptRow: View {
     let prompt: Prompt
     let isUsed: Bool
     let isCustom: Bool
+    let isFavorited: Bool
     let onSelect: () -> Void
-    
-    init(prompt: Prompt, isUsed: Bool, isCustom: Bool = false, onSelect: @escaping () -> Void) {
+    let onToggleFavorite: () -> Void
+
+    init(prompt: Prompt, isUsed: Bool, isCustom: Bool = false, isFavorited: Bool = false, onSelect: @escaping () -> Void, onToggleFavorite: @escaping () -> Void) {
         self.prompt = prompt
         self.isUsed = isUsed
         self.isCustom = isCustom
+        self.isFavorited = isFavorited
         self.onSelect = onSelect
+        self.onToggleFavorite = onToggleFavorite
     }
-    
+
     var body: some View {
-        Button(action: onSelect) {
-            HStack(spacing: 12) {
-                Image(systemName: prompt.flexibleCategory.icon)
-                    .foregroundColor(isUsed ? prompt.flexibleCategory.colorValue.opacity(0.5) : prompt.flexibleCategory.colorValue)
-                    .font(.title2)
-                    .frame(width: 32)
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 4) {
-                        Text(prompt.formattedTitle)
-                            .font(.body)
-                            .foregroundColor(isUsed ? .secondary : .primary)
-                            .multilineTextAlignment(.leading)
-                            .strikethrough(isUsed, color: .secondary.opacity(0.5))
-                        
-                        if isCustom {
-                            Image(systemName: "sparkles")
-                                .font(.caption)
-                                .foregroundColor(.purple)
+        HStack(spacing: 12) {
+            Button(action: onSelect) {
+                HStack(spacing: 12) {
+                    Image(systemName: prompt.flexibleCategory.icon)
+                        .foregroundColor(isUsed ? prompt.flexibleCategory.colorValue.opacity(0.5) : prompt.flexibleCategory.colorValue)
+                        .font(.title2)
+                        .frame(width: 32)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(spacing: 4) {
+                            Text(prompt.formattedTitle)
+                                .font(.body)
+                                .foregroundColor(isUsed ? .secondary : .primary)
+                                .multilineTextAlignment(.leading)
+                                .strikethrough(isUsed, color: .secondary.opacity(0.5))
+
+                            if isCustom {
+                                Image(systemName: "sparkles")
+                                    .font(.caption)
+                                    .foregroundColor(.purple)
+                            }
+                        }
+
+                        HStack(spacing: 8) {
+                            if isUsed {
+                                Label("Used", systemImage: "checkmark.circle.fill")
+                                    .font(.caption2)
+                                    .foregroundColor(.green.opacity(0.7))
+                            }
+
+                            if isCustom {
+                                Text("Custom")
+                                    .font(.caption2)
+                                    .foregroundColor(.purple.opacity(0.7))
+                            }
                         }
                     }
-                    
-                    HStack(spacing: 8) {
-                        if isUsed {
-                            Label("Used", systemImage: "checkmark.circle.fill")
-                                .font(.caption2)
-                                .foregroundColor(.green.opacity(0.7))
-                        }
-                        
-                        if isCustom {
-                            Text("Custom")
-                                .font(.caption2)
-                                .foregroundColor(.purple.opacity(0.7))
-                        }
-                    }
+
+                    Spacer()
                 }
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundColor(Color.secondary.opacity(0.5))
             }
-            .padding(.vertical, 4)
+            .buttonStyle(PlainButtonStyle())
+
+            Button(action: onToggleFavorite) {
+                Image(systemName: isFavorited ? "heart.fill" : "heart")
+                    .font(.body)
+                    .foregroundColor(isFavorited ? .red : .secondary.opacity(0.4))
+            }
+            .buttonStyle(PlainButtonStyle())
+            .accessibilityLabel(isFavorited ? "Remove from favorites" : "Add to favorites")
         }
-        .buttonStyle(PlainButtonStyle())
+        .padding(.vertical, 4)
     }
 }

@@ -106,6 +106,23 @@ class PromptViewModel {
         return prompt
     }
     
+    // MARK: - Favorites
+
+    private(set) var favoritePromptIds: Set<UUID> = PromptService.shared.getFavoritePromptIds()
+
+    func toggleFavorite(_ prompt: Prompt) {
+        promptService.toggleFavorite(prompt)
+        favoritePromptIds = promptService.getFavoritePromptIds()
+    }
+
+    func isPromptFavorited(_ prompt: Prompt) -> Bool {
+        favoritePromptIds.contains(prompt.id)
+    }
+
+    func getFavoritePrompts() -> [Prompt] {
+        promptService.getFavoritePrompts()
+    }
+
     func selectFlexibleCategory(_ category: FlexibleCategory) {
         // Set the flexible category
         selectedFlexibleCategory = category
