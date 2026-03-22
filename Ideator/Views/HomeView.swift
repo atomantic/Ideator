@@ -6,10 +6,7 @@ struct HomeView: View {
     @Binding var showingPromptSelection: Bool
     @Binding var showingIdeaInput: Bool
 
-    @State private var animateGradient = false
     @State private var showingCustomPrompt = false
-    @State private var currentStreak = 0
-    @State private var streakStatus = StreakManager.StreakStatus.neverStarted
     @State private var showingMilestone = false
     @State private var milestoneStreak = 0
     @State private var newAchievements: [(id: String, name: String, icon: String)] = []
@@ -18,7 +15,7 @@ struct HomeView: View {
 
     @State private var packManager = PackManager.shared
     @State private var storeManager = StoreManager.shared
-    private let streakManager = StreakManager.shared
+    @State private var streakManager = StreakManager.shared
 
     var body: some View {
         NavigationStack {
@@ -41,26 +38,10 @@ struct HomeView: View {
                 }
                 .padding()
             }
-            .onAppear {
-                updateStreakDisplay()
-            }
             .onReceive(NotificationCenter.default.publisher(for: .streakUpdated)) { _ in
-                updateStreakDisplay()
-                // Check for total-based achievements on any completion
-                if let earned = streakManager.checkAndAwardAchievements(), !earned.isEmpty {
+                if let earned = streakManager.checkAndAwardAchievements() {
                     newAchievements = earned
-                    milestoneStreak = currentStreak
-                    withAnimation { showingMilestone = true }
-                }
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .streakMilestone)) { notification in
-                if let streak = notification.userInfo?["streak"] as? Int {
-                    milestoneStreak = streak
-                    if let earned = streakManager.checkAndAwardAchievements() {
-                        newAchievements = earned
-                    } else {
-                        newAchievements = [(id: "streak_\(streak)", name: "Streak Milestone", icon: "flame.fill")]
-                    }
+                    milestoneStreak = streakManager.currentStreak
                     withAnimation { showingMilestone = true }
                 }
             }
@@ -115,15 +96,16 @@ struct HomeView: View {
     }
 
     private var streakSection: some View {
-        HStack(spacing: 16) {
+        let status = streakManager.getStreakStatus()
+        return HStack(spacing: 16) {
             VStack(spacing: 8) {
                 HStack {
                     Image(systemName: "flame.fill")
                         .font(.title2)
-                        .foregroundColor(currentStreak > 0 ? .orange : .gray)
+                        .foregroundColor(streakManager.currentStreak > 0 ? .orange : .gray)
                         .accessibilityHidden(true)
 
-                    Text("\(currentStreak)")
+                    Text("\(streakManager.currentStreak)")
                         .font(.largeTitle)
                         .fontWeight(.bold)
                 }
@@ -132,7 +114,7 @@ struct HomeView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
 
-                Text(streakStatus.emoji + " " + streakStatus.message)
+                Text(status.emoji + " " + status.message)
                     .font(.caption2)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -344,14 +326,9 @@ struct HomeView: View {
         }
     }
 
-    private func updateStreakDisplay() {
-        currentStreak = streakManager.currentStreak
-        streakStatus = streakManager.getStreakStatus()
-    }
-
     @ViewBuilder
     private var achievementBadgesSection: some View {
-        let earned = streakManager.getEarnedAchievements()
+        let earned = streakManager.earnedAchievements
         if !earned.isEmpty {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Achievements")

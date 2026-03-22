@@ -7,6 +7,7 @@ struct ConfettiPiece: Identifiable {
     let delay: Double
     let rotation: Double
     let size: CGFloat
+    let duration: Double
 }
 
 struct ConfettiView: View {
@@ -21,7 +22,8 @@ struct ConfettiView: View {
                 x: CGFloat.random(in: 0...1),
                 delay: Double.random(in: 0...0.5),
                 rotation: Double.random(in: 0...360),
-                size: CGFloat.random(in: 4...8)
+                size: CGFloat.random(in: 4...8),
+                duration: Double.random(in: 1.5...3.0)
             )
         }
     }
@@ -39,7 +41,7 @@ struct ConfettiView: View {
                             y: animate ? geo.size.height + 20 : -20
                         )
                         .animation(
-                            .easeIn(duration: Double.random(in: 1.5...3.0))
+                            .easeIn(duration: piece.duration)
                             .delay(piece.delay),
                             value: animate
                         )

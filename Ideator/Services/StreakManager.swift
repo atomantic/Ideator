@@ -19,6 +19,7 @@ final class StreakManager {
 
     private init() {
         loadStreakData()
+        loadEarnedAchievements()
         rebuildFromCompletedIfNeeded()
 
         completionObserver = NotificationCenter.default.addObserver(
@@ -101,11 +102,8 @@ final class StreakManager {
         
         // Post notification for UI updates
         NotificationCenter.default.post(name: .streakUpdated, object: nil)
-        
-        // Check for milestone achievements
-        checkMilestones()
     }
-    
+
     private func validateStreak() {
         guard let lastDate = lastCompletionDate else { return }
         
@@ -119,20 +117,6 @@ final class StreakManager {
                 currentStreak = 0
                 saveStreakData()
             }
-        }
-    }
-
-    private func checkMilestones() {
-        // Check for milestone streaks (3, 7, 14, 30, 60, 100, 365)
-        let milestones = [3, 7, 14, 30, 60, 100, 365]
-        
-        if milestones.contains(currentStreak) {
-            // Post notification for milestone celebration
-            NotificationCenter.default.post(
-                name: .streakMilestone,
-                object: nil,
-                userInfo: ["streak": currentStreak]
-            )
         }
     }
 
@@ -219,19 +203,18 @@ final class StreakManager {
     // MARK: - Achievements
 
     private let achievementsKey = "earned_achievements"
+    var earnedAchievements: Set<String> = []
 
-    func getEarnedAchievements() -> Set<String> {
+    private func loadEarnedAchievements() {
         guard let data = UserDefaults.standard.data(forKey: achievementsKey),
               let achievements = try? JSONDecoder().decode(Set<String>.self, from: data) else {
-            return []
+            return
         }
-        return achievements
+        earnedAchievements = achievements
     }
 
-    private func saveAchievement(_ id: String) {
-        var achievements = getEarnedAchievements()
-        achievements.insert(id)
-        if let data = try? JSONEncoder().encode(achievements) {
+    private func saveEarnedAchievements() {
+        if let data = try? JSONEncoder().encode(earnedAchievements) {
             UserDefaults.standard.set(data, forKey: achievementsKey)
         }
     }
@@ -251,11 +234,10 @@ final class StreakManager {
     ]
 
     func checkAndAwardAchievements() -> [(id: String, name: String, icon: String)]? {
-        let earned = getEarnedAchievements()
         var newlyEarned: [(id: String, name: String, icon: String)] = []
 
         for achievement in Self.allAchievements {
-            guard !earned.contains(achievement.id) else { continue }
+            guard !earnedAchievements.contains(achievement.id) else { continue }
 
             var qualifies = false
             if let streakReq = achievement.streakRequired, currentStreak >= streakReq {
@@ -266,9 +248,13 @@ final class StreakManager {
             }
 
             if qualifies {
-                saveAchievement(achievement.id)
+                earnedAchievements.insert(achievement.id)
                 newlyEarned.append((id: achievement.id, name: achievement.name, icon: achievement.icon))
             }
+        }
+
+        if !newlyEarned.isEmpty {
+            saveEarnedAchievements()
         }
 
         return newlyEarned.isEmpty ? nil : newlyEarned
@@ -285,6 +271,7 @@ final class StreakManager {
         UserDefaults.standard.removeObject(forKey: totalCompletedKey)
         UserDefaults.standard.removeObject(forKey: streakDatesKey)
         UserDefaults.standard.removeObject(forKey: achievementsKey)
+        earnedAchievements = []
         NotificationCenter.default.post(name: .streakUpdated, object: nil)
     }
     
@@ -344,5 +331,4 @@ final class StreakManager {
 extension Notification.Name {
     static let ideaListCompleted = Notification.Name("ideaListCompleted")
     static let streakUpdated = Notification.Name("streakUpdated")
-    static let streakMilestone = Notification.Name("streakMilestone")
 }
