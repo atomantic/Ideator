@@ -59,30 +59,21 @@ struct FlexibleCategory: Identifiable, Hashable, Codable {
         )
     }
     
-    /// Returns all available categories: Custom first, then installed pack categories, sorted by name.
+    /// Returns all available categories: Custom first, then pack categories, then remaining enum categories, sorted by name.
     @MainActor static func allCategories() -> [FlexibleCategory] {
         var categories: [FlexibleCategory] = []
-        var addedIds = Set<String>()
+        var addedNames = Set<String>()
 
         // Add Custom category first
         let customCategory = FlexibleCategory.from(category: .custom)
         categories.append(customCategory)
-        addedIds.insert(customCategory.id)
+        addedNames.insert(customCategory.name)
 
-        // Add all core categories
-        for category in Category.allCases where category != .custom {
-            let flex = FlexibleCategory.from(category: category)
-            if !addedIds.contains(flex.id) {
-                categories.append(flex)
-                addedIds.insert(flex.id)
-            }
-        }
-
-        // Add pack categories from installed packs
+        // Add pack categories first (source of truth)
         let packManager = PackManager.shared
         for pack in packManager.purchasedPacks where pack.isEnabled {
             for category in pack.categories {
-                if !addedIds.contains(category.id) {
+                if !addedNames.contains(category.name) {
                     categories.append(FlexibleCategory(
                         id: category.id,
                         name: category.name,
@@ -91,8 +82,16 @@ struct FlexibleCategory: Identifiable, Hashable, Codable {
                         packId: pack.id,
                         packName: pack.id == "core" ? nil : pack.name
                     ))
-                    addedIds.insert(category.id)
+                    addedNames.insert(category.name)
                 }
+            }
+        }
+
+        // Add remaining enum categories not covered by packs
+        for category in Category.allCases where category != .custom {
+            if !addedNames.contains(category.rawValue) {
+                categories.append(FlexibleCategory.from(category: category))
+                addedNames.insert(category.rawValue)
             }
         }
 
