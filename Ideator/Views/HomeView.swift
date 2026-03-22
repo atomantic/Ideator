@@ -16,8 +16,8 @@ struct HomeView: View {
     @State private var showPurchaseError = false
     @State private var purchaseErrorMessage = ""
 
-    @StateObject private var packManager = PackManager.shared
-    @StateObject private var storeManager = StoreManager.shared
+    @State private var packManager = PackManager.shared
+    @State private var storeManager = StoreManager.shared
     private let streakManager = StreakManager.shared
 
     var body: some View {

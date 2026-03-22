@@ -10,22 +10,16 @@ enum ProductLoadState {
 }
 
 /// Manages in-app purchases for prompt packs using StoreKit 2
-@MainActor
-final class StoreManager: ObservableObject {
+@MainActor @Observable
+final class StoreManager {
     static let shared = StoreManager()
 
-    /// All available products loaded from App Store
-    @Published var products: [String: Product] = [:]
-    /// Set of pack IDs the user has purchased (or been grandfathered into)
-    @Published var purchasedPacks: Set<String> = []
-    /// Current purchase in progress
-    @Published var purchasingPack: String?
-    /// Last purchase error message
-    @Published var purchaseError: String?
-    /// Cached set of grandfathered pack IDs
-    @Published private(set) var grandfatheredPacks: Set<String> = []
-    /// Product loading state
-    @Published var productLoadState: ProductLoadState = .idle
+    var products: [String: Product] = [:]
+    var purchasedPacks: Set<String> = []
+    var purchasingPack: String?
+    var purchaseError: String?
+    private(set) var grandfatheredPacks: Set<String> = []
+    var productLoadState: ProductLoadState = .idle
 
     nonisolated private let productIdPrefix = "net.shadowpuppet.ideator.pack."
     private let grandfatheredKey = "grandfatheredPacks"
@@ -45,7 +39,7 @@ final class StoreManager: ObservableObject {
         "net.shadowpuppet.ideator.pack.wellness",
     ]
 
-    private var transactionListener: Task<Void, Never>?
+    nonisolated(unsafe) private var transactionListener: Task<Void, Never>?
 
     private init() {
         // Load grandfathered packs from UserDefaults

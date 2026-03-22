@@ -15,7 +15,7 @@ struct SettingsView: View {
     @State private var notificationTime = Date()
     @State private var promoCode = ""
     @State private var promoResult: PromoResult?
-    @StateObject private var storeManager = StoreManager.shared
+    @State private var storeManager = StoreManager.shared
 
     var body: some View {
         NavigationStack {

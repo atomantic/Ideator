@@ -3,11 +3,11 @@ import os.log
 
 private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "net.shadowpuppet.ideator", category: "PackManager")
 
-@MainActor
-final class PackManager: ObservableObject {
+@MainActor @Observable
+final class PackManager {
     static let shared = PackManager()
 
-    @Published var allPacks: [PromptPack] = []
+    var allPacks: [PromptPack] = []
 
     /// All known bundled pack IDs
     private let bundledPackIds = [

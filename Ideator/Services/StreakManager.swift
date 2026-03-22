@@ -1,13 +1,13 @@
 import Foundation
-import Combine
 
-final class StreakManager: ObservableObject {
+@MainActor @Observable
+final class StreakManager {
     static let shared = StreakManager()
-    
-    @Published var currentStreak: Int = 0
-    @Published var longestStreak: Int = 0
-    @Published var lastCompletionDate: Date?
-    @Published var totalCompletedLists: Int = 0
+
+    var currentStreak: Int = 0
+    var longestStreak: Int = 0
+    var lastCompletionDate: Date?
+    var totalCompletedLists: Int = 0
     
     private let streakKey = "daily_streak"
     private let longestStreakKey = "longest_streak"
@@ -15,19 +15,24 @@ final class StreakManager: ObservableObject {
     private let totalCompletedKey = "total_completed_lists"
     private let streakDatesKey = "streak_dates"
     
+    private var completionObserver: Any?
+
     private init() {
         loadStreakData()
         rebuildFromCompletedIfNeeded()
-        
-        // Listen for completed lists
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleListCompleted),
-            name: .ideaListCompleted,
-            object: nil
-        )
+
+        completionObserver = NotificationCenter.default.addObserver(
+            forName: .ideaListCompleted,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.recordCompletion()
+            }
+        }
     }
-    
+
+
     private func loadStreakData() {
         currentStreak = UserDefaults.standard.integer(forKey: streakKey)
         longestStreak = UserDefaults.standard.integer(forKey: longestStreakKey)
@@ -51,10 +56,6 @@ final class StreakManager: ObservableObject {
            let dateData = try? JSONEncoder().encode(lastDate) {
             UserDefaults.standard.set(dateData, forKey: lastCompletionKey)
         }
-    }
-    
-    @objc private func handleListCompleted() {
-        recordCompletion()
     }
     
     func recordCompletion() {

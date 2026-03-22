@@ -2,8 +2,8 @@ import SwiftUI
 import StoreKit
 
 struct PromptPacksView: View {
-    @StateObject private var packManager = PackManager.shared
-    @StateObject private var storeManager = StoreManager.shared
+    @State private var packManager = PackManager.shared
+    @State private var storeManager = StoreManager.shared
     @State private var showPurchaseError = false
 
     var body: some View {

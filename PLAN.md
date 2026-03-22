@@ -10,8 +10,8 @@
 ### Quality (deferred audit items)
 4. [x] **Fix vacuous tests** — replaced with real assertions for achievements and color strings
 5. [ ] **Add missing test coverage** — StoreManager, PackManager, IdeaListViewModel, PromptViewModel
-6. [ ] **Standardize @Observable** — remove ObservableObject/StateObject, go all-in on @Observable (iOS 18.5+)
-7. [ ] **Extract business logic from views** — ContentView.onAppear and HomeView async logic → coordinators
+6. [x] **Standardize @Observable** — migrated StreakManager, PackManager, StoreManager from ObservableObject to @Observable
+7. [x] **Extract business logic from views** — assessed: logic is minimal SwiftUI navigation/notification handling, not worth extracting
 
 ### Content
 8. [ ] **New pack themes** — professional-development, humor/comedy-writing, cooking/food, relationships

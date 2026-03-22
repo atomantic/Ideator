@@ -1,6 +1,7 @@
 import XCTest
 @testable import Ideator
 
+@MainActor
 final class StreakManagerTests: XCTestCase {
     private var manager: StreakManager!
 
