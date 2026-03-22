@@ -14,3 +14,18 @@ Ways to delight users that cost us nothing	(surprise + zero budget) ways-to-deli
 Ways to differentiate from competitors	(do what they won’t) ways-to-differentiate-from-competitors
 Ways to simplify the user experience	(remove a step) ways-to-simplify-the-user-experience
 Ways to validate this idea quickly	(painted door or concierge) ways-to-validate-this-idea-quickly
+Animations or micro-interactions that would delight users	(moment + feeling it creates) animations-or-micro-interactions-that-would-delight
+Common workflows we make harder than they should be	(task + step to remove) common-workflows-we-make-harder-than-they-should-be
+Edge cases that will bite us if we don't handle them	(scenario + graceful fallback) edge-cases-that-will-bite-us
+Empty states that could teach instead of bore	(screen + helpful first action) empty-states-that-could-teach-instead-of-bore
+Features we should kill	(feature + why nobody uses it) features-we-should-kill
+Loading states that could do something useful	(wait time + info to show) loading-states-that-could-do-something-useful
+Moments where users might feel lost	(screen + breadcrumb or hint) moments-where-users-might-feel-lost
+Notifications we send that annoy instead of help	(notification + better trigger) notifications-we-send-that-annoy
+Onboarding steps that create an aha moment	(action + realization it triggers) onboarding-steps-that-create-aha-moments
+Problems our product almost solves but doesn't quite	(gap + minimum addition) problems-our-product-almost-solves
+Questions users ask support that the UI should answer	(question + where to surface it) questions-users-ask-support-the-ui-should-answer
+Settings that should be smart defaults instead	(setting + obvious best choice) settings-that-should-be-smart-defaults
+Things users do with our product that surprise us	(behavior + what it reveals) things-users-do-with-our-product-that-surprise-us
+Ways our product could work offline	(feature + graceful degradation) ways-our-product-could-work-offline
+Ways to reduce time-to-value for new users	(barrier + shortcut) ways-to-reduce-time-to-value-for-new-users
