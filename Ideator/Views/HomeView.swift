@@ -12,6 +12,7 @@ struct HomeView: View {
     @State private var streakStatus = StreakManager.StreakStatus.neverStarted
     @State private var showingMilestone = false
     @State private var milestoneStreak = 0
+    @State private var newAchievements: [(id: String, name: String, icon: String)] = []
     @State private var showPurchaseError = false
     @State private var purchaseErrorMessage = ""
 
@@ -26,6 +27,8 @@ struct HomeView: View {
                     heroSection
 
                     streakSection
+
+                    achievementBadgesSection
 
                     quickStartSection
 
@@ -43,11 +46,22 @@ struct HomeView: View {
             }
             .onReceive(NotificationCenter.default.publisher(for: .streakUpdated)) { _ in
                 updateStreakDisplay()
+                // Check for total-based achievements on any completion
+                if let earned = streakManager.checkAndAwardAchievements(), !earned.isEmpty {
+                    newAchievements = earned
+                    milestoneStreak = currentStreak
+                    withAnimation { showingMilestone = true }
+                }
             }
             .onReceive(NotificationCenter.default.publisher(for: .streakMilestone)) { notification in
                 if let streak = notification.userInfo?["streak"] as? Int {
                     milestoneStreak = streak
-                    showingMilestone = true
+                    if let earned = streakManager.checkAndAwardAchievements() {
+                        newAchievements = earned
+                    } else {
+                        newAchievements = [(id: "streak_\(streak)", name: "Streak Milestone", icon: "flame.fill")]
+                    }
+                    withAnimation { showingMilestone = true }
                 }
             }
             .sheet(isPresented: $showingCustomPrompt) {
@@ -56,10 +70,15 @@ struct HomeView: View {
                     showingIdeaInput: $showingIdeaInput
                 )
             }
-            .alert("Streak Milestone! 🎉", isPresented: $showingMilestone) {
-                Button("Awesome!") {}
-            } message: {
-                Text(getMilestoneMessage(for: milestoneStreak))
+            .overlay {
+                if showingMilestone {
+                    MilestoneCelebrationView(
+                        achievements: newAchievements,
+                        streak: milestoneStreak,
+                        onDismiss: { showingMilestone = false }
+                    )
+                    .transition(.opacity)
+                }
             }
             .alert("Purchase Failed", isPresented: $showPurchaseError) {
                 Button("OK") {}
@@ -330,24 +349,35 @@ struct HomeView: View {
         streakStatus = streakManager.getStreakStatus()
     }
 
-    private func getMilestoneMessage(for streak: Int) -> String {
-        switch streak {
-        case 3:
-            return "You've completed 3 days in a row! You're building a great habit. Keep it up!"
-        case 7:
-            return "One week streak! You're on fire! Your creativity is flowing."
-        case 14:
-            return "Two weeks of daily ideas! You're unstoppable!"
-        case 30:
-            return "30 day streak! You've mastered the art of daily ideation. Incredible dedication!"
-        case 60:
-            return "60 days! Two months of creative brilliance. You're an idea machine!"
-        case 100:
-            return "100 DAYS! Triple digits! You've reached legendary status!"
-        case 365:
-            return "ONE FULL YEAR! 365 days of ideas! You are truly extraordinary!"
-        default:
-            return "Amazing streak of \(streak) days! Keep those creative juices flowing!"
+    @ViewBuilder
+    private var achievementBadgesSection: some View {
+        let earned = streakManager.getEarnedAchievements()
+        if !earned.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Achievements")
+                    .font(.headline)
+
+                LazyVGrid(columns: [
+                    GridItem(.adaptive(minimum: 60), spacing: 8)
+                ], spacing: 8) {
+                    ForEach(StreakManager.allAchievements, id: \.id) { achievement in
+                        let isEarned = earned.contains(achievement.id)
+                        VStack(spacing: 4) {
+                            Image(systemName: achievement.icon)
+                                .font(.title2)
+                                .foregroundColor(isEarned ? .orange : .gray.opacity(0.3))
+
+                            Text(achievement.name)
+                                .font(.system(size: 9))
+                                .foregroundColor(isEarned ? .primary : .secondary.opacity(0.4))
+                                .multilineTextAlignment(.center)
+                                .lineLimit(2)
+                        }
+                        .frame(minWidth: 60, minHeight: 70)
+                        .accessibilityLabel(isEarned ? "\(achievement.name) earned" : "\(achievement.name) locked: \(achievement.requirement)")
+                    }
+                }
+            }
         }
     }
 

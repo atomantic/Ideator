@@ -215,6 +215,64 @@ final class StreakManager: ObservableObject {
         NotificationCenter.default.post(name: .streakUpdated, object: nil)
     }
     
+    // MARK: - Achievements
+
+    private let achievementsKey = "earned_achievements"
+
+    func getEarnedAchievements() -> Set<String> {
+        guard let data = UserDefaults.standard.data(forKey: achievementsKey),
+              let achievements = try? JSONDecoder().decode(Set<String>.self, from: data) else {
+            return []
+        }
+        return achievements
+    }
+
+    private func saveAchievement(_ id: String) {
+        var achievements = getEarnedAchievements()
+        achievements.insert(id)
+        if let data = try? JSONEncoder().encode(achievements) {
+            UserDefaults.standard.set(data, forKey: achievementsKey)
+        }
+    }
+
+    static let allAchievements: [(id: String, name: String, icon: String, requirement: String, streakRequired: Int?, totalRequired: Int?)] = [
+        ("first_list", "First Spark", "sparkle", "Complete your first idea list", nil, 1),
+        ("streak_3", "On a Roll", "flame", "3-day streak", 3, nil),
+        ("streak_7", "Week Warrior", "flame.fill", "7-day streak", 7, nil),
+        ("streak_14", "Fortnight Force", "bolt.fill", "14-day streak", 14, nil),
+        ("streak_30", "Monthly Master", "star.fill", "30-day streak", 30, nil),
+        ("streak_60", "Idea Machine", "crown", "60-day streak", 60, nil),
+        ("streak_100", "Century Club", "trophy.fill", "100-day streak", 100, nil),
+        ("streak_365", "Legendary", "laurel.leading", "365-day streak", 365, nil),
+        ("total_10", "Getting Started", "lightbulb", "Complete 10 idea lists", nil, 10),
+        ("total_50", "Prolific Thinker", "lightbulb.fill", "Complete 50 idea lists", nil, 50),
+        ("total_100", "Centurion", "brain.head.profile", "Complete 100 idea lists", nil, 100),
+    ]
+
+    func checkAndAwardAchievements() -> [(id: String, name: String, icon: String)]? {
+        let earned = getEarnedAchievements()
+        var newlyEarned: [(id: String, name: String, icon: String)] = []
+
+        for achievement in Self.allAchievements {
+            guard !earned.contains(achievement.id) else { continue }
+
+            var qualifies = false
+            if let streakReq = achievement.streakRequired, currentStreak >= streakReq {
+                qualifies = true
+            }
+            if let totalReq = achievement.totalRequired, totalCompletedLists >= totalReq {
+                qualifies = true
+            }
+
+            if qualifies {
+                saveAchievement(achievement.id)
+                newlyEarned.append((id: achievement.id, name: achievement.name, icon: achievement.icon))
+            }
+        }
+
+        return newlyEarned.isEmpty ? nil : newlyEarned
+    }
+
     func resetAllStats() {
         currentStreak = 0
         longestStreak = 0
@@ -225,6 +283,7 @@ final class StreakManager: ObservableObject {
         UserDefaults.standard.removeObject(forKey: lastCompletionKey)
         UserDefaults.standard.removeObject(forKey: totalCompletedKey)
         UserDefaults.standard.removeObject(forKey: streakDatesKey)
+        UserDefaults.standard.removeObject(forKey: achievementsKey)
         NotificationCenter.default.post(name: .streakUpdated, object: nil)
     }
     

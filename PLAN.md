@@ -6,7 +6,7 @@
 1. [x] **Favorites / bookmarking** — heart button on prompt rows, favorites section on Home, filter in prompt selection
 2. [ ] **Prompt of the Day widget** — iOS WidgetKit widget showing a daily prompt; tapping opens the app to that prompt
 3. [ ] **Share individual ideas** — share a single idea as text/image card, not just full lists
-4. [ ] **Streaks & gamification** — surface milestone celebrations (badges, confetti) when hitting streak goals
+4. [x] **Streaks & gamification** — confetti celebration, achievement badges grid, 11 unlockable achievements
 
 ### Quality (deferred audit items)
 5. [ ] **Fix vacuous tests** — StreakManagerTests.testMilestone, ModelTests.testCategory_colorValue
