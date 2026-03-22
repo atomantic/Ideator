@@ -26,7 +26,7 @@ Platform: iOS | Deployment target: 18.5+
 
 ### Security & Secrets
 - [x] **[MEDIUM]** `PackManager.swift` - Pack ID not validated for path traversal — added validatePackId() guard
-- [ ] **[LOW]** `StoreManager.swift` - Purchase data logged without privacy annotation
+- [x] **[LOW]** `StoreManager.swift` - Purchase data logged without privacy annotation — added privacy: .public
 
 ### Code Quality & Style
 - [x] **[HIGH]** `PromptService.swift:29` - print() instead of logger — replaced with logger.warning()
@@ -53,13 +53,13 @@ Platform: iOS | Deployment target: 18.5+
 - [x] **[MEDIUM]** `OnboardingView.swift` - Hardcoded font sizes in BenefitCard — replaced with semantic fonts
 
 ### Test Quality & Coverage — 51 tests passing
-- [ ] **[HIGH][VACUOUS]** `StreakManagerTests.swift` - testMilestone doesn't test real behavior
-- [ ] **[HIGH][VACUOUS]** `ModelTests.swift` - testCategory_colorValue discards result
-- [ ] **[HIGH][WEAK]** `TSVParserTests.swift` - Missing inverse slug test, ragged data
-- [ ] **[MEDIUM][MISSING]** StoreManager — completely untested
-- [ ] **[MEDIUM][MISSING]** PackManager — only isNewerVersion tested
-- [ ] **[MEDIUM][MISSING]** IdeaListViewModel — no state transition tests
-- [ ] **[MEDIUM][MISSING]** PromptViewModel — completely untested
+- [x] **[HIGH][VACUOUS]** `StreakManagerTests.swift` - testMilestone — replaced with real achievement assertions
+- [x] **[HIGH][VACUOUS]** `ModelTests.swift` - testCategory_colorValue — replaced with real assertions
+- [x] **[HIGH][WEAK]** `TSVParserTests.swift` - Added inverse slug test and ragged data test
+- [x] **[MEDIUM][MISSING]** StoreManager — 8 tests added
+- [x] **[MEDIUM][MISSING]** PackManager — 8 tests added
+- [x] **[MEDIUM][MISSING]** IdeaListViewModel — 10 tests added
+- [x] **[MEDIUM][MISSING]** PromptViewModel — 8 tests added
 
 ---
 
@@ -79,10 +79,10 @@ Platform: iOS | Deployment target: 18.5+
 - [x] **[HIGH]** Services throughout - print() instead of Logger — replaced with os.log
 - [x] **[MEDIUM]** `FlexibleCategory.swift:58` - Force unwrap on packId! — safe optional binding
 - [x] **[MEDIUM]** `IdeaInputView.swift:261` - Timer reference not nil'd after invalidate — fixed with .task pattern
-- [ ] **[LOW]** `PersistenceManager.swift` - Classes not marked `final`
-- [ ] **[LOW]** `TSVParser.swift` - Struct with only static methods could be enum
+- [x] **[LOW]** `PersistenceManager.swift` - Already marked final
+- [x] **[LOW]** `TSVParser.swift` - Changed struct to enum (only static methods)
 - [ ] **[LOW]** `SettingsView.swift:275` - Force unwrap on hardcoded URL (safe but style)
-- [ ] **[LOW]** `IdeaInputView.swift:12` - helpTips as @State could be private let
+- [x] **[LOW]** `IdeaInputView.swift:12` - Changed to private let
 
 ### DRY & YAGNI
 - [x] **[HIGH]** `CustomPromptView.swift + CustomPromptsListView.swift` - Duplicate getAllCategories() — consolidated into FlexibleCategory.allCategories()
@@ -109,9 +109,9 @@ Platform: iOS | Deployment target: 18.5+
 - [x] **[HIGH]** `HomeView.swift:43` - .onAppear { Task } instead of .task — fixed
 - [x] **[HIGH]** `HomeView.swift:250` - ForEach with unstable offset IDs — stable packId
 - [x] **[MEDIUM]** `PackManager.swift` - try? swallowing errors — added Logger error logging
-- [ ] **[HIGH]** `PackManager.swift` - @StateObject with singleton — use @Environment or direct access
+- [x] **[HIGH]** `PackManager.swift` - @StateObject → @State with @Observable
 - [ ] **[MEDIUM]** `PackManager.swift:222-277` - Concurrent Task without cancellation — add task gate
-- [ ] **[MEDIUM]** `PromptService.swift:150-165` - Double filter on allPrompts — single pass
+- [x] **[MEDIUM]** `PromptService.swift:150-165` - Double filter on allPrompts — merged to single pass
 - [ ] **[MEDIUM]** `PromptSelectionView.swift:64-66` - Dictionary(grouping:) in body — memoize
 - [ ] **[LOW]** `ContentView.swift:82` - Wrapping increment — replaced with standard increment
 
@@ -119,9 +119,9 @@ Platform: iOS | Deployment target: 18.5+
 - [x] **[HIGH]** `HomeView.swift` - .onAppear async → .task modifier
 - [x] **[MEDIUM]** `OnboardingView.swift` - Hardcoded font sizes → @ScaledMetric
 - [x] **[MEDIUM]** `DraftsView.swift + HistoryView.swift` - Missing accessibility on decorative images
-- [ ] **[HIGH]** Mixed ObservableObject/@Observable — standardize to @Observable (target supports iOS 18.5)
-- [ ] **[MEDIUM]** `HomeView.swift:23` - @StateObject with singleton PackManager
-- [ ] **[MEDIUM]** `IdeaInputView.swift` - Button with no accessibility label
+- [x] **[HIGH]** Mixed ObservableObject/@Observable — standardized to @Observable
+- [x] **[MEDIUM]** `HomeView.swift:23` - @StateObject → @State with @Observable
+- [x] **[MEDIUM]** `IdeaInputView.swift` - Added accessibility label to add button
 - [ ] **[LOW]** `OnboardingView.swift` - Gradient opacity may need dark mode testing
 - [ ] **[LOW]** Throughout - Missing @Environment(\.accessibilityReduceMotion) checks
 
@@ -134,8 +134,8 @@ Platform: iOS | Deployment target: 18.5+
 - [x] Strengthen TSVParser edge cases (empty, extra cols, empty slug) — 3 tests added
 - [x] Strengthen VersionCompare edge cases (equal, empty) — 2 tests added
 - [x] Strengthen UUID determinism tests (format, empty string) — 2 tests added
-- [ ] IdeaListViewModel state transition tests
-- [ ] PromptViewModel tests
+- [x] IdeaListViewModel state transition tests — 10 tests
+- [x] PromptViewModel tests — 8 tests
 - [ ] XCUITests for navigation flows
 
 ## Slug-Based Prompt ID System — 2026-03-17

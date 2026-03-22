@@ -90,5 +90,36 @@ final class TSVParserTests: XCTestCase {
         let prompt2 = Prompt(text: "Brew a cup of tea", flexibleCategory: cat, slug: "make-tea")
         XCTAssertEqual(prompt1.id, prompt2.id, "Same slug should produce same UUID regardless of text")
     }
+
+    func testDifferentSlugs_produceDifferentUUIDs() {
+        let cat = FlexibleCategory(id: "test.cat", name: "Test", icon: "star", color: "blue", packId: "test", packName: "Test Pack")
+        let slug1 = Prompt(text: "Same text", flexibleCategory: cat, slug: "slug-one")
+        let slug2 = Prompt(text: "Same text", flexibleCategory: cat, slug: "slug-two")
+        XCTAssertNotEqual(slug1.id, slug2.id, "Different slugs should produce different UUIDs even with same text")
+    }
+
+    func testParseRaggedRows_fewerColumnsThanHeader() {
+        let tsv = """
+        text\thelp\tslug
+        Only text here
+        Two cols\t(hint)
+        Full row\t(help)\tmy-slug
+        """
+        let cat = FlexibleCategory(id: "test.cat", name: "Test", icon: "star", color: "blue", packId: "test", packName: "Test Pack")
+        let prompts = TSVParser.parse(tsv: tsv, flexibleCategory: cat)
+        XCTAssertEqual(prompts.count, 3)
+        // Row with only text column
+        XCTAssertEqual(prompts[0].text, "Only text here")
+        XCTAssertNil(prompts[0].help)
+        XCTAssertNil(prompts[0].slug)
+        // Row with text and help only
+        XCTAssertEqual(prompts[1].text, "Two cols")
+        XCTAssertEqual(prompts[1].help, "(hint)")
+        XCTAssertNil(prompts[1].slug)
+        // Full row
+        XCTAssertEqual(prompts[2].text, "Full row")
+        XCTAssertEqual(prompts[2].help, "(help)")
+        XCTAssertEqual(prompts[2].slug, "my-slug")
+    }
 }
 

@@ -138,22 +138,20 @@ final class PromptService {
     
     func getRandomPrompt(from category: Category? = nil, avoiding usedIds: Set<UUID>? = nil) -> Prompt? {
         let idsToAvoid = usedIds ?? usedPromptIds
-        
-        var availablePrompts = allPrompts.filter { !idsToAvoid.contains($0.id) }
-        
-        if let category = category {
-            availablePrompts = availablePrompts.filter { $0.category == category }
+
+        let availablePrompts = allPrompts.filter { prompt in
+            !idsToAvoid.contains(prompt.id) && (category == nil || prompt.category == category)
         }
-        
+
         if availablePrompts.isEmpty {
             if category != nil {
                 return getRandomPrompt(from: nil, avoiding: usedIds)
             } else {
                 resetUsedPrompts()
-                availablePrompts = allPrompts
+                return allPrompts.randomElement()
             }
         }
-        
+
         return availablePrompts.randomElement()
     }
     
@@ -215,11 +213,9 @@ final class PromptService {
     }
     
     func getUnusedPromptsCount(for category: Category? = nil) -> Int {
-        var prompts = allPrompts.filter { !usedPromptIds.contains($0.id) }
-        if let category = category {
-            prompts = prompts.filter { $0.category == category }
-        }
-        return prompts.count
+        allPrompts.filter { prompt in
+            !usedPromptIds.contains(prompt.id) && (category == nil || prompt.category == category)
+        }.count
     }
     
     func getUnusedPromptsCount(for flexibleCategory: FlexibleCategory) -> Int {

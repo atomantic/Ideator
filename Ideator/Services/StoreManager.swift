@@ -120,17 +120,17 @@ final class StoreManager {
                 let transaction = try Self.checkVerified(verification)
                 await transaction.finish()
                 purchasedPacks.insert(packId)
-                logger.info("🛒 purchased pack: \(packId)")
+                logger.info("🛒 purchased pack: \(packId, privacy: .public)")
                 purchasingPack = nil
                 return true
 
             case .userCancelled:
-                logger.info("🛒 user cancelled purchase: \(packId)")
+                logger.info("🛒 user cancelled purchase: \(packId, privacy: .public)")
                 purchasingPack = nil
                 return false
 
             case .pending:
-                logger.info("🛒 purchase pending: \(packId)")
+                logger.info("🛒 purchase pending: \(packId, privacy: .public)")
                 purchasingPack = nil
                 return false
 

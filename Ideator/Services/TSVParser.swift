@@ -1,6 +1,6 @@
 import Foundation
 
-struct TSVParser {
+enum TSVParser {
     static func parse(tsv: String, flexibleCategory: FlexibleCategory) -> [Prompt] {
         let lines = tsv.components(separatedBy: .newlines)
         let dataLines = lines.dropFirst().filter { !$0.isEmpty }

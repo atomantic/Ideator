@@ -12,7 +12,7 @@ struct IdeaInputView: View {
     @State private var currentHelpTip = "Enter an idea..."
     @State private var helpTimerActive = false
     
-    let helpTips = [
+    private let helpTips = [
         "Get silly with it!",
         "Think outside the box",
         "Just say whatever pops into your head!",
@@ -75,6 +75,7 @@ struct IdeaInputView: View {
                                 .font(.title2)
                                 .foregroundColor(.blue)
                         }
+                        .accessibilityLabel("Add idea")
                         .disabled(currentInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
                     .padding(.horizontal)
