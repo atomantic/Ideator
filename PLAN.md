@@ -9,7 +9,7 @@
 
 ### Quality (deferred audit items)
 4. [x] **Fix vacuous tests** — replaced with real assertions for achievements and color strings
-5. [ ] **Add missing test coverage** — StoreManager, PackManager, IdeaListViewModel, PromptViewModel
+5. [x] **Add missing test coverage** — 34 new tests: StoreManager (8), PackManager (8), IdeaListViewModel (10), PromptViewModel (8)
 6. [x] **Standardize @Observable** — migrated StreakManager, PackManager, StoreManager from ObservableObject to @Observable
 7. [x] **Extract business logic from views** — assessed: logic is minimal SwiftUI navigation/notification handling, not worth extracting
 
