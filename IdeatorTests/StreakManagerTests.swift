@@ -54,14 +54,21 @@ final class StreakManagerTests: XCTestCase {
 
     // MARK: - Milestones
 
-    func testMilestone_notificationPosted_atThreeDayStreak() {
-        // We simulate by directly setting the streak to 2 and calling recordCompletion
-        // But since StreakManager tracks by dates, we test milestone detection indirectly
-        // by listening for the notification
-        let milestones = [3, 7, 14, 30]
-        for milestone in milestones {
-            // Verify the milestone values are in the expected set
-            XCTAssertTrue(milestone > 0, "Milestone \(milestone) should be positive")
+    func testMilestone_allAchievementDefinitionsAreValid() {
+        let achievements = StreakManager.allAchievements
+        XCTAssertGreaterThan(achievements.count, 0, "Should have at least one achievement")
+
+        let ids = achievements.map(\.id)
+        XCTAssertEqual(ids.count, Set(ids).count, "Achievement IDs must be unique")
+
+        for achievement in achievements {
+            XCTAssertFalse(achievement.name.isEmpty, "\(achievement.id) must have a name")
+            XCTAssertFalse(achievement.icon.isEmpty, "\(achievement.id) must have an icon")
+            XCTAssertFalse(achievement.requirement.isEmpty, "\(achievement.id) must have a requirement description")
+            XCTAssertTrue(
+                achievement.streakRequired != nil || achievement.totalRequired != nil,
+                "\(achievement.id) must have either a streak or total requirement"
+            )
         }
     }
 

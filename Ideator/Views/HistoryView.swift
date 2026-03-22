@@ -630,6 +630,13 @@ struct IdeaListDetailView: View {
                             .fixedSize(horizontal: false, vertical: true)
 
                         Spacer()
+
+                        ShareLink(item: trimmed) {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.caption)
+                                .foregroundColor(.secondary.opacity(0.5))
+                        }
+                        .buttonStyle(PlainButtonStyle())
                     }
                     .padding(.vertical, 4)
                 }

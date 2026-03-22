@@ -4,19 +4,18 @@
 
 ### Features
 1. [x] **Favorites / bookmarking** — heart button on prompt rows, favorites section on Home, filter in prompt selection
-2. [ ] **Prompt of the Day widget** — iOS WidgetKit widget showing a daily prompt; tapping opens the app to that prompt
-3. [ ] **Share individual ideas** — share a single idea as text/image card, not just full lists
-4. [x] **Streaks & gamification** — confetti celebration, achievement badges grid, 11 unlockable achievements
+2. [x] **Share individual ideas** — ShareLink on each idea in history detail + context menu in idea input
+3. [x] **Streaks & gamification** — confetti celebration, achievement badges grid, 11 unlockable achievements
 
 ### Quality (deferred audit items)
-5. [ ] **Fix vacuous tests** — StreakManagerTests.testMilestone, ModelTests.testCategory_colorValue
-6. [ ] **Add missing test coverage** — StoreManager, PackManager, IdeaListViewModel, PromptViewModel
-7. [ ] **Standardize @Observable** — remove ObservableObject/StateObject, go all-in on @Observable (iOS 18.5+)
-8. [ ] **Extract business logic from views** — ContentView.onAppear and HomeView async logic → coordinators
+4. [x] **Fix vacuous tests** — replaced with real assertions for achievements and color strings
+5. [ ] **Add missing test coverage** — StoreManager, PackManager, IdeaListViewModel, PromptViewModel
+6. [ ] **Standardize @Observable** — remove ObservableObject/StateObject, go all-in on @Observable (iOS 18.5+)
+7. [ ] **Extract business logic from views** — ContentView.onAppear and HomeView async logic → coordinators
 
 ### Content
-9. [ ] **New pack themes** — professional-development, humor/comedy-writing, cooking/food, relationships
-10. [ ] **Seasonal/timely prompts** — rotating prompts tied to seasons or holidays
+8. [ ] **New pack themes** — professional-development, humor/comedy-writing, cooking/food, relationships
+9. [ ] **Seasonal/timely prompts** — rotating prompts tied to seasons or holidays
 
 ---
 

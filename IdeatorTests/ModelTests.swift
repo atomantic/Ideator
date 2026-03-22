@@ -79,12 +79,11 @@ final class ModelTests: XCTestCase {
         XCTAssertEqual(Category.personalDevelopment.color, "blue")
     }
 
-    func testCategory_colorValue_returnsSwiftUIColor() {
-        // colorValue should return the SwiftUI Color matching the color string
-        // We can't directly compare SwiftUI Colors, but we verify it doesn't crash
-        // and that the property is accessible for all cases
+    func testCategory_colorValue_allCasesHaveNonEmptyColorString() {
         for category in Category.allCases {
-            let _ = category.colorValue
+            XCTAssertFalse(category.color.isEmpty, "\(category.rawValue) should have a non-empty color string")
+            // Verify colorValue computes without crash for every case
+            _ = category.colorValue
         }
     }
 

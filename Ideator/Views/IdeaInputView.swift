@@ -343,6 +343,14 @@ struct IdeaRow: View {
             }
             .padding(.top, 8)
         }
+        .contextMenu {
+            ShareLink(item: text) {
+                Label("Share Idea", systemImage: "square.and.arrow.up")
+            }
+            Button(role: .destructive, action: onDelete) {
+                Label("Delete", systemImage: "trash")
+            }
+        }
     }
 
     private func commitEdit() {
