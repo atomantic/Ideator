@@ -10,6 +10,7 @@ final class PromptService {
     private var allPrompts: [Prompt] = []
     private var usedPromptIds: Set<UUID> = []
     private var favoritePromptIds: Set<UUID> = []
+    private var cachedGroupedCategories: [(packName: String?, packId: String?, categories: [FlexibleCategory])]?
     private let packManager = PackManager.shared
     
     private init() {
@@ -21,6 +22,7 @@ final class PromptService {
     }
     
     private func loadPromptsFromPacks() {
+        cachedGroupedCategories = nil
         var prompts: [Prompt] = []
 
         for pack in packManager.purchasedPacks where pack.isEnabled {
@@ -64,6 +66,7 @@ final class PromptService {
 
     func reloadPrompts() {
         packManager.loadAllPacks()
+        cachedGroupedCategories = nil
         loadPromptsFromPacks()
         NotificationCenter.default.post(name: .promptsReloaded, object: nil)
     }
@@ -238,8 +241,12 @@ final class PromptService {
     }
     
     func getCategoriesGroupedByPack() -> [(packName: String?, packId: String?, categories: [FlexibleCategory])] {
+        if let cached = cachedGroupedCategories {
+            return cached
+        }
+
         var categoryDict: [String?: (packId: String?, categories: Set<FlexibleCategory>)] = [:]
-        
+
         for prompt in allPrompts {
             let packName = prompt.flexibleCategory.packName
             let packId = prompt.flexibleCategory.packId
@@ -248,15 +255,17 @@ final class PromptService {
             }
             categoryDict[packName]?.categories.insert(prompt.flexibleCategory)
         }
-        
+
         // Sort: Core (nil) first, then alphabetically by pack name
         let sorted = categoryDict.sorted { (first, second) in
             if first.key == nil { return true }
             if second.key == nil { return false }
             return (first.key ?? "") < (second.key ?? "")
         }
-        
-        return sorted.map { (packName: $0.key, packId: $0.value.packId, categories: Array($0.value.categories).sorted { $0.name < $1.name }) }
+
+        let result = sorted.map { (packName: $0.key, packId: $0.value.packId, categories: Array($0.value.categories).sorted { $0.name < $1.name }) }
+        cachedGroupedCategories = result
+        return result
     }
     
     private func migrateUsedPromptIdsToSlugBased() {

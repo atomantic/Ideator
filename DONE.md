@@ -2,6 +2,13 @@
 
 Completed items archived from PLAN.md.
 
+## 2026-03-23
+
+- HistoryView decomposition — extracted IdeaListDetailView and ShareSheet to own file (715 → 460 lines)
+- Memoized getCategoriesGroupedByPack() — cached in PromptService with invalidation on reload
+- PromptService tests — 17 tests covering prompt loading, filtering, random selection, used/favorites, and category grouping (107 total tests)
+- Assessed ContentView, HomeView async, PackManager task gate — all already clean, no changes needed
+
 ## 2026-03-18
 
 - Favorites/bookmarking — heart button on prompt rows, favorites section on Home, filter in prompt selection
