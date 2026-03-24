@@ -261,7 +261,7 @@ struct SettingsView: View {
                     .foregroundColor(.secondary)
             }
             
-            Link(destination: URL(string: "https://github.com/atomantic/IdeatorPromptPacks/issues")!) {
+            Link(destination: URL(string: "https://github.com/atomantic/IdeatorPromptPacks/issues") ?? URL(string: "https://github.com")!) {
                 HStack {
                     Text("Contact Support")
                     Spacer()
