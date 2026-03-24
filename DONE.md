@@ -8,6 +8,10 @@ Completed items archived from PLAN.md.
 - Memoized getCategoriesGroupedByPack() — cached in PromptService with invalidation on reload
 - PromptService tests — 17 tests covering prompt loading, filtering, random selection, used/favorites, and category grouping (107 total tests)
 - Assessed ContentView, HomeView async, PackManager task gate — all already clean, no changes needed
+- SettingsView force unwrap fix — safe fallback on hardcoded URL
+- ExportManager tests — 9 tests covering text and markdown export formats
+- Fixed DraftRow using old category system — now uses flexibleCategory for consistent pack icons
+- Assessed DraftsView/HistoryView shared row — different enough that a shared component would be over-engineering
 
 ## 2026-03-18
 
