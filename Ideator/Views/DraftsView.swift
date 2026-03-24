@@ -87,8 +87,8 @@ struct DraftRow: View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Image(systemName: draft.prompt.category.icon)
-                        .foregroundColor(draft.prompt.category.colorValue)
+                    Image(systemName: draft.prompt.flexibleCategory.icon)
+                        .foregroundColor(draft.prompt.flexibleCategory.colorValue)
                         .font(.title3)
                     
                     Text(draft.prompt.formattedTitle)
