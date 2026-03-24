@@ -80,11 +80,6 @@ To ensure variety and prevent repetition:
 - books to read this year
 - places to visit in my city
 
-## TODO:
-
-- intro explaining app
-- on share page explain that we've saved it in history
-- should prompt to set daily notification
 
 ## License
 
