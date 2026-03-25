@@ -12,6 +12,8 @@ Completed items archived from PLAN.md.
 - ExportManager tests — 9 tests covering text and markdown export formats
 - Fixed DraftRow using old category system — now uses flexibleCategory for consistent pack icons
 - Assessed DraftsView/HistoryView shared row — different enough that a shared component would be over-engineering
+- Share page history notice — added "Your list has been saved to History" on export completion screen
+- Confirmed onboarding intro and daily notification prompt already implemented — removed from plan
 
 ## 2026-03-18
 
