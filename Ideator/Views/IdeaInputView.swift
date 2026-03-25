@@ -387,6 +387,10 @@ struct ExportView: View {
                     .font(.body)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
+
+                Text("Your list has been saved to History.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
                 
                 Picker("Export Format", selection: $exportFormat) {
                     Text("Plain Text").tag("text")
