@@ -10,9 +10,29 @@ enum TSVParser {
             let parts = trimmed.components(separatedBy: "\t")
             let text = parts.first?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
             guard !text.isEmpty else { return nil }
-            let help = parts.count > 1 ? parts[1].trimmingCharacters(in: .whitespacesAndNewlines) : nil
-            let slugRaw = parts.count > 2 ? parts[2].trimmingCharacters(in: .whitespacesAndNewlines) : nil
-            let slug = (slugRaw?.isEmpty == true) ? nil : slugRaw
+
+            var help: String?
+            var slug: String?
+
+            if parts.count > 2 {
+                // 3-column format: text \t help \t slug
+                let helpRaw = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
+                help = helpRaw.isEmpty ? nil : helpRaw
+                let slugRaw = parts[2].trimmingCharacters(in: .whitespacesAndNewlines)
+                slug = slugRaw.isEmpty ? nil : slugRaw
+            } else if parts.count > 1 {
+                // 2-column format: text \t "(help text) slug"
+                let raw = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
+                if let closeParenRange = raw.range(of: ")", options: .backwards),
+                   raw.hasPrefix("(") {
+                    help = String(raw[raw.startIndex...closeParenRange.lowerBound])
+                    let remainder = raw[closeParenRange.upperBound...].trimmingCharacters(in: .whitespaces)
+                    slug = remainder.isEmpty ? nil : remainder
+                } else {
+                    help = raw.isEmpty ? nil : raw
+                }
+            }
+
             return Prompt(
                 text: text,
                 flexibleCategory: flexibleCategory,

@@ -98,6 +98,22 @@ final class TSVParserTests: XCTestCase {
         XCTAssertNotEqual(slug1.id, slug2.id, "Different slugs should produce different UUIDs even with same text")
     }
 
+    func testParseTwoColumnTSV_withEmbeddedSlug() {
+        let tsv = """
+        text\thelp
+        Analog message systems\t(e.g., bulletin board) analog-message-systems
+        Ways to keep morale up\t(jobs for everyone + small wins) ways-to-keep-morale-up
+        """
+        let cat = FlexibleCategory(id: "test.cat", name: "Test", icon: "star", color: "blue", packId: "test", packName: "Test Pack")
+        let prompts = TSVParser.parse(tsv: tsv, flexibleCategory: cat)
+        XCTAssertEqual(prompts.count, 2)
+        XCTAssertEqual(prompts[0].text, "Analog message systems")
+        XCTAssertEqual(prompts[0].help, "(e.g., bulletin board)")
+        XCTAssertEqual(prompts[0].slug, "analog-message-systems")
+        XCTAssertEqual(prompts[1].help, "(jobs for everyone + small wins)")
+        XCTAssertEqual(prompts[1].slug, "ways-to-keep-morale-up")
+    }
+
     func testParseRaggedRows_fewerColumnsThanHeader() {
         let tsv = """
         text\thelp\tslug
