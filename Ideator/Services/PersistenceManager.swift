@@ -10,6 +10,7 @@ final class PersistenceManager {
     private let completedKey = "ideator_completed"
     private let customPromptsKey = "custom_prompts"
     private let favoritePromptIdsKey = "favorite_prompt_ids"
+    private let starredIdeaKeysKey = "starred_idea_keys"
 
     private init() {}
     
@@ -89,6 +90,17 @@ final class PersistenceManager {
         UserDefaults.standard.removeObject(forKey: completedKey)
         UserDefaults.standard.removeObject(forKey: customPromptsKey)
         UserDefaults.standard.removeObject(forKey: favoritePromptIdsKey)
+        UserDefaults.standard.removeObject(forKey: starredIdeaKeysKey)
+    }
+
+    // MARK: - Starred Ideas (Best Ideas Collection)
+
+    func loadStarredIdeaKeys() -> Set<String> {
+        load(forKey: starredIdeaKeysKey) ?? []
+    }
+
+    func saveStarredIdeaKeys(_ keys: Set<String>) {
+        save(keys, forKey: starredIdeaKeysKey)
     }
 
     // MARK: - Favorite Prompts

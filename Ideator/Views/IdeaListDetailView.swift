@@ -9,6 +9,7 @@ struct IdeaListDetailView: View {
     @State private var isEditing = false
     @State private var editMode: EditMode = .inactive
     @State private var ideaIdentifiers: [UUID] = []
+    @State private var starredKeys: Set<String> = PersistenceManager.shared.loadStarredIdeaKeys()
 
     init(ideaList: IdeaList, onUpdate: @escaping (IdeaList) -> Void = { _ in }) {
         self.onUpdate = onUpdate
@@ -159,6 +160,8 @@ struct IdeaListDetailView: View {
             ForEach(Array(editableList.ideas.enumerated()), id: \.offset) { index, idea in
                 let trimmed = idea.trimmingCharacters(in: .whitespacesAndNewlines)
                 if !trimmed.isEmpty {
+                    let key = starKey(for: trimmed)
+                    let isStarred = starredKeys.contains(key)
                     HStack(alignment: .top, spacing: 8) {
                         Text("\(index + 1).")
                             .font(.body)
@@ -171,6 +174,16 @@ struct IdeaListDetailView: View {
                             .fixedSize(horizontal: false, vertical: true)
 
                         Spacer()
+
+                        Button {
+                            toggleStar(key: key)
+                        } label: {
+                            Image(systemName: isStarred ? "star.fill" : "star")
+                                .font(.body)
+                                .foregroundColor(isStarred ? .yellow : .secondary.opacity(0.4))
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .accessibilityLabel(isStarred ? "Remove from Best Ideas" : "Add to Best Ideas")
 
                         ShareLink(item: trimmed) {
                             Image(systemName: "square.and.arrow.up")
@@ -242,6 +255,19 @@ struct IdeaListDetailView: View {
         onUpdate(updatedList)
 
         isEditing = false
+    }
+
+    private func starKey(for ideaText: String) -> String {
+        "\(editableList.id.uuidString):\(ideaText)"
+    }
+
+    private func toggleStar(key: String) {
+        if starredKeys.contains(key) {
+            starredKeys.remove(key)
+        } else {
+            starredKeys.insert(key)
+        }
+        PersistenceManager.shared.saveStarredIdeaKeys(starredKeys)
     }
 }
 

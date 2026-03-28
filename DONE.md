@@ -2,6 +2,10 @@
 
 Completed items archived from PLAN.md.
 
+## 2026-03-28
+
+- Best Ideas Collection — star/flag individual ideas in History detail view, curated "Best Ideas" section on Home with full-screen browse view
+
 ## 2026-03-23
 
 - HistoryView decomposition — extracted IdeaListDetailView and ShareSheet to own file (715 → 460 lines)

@@ -31,6 +31,8 @@ struct HomeView: View {
 
                     favoritesSection
 
+                    bestIdeasSection
+
                     recentCategoriesSection
                         .id("categories")
 
@@ -289,6 +291,92 @@ struct HomeView: View {
                     .fill(Color(UIColor.secondarySystemBackground))
             )
         }
+    }
+
+    @ViewBuilder
+    private var bestIdeasSection: some View {
+        let starredKeys = PersistenceManager.shared.loadStarredIdeaKeys()
+        if !starredKeys.isEmpty {
+            let completedLists = PersistenceManager.shared.loadCompleted()
+            let bestIdeas = collectBestIdeas(from: completedLists, starredKeys: starredKeys)
+            if !bestIdeas.isEmpty {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Image(systemName: "star.fill")
+                            .foregroundColor(.yellow)
+                        Text("Best Ideas")
+                            .font(.headline)
+
+                        Spacer()
+
+                        Text("\(bestIdeas.count)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+
+                    ForEach(bestIdeas.prefix(5), id: \.key) { item in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(item.ideaText)
+                                .font(.subheadline)
+                                .foregroundColor(.primary)
+                                .lineLimit(2)
+
+                            HStack(spacing: 4) {
+                                Image(systemName: item.categoryIcon)
+                                    .font(.caption2)
+                                    .foregroundColor(Color.from(name: item.categoryColor))
+                                Text(item.promptText)
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                    .lineLimit(1)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                        .padding(.horizontal, 12)
+                    }
+
+                    if bestIdeas.count > 5 {
+                        NavigationLink {
+                            BestIdeasFullView()
+                        } label: {
+                            Text("See all \(bestIdeas.count) best ideas")
+                                .font(.caption)
+                                .foregroundColor(.accentColor)
+                        }
+                        .padding(.horizontal, 12)
+                    }
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(UIColor.secondarySystemBackground))
+                )
+            }
+        }
+    }
+
+    private func collectBestIdeas(
+        from lists: [IdeaList],
+        starredKeys: Set<String>
+    ) -> [(key: String, ideaText: String, promptText: String, categoryIcon: String, categoryColor: String)] {
+        var results: [(key: String, ideaText: String, promptText: String, categoryIcon: String, categoryColor: String)] = []
+        for list in lists {
+            for idea in list.ideas {
+                let trimmed = idea.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !trimmed.isEmpty else { continue }
+                let key = "\(list.id.uuidString):\(trimmed)"
+                if starredKeys.contains(key) {
+                    results.append((
+                        key: key,
+                        ideaText: trimmed,
+                        promptText: list.prompt.formattedTitle,
+                        categoryIcon: list.prompt.flexibleCategory.icon,
+                        categoryColor: list.prompt.flexibleCategory.color
+                    ))
+                }
+            }
+        }
+        return results
     }
 
     private var recentCategoriesSection: some View {
