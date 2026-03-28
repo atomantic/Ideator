@@ -11,5 +11,4 @@ For completed work, see [DONE.md](./DONE.md).
 - Design tokens system — shared cornerRadius, colors, padding constants
 - Duplicate empty state pattern — extract reusable empty state component
 - New pack themes — professional-development, humor/comedy-writing, cooking/food
-- Seasonal/timely prompts — rotating prompts tied to seasons or holidays
 - Reduce motion audit — comprehensive check for all remaining animation paths

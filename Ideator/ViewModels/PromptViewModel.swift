@@ -109,6 +109,10 @@ class PromptViewModel {
     func getDailyPrompt() -> Prompt? {
         promptService.getDailyPrompt()
     }
+
+    func getSeasonalPrompts() -> SeasonalPromptProvider.SeasonalResult {
+        SeasonalPromptProvider.getSeasonalPrompts()
+    }
     
     // MARK: - Favorites
 

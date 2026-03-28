@@ -29,6 +29,8 @@ struct HomeView: View {
 
                     dailyPromptSection
 
+                    seasonalInspirationSection
+
                     quickStartSection
 
                     favoritesSection
@@ -253,6 +255,71 @@ struct HomeView: View {
             list.prompt.id == prompt.id &&
             calendar.isDateInToday(list.modifiedDate)
         }
+    }
+
+    private var seasonalInspirationSection: some View {
+        let seasonal = promptViewModel.getSeasonalPrompts()
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: seasonal.icon)
+                    .foregroundColor(Color.from(name: seasonal.color))
+                    .font(.headline)
+
+                Text(seasonal.title)
+                    .font(.headline)
+            }
+
+            ForEach(seasonal.prompts) { prompt in
+                Button {
+                    ideaListViewModel.startNewList(with: prompt)
+                    promptViewModel.markPromptAsUsed(prompt)
+                    showingIdeaInput = true
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: prompt.flexibleCategory.icon)
+                            .foregroundColor(Color.from(name: seasonal.color))
+                            .font(.body)
+                            .frame(width: 24)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(prompt.formattedTitle)
+                                .font(.subheadline)
+                                .foregroundColor(.primary)
+                                .lineLimit(2)
+                                .multilineTextAlignment(.leading)
+
+                            if let help = prompt.help {
+                                Text(help)
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                    .lineLimit(1)
+                            }
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundColor(.secondary.opacity(0.5))
+                    }
+                    .padding(.vertical, 6)
+                    .padding(.horizontal, 12)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(UIColor.secondarySystemBackground))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(
+                            Color.from(name: seasonal.color).opacity(0.3),
+                            lineWidth: 1
+                        )
+                )
+        )
     }
 
     private var quickStartSection: some View {

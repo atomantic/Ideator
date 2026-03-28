@@ -9,6 +9,7 @@ Completed items archived from PLAN.md.
 - Home Screen Widget — WidgetKit extension with small + medium layouts showing daily prompt, streak count, and completion status; tapping opens directly into ideation via deep link; App Group shared UserDefaults for data sync
 - Best Ideas Collection — star/flag individual ideas in History detail view, curated "Best Ideas" section on Home with full-screen browse view
 - Prompt of the Day — deterministic daily prompt card on Home screen that changes each day; shows completion status; encourages daily engagement alongside streaks
+- Seasonal/timely prompts — rotating "Seasonal Inspiration" section on Home screen with 3 creative prompts tied to current season (spring/summer/autumn/winter) or nearby holidays (New Year, Valentine's, St. Patrick's, Earth Day, Halloween, Thanksgiving, Christmas); holiday prompts take priority when within range; 18 unit tests
 
 ## 2026-03-23
 
