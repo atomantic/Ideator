@@ -158,9 +158,15 @@ struct IdeaInputView: View {
         }
         .sheet(isPresented: $showingExportSheet) {
             if let ideaList = viewModel.currentIdeaList {
-                ExportView(ideaList: ideaList, promptViewModel: promptViewModel) {
-                    dismiss()
-                }
+                ExportView(
+                    ideaList: ideaList,
+                    promptViewModel: promptViewModel,
+                    onComplete: { dismiss() },
+                    onRemix: { remixPrompt in
+                        showingExportSheet = false
+                        viewModel.startNewList(with: remixPrompt)
+                    }
+                )
             }
         }
         .onAppear {
@@ -367,94 +373,211 @@ struct ExportView: View {
     let ideaList: IdeaList
     let promptViewModel: PromptViewModel?
     let onComplete: () -> Void
+    var onRemix: ((Prompt) -> Void)? = nil
     @State private var exportFormat = "text"
     @State private var showingShareSheet = false
     @State private var markPromptAsUsed = true
-    
+    @State private var remixPair: (String, String)?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var filledIdeas: [String] {
+        ideaList.ideas.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    }
+
     var body: some View {
         NavigationStack {
-            VStack(spacing: 24) {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 80))
-                    .foregroundColor(.green)
-                    .symbolEffect(.bounce)
-                
-                Text("List Complete!")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                
-                Text("Great job! You've completed your idea list.")
-                    .font(.body)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
+            ScrollView {
+                VStack(spacing: 24) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 80))
+                        .foregroundColor(.green)
+                        .symbolEffect(.bounce)
 
-                Text("Your list has been saved to History.")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                
-                Picker("Export Format", selection: $exportFormat) {
-                    Text("Plain Text").tag("text")
-                    Text("Markdown").tag("markdown")
-                }
-                .pickerStyle(SegmentedPickerStyle())
-                .padding(.horizontal)
-                
-                // Prompt usage toggle
-                VStack(alignment: .leading, spacing: 8) {
-                    Toggle(isOn: $markPromptAsUsed) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Mark prompt as used")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                            
-                            Text(markPromptAsUsed ? 
-                                "We won't use this prompt again" :
-                                "Keep this prompt active for future use")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
+                    Text("List Complete!")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+
+                    Text("Great job! You've completed your idea list.")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+
+                    Text("Your list has been saved to History.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
+                    // Remix Challenge
+                    if let pair = remixPair, onRemix != nil {
+                        remixCard(idea1: pair.0, idea2: pair.1)
                     }
-                    .toggleStyle(SwitchToggleStyle(tint: .blue))
+
+                    Picker("Export Format", selection: $exportFormat) {
+                        Text("Plain Text").tag("text")
+                        Text("Markdown").tag("markdown")
+                    }
+                    .pickerStyle(SegmentedPickerStyle())
+                    .padding(.horizontal)
+
+                    // Prompt usage toggle
+                    VStack(alignment: .leading, spacing: 8) {
+                        Toggle(isOn: $markPromptAsUsed) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Mark prompt as used")
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+
+                                Text(markPromptAsUsed ?
+                                    "We won't use this prompt again" :
+                                    "Keep this prompt active for future use")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        .toggleStyle(SwitchToggleStyle(tint: .blue))
+                    }
+                    .padding()
+                    .background(Color(UIColor.secondarySystemBackground))
+                    .cornerRadius(12)
+                    .padding(.horizontal)
+
+                    Button(action: {
+                        showingShareSheet = true
+                    }) {
+                        Label("Export", systemImage: "square.and.arrow.up")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                    }
+                    .padding(.horizontal)
+
+                    Button("Done") {
+                        handlePromptUsage()
+                        onComplete()
+                    }
+                    .font(.headline)
                 }
                 .padding()
-                .background(Color(UIColor.secondarySystemBackground))
-                .cornerRadius(12)
-                .padding(.horizontal)
-                
-                Button(action: {
-                    showingShareSheet = true
-                }) {
-                    Label("Export", systemImage: "square.and.arrow.up")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(12)
-                }
-                .padding(.horizontal)
-                
-                Button("Done") {
-                    // Handle prompt usage based on toggle
-                    if markPromptAsUsed, let promptViewModel = promptViewModel {
-                        promptViewModel.markPromptAsUsed(ideaList.prompt)
-                    }
-                    onComplete()
-                }
-                .font(.headline)
-                
-                Spacer()
             }
-            .padding()
             .navigationTitle("Success!")
             .navigationBarTitleDisplayMode(.inline)
         }
+        .onAppear {
+            shuffleRemixPair()
+        }
         .sheet(isPresented: $showingShareSheet) {
             ShareSheet(activityItems: [
-                exportFormat == "markdown" 
+                exportFormat == "markdown"
                     ? ExportManager.shared.exportAsMarkdown(ideaList)
                     : ideaList.formattedForExport
             ])
+        }
+    }
+
+    private func remixCard(idea1: String, idea2: String) -> some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: "shuffle")
+                    .font(.headline)
+                    .foregroundColor(.purple)
+                Text("Remix Challenge")
+                    .font(.headline)
+                    .foregroundColor(.purple)
+            }
+
+            Text("What if you combined...")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+
+            HStack(spacing: 8) {
+                Text("'\(idea1)'")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+
+                Image(systemName: "plus")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                Text("'\(idea2)'")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+            }
+
+            HStack(spacing: 12) {
+                Button {
+                    withAnimation(reduceMotion ? .none : .spring(response: 0.3)) {
+                        shuffleRemixPair()
+                    }
+                } label: {
+                    Label("Shuffle", systemImage: "dice.fill")
+                        .font(.subheadline)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Color(UIColor.tertiarySystemBackground))
+                        .cornerRadius(8)
+                }
+
+                Button {
+                    handlePromptUsage()
+                    let remixText = "What if you combined '\(idea1)' with '\(idea2)'?"
+                    let defaultListSize = UserDefaults.standard.integer(forKey: "defaultListSize")
+                    let suggestedCount = defaultListSize > 0 ? defaultListSize : 10
+                    let remixPrompt = Prompt(
+                        text: remixText,
+                        flexibleCategory: FlexibleCategory.from(category: .creative),
+                        suggestedCount: suggestedCount,
+                        help: "Mash up these two ideas into something new"
+                    )
+                    onRemix?(remixPrompt)
+                } label: {
+                    Label("Try This Remix", systemImage: "arrow.right.circle.fill")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Color.purple)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                }
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.purple.opacity(0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.purple.opacity(0.2), lineWidth: 1)
+                )
+        )
+        .padding(.horizontal)
+    }
+
+    private func shuffleRemixPair() {
+        let ideas = filledIdeas
+        guard ideas.count >= 2 else {
+            remixPair = nil
+            return
+        }
+        var shuffled = ideas.shuffled()
+        // Avoid picking the same pair again
+        if let current = remixPair, shuffled.count > 2 {
+            while shuffled[0] == current.0 && shuffled[1] == current.1 {
+                shuffled.shuffle()
+            }
+        }
+        remixPair = (shuffled[0], shuffled[1])
+    }
+
+    private func handlePromptUsage() {
+        if markPromptAsUsed, let promptViewModel = promptViewModel {
+            promptViewModel.markPromptAsUsed(ideaList.prompt)
         }
     }
 }
