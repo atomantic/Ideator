@@ -2,6 +2,7 @@ import SwiftUI
 
 struct BestIdeasFullView: View {
     @State private var starredKeys = PersistenceManager.shared.loadStarredIdeaKeys()
+    @State private var showingShareSheet = false
 
     var body: some View {
         let completedLists = PersistenceManager.shared.loadCompleted()
@@ -53,12 +54,35 @@ struct BestIdeasFullView: View {
         }
         .navigationTitle("Best Ideas")
         .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            if !bestIdeas.isEmpty {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        showingShareSheet = true
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                    .accessibilityLabel("Share Best Ideas")
+                }
+            }
+        }
+        .sheet(isPresented: $showingShareSheet) {
+            let completedLists = PersistenceManager.shared.loadCompleted()
+            let bestIdeas = collectBestIdeas(from: completedLists)
+            let exportItems = bestIdeas.map { (
+                ideaText: $0.ideaText,
+                promptText: $0.promptText,
+                categoryName: $0.categoryName
+            ) }
+            let text = ExportManager.shared.exportBestIdeas(exportItems)
+            ShareSheet(activityItems: [text])
+        }
     }
 
     private func collectBestIdeas(
         from lists: [IdeaList]
-    ) -> [(key: String, ideaText: String, promptText: String, categoryIcon: String, categoryColor: String)] {
-        var results: [(key: String, ideaText: String, promptText: String, categoryIcon: String, categoryColor: String)] = []
+    ) -> [(key: String, ideaText: String, promptText: String, categoryIcon: String, categoryColor: String, categoryName: String)] {
+        var results: [(key: String, ideaText: String, promptText: String, categoryIcon: String, categoryColor: String, categoryName: String)] = []
         for list in lists {
             for idea in list.ideas {
                 let trimmed = idea.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -70,7 +94,8 @@ struct BestIdeasFullView: View {
                         ideaText: trimmed,
                         promptText: list.prompt.formattedTitle,
                         categoryIcon: list.prompt.flexibleCategory.icon,
-                        categoryColor: list.prompt.flexibleCategory.color
+                        categoryColor: list.prompt.flexibleCategory.color,
+                        categoryName: list.prompt.flexibleCategory.name
                     ))
                 }
             }

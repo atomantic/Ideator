@@ -72,4 +72,45 @@ final class ExportManagerTests: XCTestCase {
         XCTAssertTrue(md.contains("## Ideas"))
         XCTAssertFalse(md.contains("1."))
     }
+
+    // MARK: - Best Ideas Export
+
+    func testExportBestIdeas_emptyReturnsEmpty() {
+        let result = manager.exportBestIdeas([])
+        XCTAssertEqual(result, "")
+    }
+
+    func testExportBestIdeas_containsTitle() {
+        let items = [(ideaText: "Great idea", promptText: "Test prompt", categoryName: "Creative")]
+        let result = manager.exportBestIdeas(items)
+        XCTAssertTrue(result.contains("My Best Ideas"))
+    }
+
+    func testExportBestIdeas_groupsByCategory() {
+        let items = [
+            (ideaText: "Idea A", promptText: "Prompt 1", categoryName: "Creative"),
+            (ideaText: "Idea B", promptText: "Prompt 2", categoryName: "Tech"),
+            (ideaText: "Idea C", promptText: "Prompt 3", categoryName: "Creative")
+        ]
+        let result = manager.exportBestIdeas(items)
+        XCTAssertTrue(result.contains("Creative"))
+        XCTAssertTrue(result.contains("Tech"))
+        XCTAssertTrue(result.contains("Idea A"))
+        XCTAssertTrue(result.contains("Idea C"))
+    }
+
+    func testExportBestIdeas_showsPromptSource() {
+        let items = [(ideaText: "My idea", promptText: "Source prompt", categoryName: "Fun")]
+        let result = manager.exportBestIdeas(items)
+        XCTAssertTrue(result.contains("→ from: Source prompt"))
+    }
+
+    func testExportBestIdeas_showsTotalCount() {
+        let items = [
+            (ideaText: "Idea 1", promptText: "P1", categoryName: "A"),
+            (ideaText: "Idea 2", promptText: "P2", categoryName: "B")
+        ]
+        let result = manager.exportBestIdeas(items)
+        XCTAssertTrue(result.contains("2 best ideas total"))
+    }
 }
