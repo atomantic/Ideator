@@ -16,7 +16,7 @@ struct DraftsView: View {
                 }
             }
             .navigationTitle("Drafts")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .onAppear {
                 loadDrafts()
             }

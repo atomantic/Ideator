@@ -21,7 +21,7 @@ struct InsightsView: View {
                 }
             }
             .navigationTitle("Insights")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .onAppear { loadData() }
         }
     }

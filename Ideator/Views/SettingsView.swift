@@ -31,7 +31,7 @@ struct SettingsView: View {
                 aboutSection
             }
             .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
         }
         .alert("Reset Used Prompts", isPresented: $showingResetAlert) {
             Button("Cancel", role: .cancel) {}

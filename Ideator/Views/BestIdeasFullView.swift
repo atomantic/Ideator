@@ -53,7 +53,7 @@ struct BestIdeasFullView: View {
             }
         }
         .navigationTitle("Best Ideas")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if !bestIdeas.isEmpty {
                 ToolbarItem(placement: .navigationBarTrailing) {

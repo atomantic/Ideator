@@ -16,7 +16,7 @@ struct PromptPacksView: View {
                 restorePurchasesSection
             }
             .navigationTitle("Prompt Packs")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .alert("Purchase Failed", isPresented: $showPurchaseError) {
                 Button("OK") {}
             } message: {

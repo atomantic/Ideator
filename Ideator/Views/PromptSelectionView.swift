@@ -90,7 +90,7 @@ struct PromptSelectionView: View {
             .searchable(text: $searchText, prompt: "Search prompts...")
             .listStyle(PlainListStyle())
             .navigationTitle(navigationTitle)
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
