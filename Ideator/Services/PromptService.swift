@@ -239,6 +239,16 @@ final class PromptService {
         }
         return available.randomElement()
     }
+
+    /// Returns a deterministic prompt for the given date, cycling through all prompts.
+    /// The same date always yields the same prompt.
+    func getDailyPrompt(for date: Date = Date()) -> Prompt? {
+        guard !allPrompts.isEmpty else { return nil }
+        let calendar = Calendar.current
+        let day = calendar.ordinality(of: .day, in: .era, for: date) ?? 0
+        let index = day % allPrompts.count
+        return allPrompts[index]
+    }
     
     func getCategoriesGroupedByPack() -> [(packName: String?, packId: String?, categories: [FlexibleCategory])] {
         if let cached = cachedGroupedCategories {

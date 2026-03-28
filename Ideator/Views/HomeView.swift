@@ -27,6 +27,8 @@ struct HomeView: View {
 
                     achievementBadgesSection
 
+                    dailyPromptSection
+
                     quickStartSection
 
                     favoritesSection
@@ -156,6 +158,100 @@ struct HomeView: View {
                 RoundedRectangle(cornerRadius: 12)
                     .fill(Color(UIColor.secondarySystemBackground))
             )
+        }
+    }
+
+    @ViewBuilder
+    private var dailyPromptSection: some View {
+        if let dailyPrompt = promptViewModel.getDailyPrompt() {
+            let completedToday = hasDailyPromptBeenCompleted(dailyPrompt)
+            Button {
+                if !completedToday {
+                    ideaListViewModel.startNewList(with: dailyPrompt)
+                    promptViewModel.markPromptAsUsed(dailyPrompt)
+                    showingIdeaInput = true
+                }
+            } label: {
+                HStack(spacing: 14) {
+                    ZStack {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [.orange, .yellow],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 48, height: 48)
+
+                        Image(systemName: completedToday ? "checkmark" : "calendar")
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Prompt of the Day")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.orange)
+                            .textCase(.uppercase)
+
+                        Text(dailyPrompt.formattedTitle)
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundColor(.primary)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+
+                        if completedToday {
+                            Text("Completed")
+                                .font(.caption2)
+                                .foregroundColor(.green)
+                                .fontWeight(.medium)
+                        } else {
+                            Text("Tap to start")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+
+                    Spacer()
+
+                    if !completedToday {
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(UIColor.secondarySystemBackground))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [.orange.opacity(0.4), .yellow.opacity(0.3)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 1
+                                )
+                        )
+                )
+            }
+            .buttonStyle(PlainButtonStyle())
+            .disabled(completedToday)
+        }
+    }
+
+    private func hasDailyPromptBeenCompleted(_ prompt: Prompt) -> Bool {
+        let completedLists = PersistenceManager.shared.loadCompleted()
+        let calendar = Calendar.current
+        return completedLists.contains { list in
+            list.prompt.id == prompt.id &&
+            calendar.isDateInToday(list.modifiedDate)
         }
     }
 

@@ -105,6 +105,10 @@ class PromptViewModel {
         }
         return prompt
     }
+
+    func getDailyPrompt() -> Prompt? {
+        promptService.getDailyPrompt()
+    }
     
     // MARK: - Favorites
 
