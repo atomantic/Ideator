@@ -44,7 +44,13 @@ struct ContentView: View {
                     Label("History", systemImage: "clock.fill")
                 }
                 .tag(2)
-            
+
+            InsightsView()
+                .tabItem {
+                    Label("Insights", systemImage: "chart.bar.fill")
+                }
+                .tag(3)
+
             SettingsView(
                 promptViewModel: promptViewModel,
                 onShowOnboarding: {
@@ -54,7 +60,7 @@ struct ContentView: View {
             .tabItem {
                 Label("Settings", systemImage: "gear")
             }
-            .tag(3)
+            .tag(4)
         }
         .onAppear {
             updateDraftCount()

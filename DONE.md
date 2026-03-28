@@ -4,6 +4,7 @@ Completed items archived from PLAN.md.
 
 ## 2026-03-28
 
+- Insights tab — new tab with activity heatmap (12-week grid), weekly trend bar chart, top categories breakdown, most productive day visualization, and summary stat cards (total ideas, lists completed, avg ideas/list, best ideas count)
 - Idea Remix Challenge — after completing a list, the export screen offers to combine 2 random ideas into a new creative prompt; shuffle for new combos, "Try This Remix" starts a fresh ideation session with the mashup prompt
 - Home Screen Widget — WidgetKit extension with small + medium layouts showing daily prompt, streak count, and completion status; tapping opens directly into ideation via deep link; App Group shared UserDefaults for data sync
 - Best Ideas Collection — star/flag individual ideas in History detail view, curated "Best Ideas" section on Home with full-screen browse view
