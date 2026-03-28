@@ -76,6 +76,13 @@ struct ContentView: View {
                   selectedTab = 0
               }
           }
+          .onReceive(NotificationCenter.default.publisher(for: .widgetStartTapped)) { _ in
+              if let randomPrompt = promptViewModel.getRandomPrompt() {
+                  ideaListViewModel.startNewList(with: randomPrompt)
+                  showingIdeaInput = true
+                  selectedTab = 0
+              }
+          }
           .onReceive(NotificationCenter.default.publisher(for: .promptsReloaded)) { _ in
               // Reload prompts and force HomeView rebuild to reflect new categories
               promptViewModel.loadPrompts()

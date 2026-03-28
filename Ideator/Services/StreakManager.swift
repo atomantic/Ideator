@@ -52,11 +52,23 @@ final class StreakManager {
         UserDefaults.standard.set(currentStreak, forKey: streakKey)
         UserDefaults.standard.set(longestStreak, forKey: longestStreakKey)
         UserDefaults.standard.set(totalCompletedLists, forKey: totalCompletedKey)
-        
+
         if let lastDate = lastCompletionDate,
            let dateData = try? JSONEncoder().encode(lastDate) {
             UserDefaults.standard.set(dateData, forKey: lastCompletionKey)
         }
+
+        syncToWidget()
+    }
+
+    private func syncToWidget() {
+        let status = getStreakStatus()
+        WidgetDataStore.syncStreak(
+            current: currentStreak,
+            longest: longestStreak,
+            total: totalCompletedLists,
+            completedToday: status == .completedToday
+        )
     }
     
     func recordCompletion() {
@@ -331,4 +343,5 @@ final class StreakManager {
 extension Notification.Name {
     static let ideaListCompleted = Notification.Name("ideaListCompleted")
     static let streakUpdated = Notification.Name("streakUpdated")
+    static let widgetStartTapped = Notification.Name("widgetStartTapped")
 }
