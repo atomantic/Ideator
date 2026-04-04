@@ -2,7 +2,8 @@
 set -euo pipefail
 
 # Ideator (Idea Loom) - Local TestFlight Deploy
-# Usage: ./deploy.sh [--skip-tests]
+# Usage: ./deploy.sh [--skip-tests] [--ios] [--macos] [--all]
+# Default (no platform flag): iOS only
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
@@ -34,10 +35,24 @@ if [ ! -f ~/.private_keys/"$KEY_FILENAME" ]; then
 fi
 
 PROJECT="Ideator.xcodeproj"
-SCHEME="Ideator"
 BUILD_DIR="$SCRIPT_DIR/build"
-ARCHIVE_PATH="$BUILD_DIR/$SCHEME.xcarchive"
-EXPORT_PATH="$BUILD_DIR/export"
+
+# Parse flags
+SKIP_TESTS=false
+BUILD_IOS=false
+BUILD_MACOS=false
+for arg in "$@"; do
+    case "$arg" in
+        --skip-tests) SKIP_TESTS=true ;;
+        --ios) BUILD_IOS=true ;;
+        --macos) BUILD_MACOS=true ;;
+        --all) BUILD_IOS=true; BUILD_MACOS=true ;;
+    esac
+done
+# Default to iOS if no platform specified
+if ! $BUILD_IOS && ! $BUILD_MACOS; then
+    BUILD_IOS=true
+fi
 
 # Auto-increment build number in xcodeproj
 CURRENT_BUILD=$(grep -m1 'CURRENT_PROJECT_VERSION = ' "$PROJECT/project.pbxproj" | awk '{print $3}' | tr -d ';')
@@ -46,7 +61,7 @@ echo "📦 Build number: $CURRENT_BUILD → $NEW_BUILD"
 /usr/bin/sed -i '' "s/CURRENT_PROJECT_VERSION = ${CURRENT_BUILD};/CURRENT_PROJECT_VERSION = ${NEW_BUILD};/g" "$PROJECT/project.pbxproj"
 
 # Run tests (unless skipped)
-if [ "${1:-}" != "--skip-tests" ]; then
+if ! $SKIP_TESTS; then
     echo "🧪 Running tests..."
     DESTINATION=$(
         SIMINFO=$(xcrun simctl list devices available -j | python3 -c "
@@ -82,7 +97,7 @@ for runtime, devices in data.get('devices', {}).items():
     )
     xcodebuild test \
         -project "$PROJECT" \
-        -scheme "$SCHEME" \
+        -scheme Ideator \
         -only-testing:IdeatorTests \
         -destination "$DESTINATION" \
         -configuration Debug \
@@ -94,23 +109,25 @@ fi
 # Clean build directory
 rm -rf "$BUILD_DIR"
 
-# Archive
-echo "📦 Archiving..."
-xcodebuild archive \
-    -project "$PROJECT" \
-    -scheme "$SCHEME" \
-    -configuration Release \
-    -destination 'generic/platform=iOS' \
-    -archivePath "$ARCHIVE_PATH" \
-    CODE_SIGNING_ALLOWED=NO \
-    CODE_SIGN_IDENTITY="" \
-    CODE_SIGNING_REQUIRED=NO \
-    -quiet
+# --- iOS Build & Upload ---
+if $BUILD_IOS; then
+    ARCHIVE_IOS="$BUILD_DIR/Ideator_iOS.xcarchive"
+    EXPORT_IOS="$BUILD_DIR/export_ios"
 
-echo "✅ Archive complete"
+    echo "📦 Archiving iOS..."
+    xcodebuild archive \
+        -project "$PROJECT" \
+        -scheme Ideator \
+        -configuration Release \
+        -destination 'generic/platform=iOS' \
+        -archivePath "$ARCHIVE_IOS" \
+        CODE_SIGNING_ALLOWED=NO \
+        CODE_SIGN_IDENTITY="" \
+        CODE_SIGNING_REQUIRED=NO \
+        -quiet
+    echo "✅ iOS archive complete"
 
-# Create exportOptions.plist
-cat > "$BUILD_DIR/exportOptions.plist" <<EOF
+    cat > "$BUILD_DIR/exportOptions_ios.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
   "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -123,43 +140,104 @@ cat > "$BUILD_DIR/exportOptions.plist" <<EOF
 </plist>
 EOF
 
-# Export IPA
-echo "📤 Exporting IPA..."
-xcodebuild -exportArchive \
-    -archivePath "$ARCHIVE_PATH" \
-    -exportOptionsPlist "$BUILD_DIR/exportOptions.plist" \
-    -exportPath "$EXPORT_PATH" \
-    -allowProvisioningUpdates \
-    -authenticationKeyPath "$KEY_PATH" \
-    -authenticationKeyID "$APPSTORE_API_KEY_ID" \
-    -authenticationKeyIssuerID "$APPSTORE_ISSUER_ID" \
-    -quiet
+    echo "📤 Exporting iOS IPA..."
+    xcodebuild -exportArchive \
+        -archivePath "$ARCHIVE_IOS" \
+        -exportOptionsPlist "$BUILD_DIR/exportOptions_ios.plist" \
+        -exportPath "$EXPORT_IOS" \
+        -allowProvisioningUpdates \
+        -authenticationKeyPath "$KEY_PATH" \
+        -authenticationKeyID "$APPSTORE_API_KEY_ID" \
+        -authenticationKeyIssuerID "$APPSTORE_ISSUER_ID" \
+        -quiet
+    echo "✅ iOS IPA exported"
 
-echo "✅ IPA exported"
+    IPA_PATH="$EXPORT_IOS/Ideator.ipa"
+    if [ ! -f "$IPA_PATH" ]; then
+        echo "❌ iOS IPA not found at $IPA_PATH"
+        ls -la "$EXPORT_IOS/"
+        exit 1
+    fi
 
-# Upload to TestFlight
-IPA_PATH="$EXPORT_PATH/$SCHEME.ipa"
-if [ ! -f "$IPA_PATH" ]; then
-    echo "❌ IPA not found at $IPA_PATH"
-    ls -la "$EXPORT_PATH/"
-    exit 1
+    echo "🚀 Uploading iOS to TestFlight..."
+    xcrun altool --upload-app \
+        --file "$IPA_PATH" \
+        --type ios \
+        --apiKey "$APPSTORE_API_KEY_ID" \
+        --apiIssuer "$APPSTORE_ISSUER_ID" \
+        --transport DAV
+    echo "✅ iOS upload complete!"
+
+    if $BUILD_MACOS; then
+        echo "⏳ Waiting 60s before macOS upload to avoid Apple CDN contention..."
+        sleep 60
+    fi
 fi
 
-echo "🚀 Uploading to TestFlight..."
-xcrun altool --upload-app \
-    --file "$IPA_PATH" \
-    --type ios \
-    --apiKey "$APPSTORE_API_KEY_ID" \
-    --apiIssuer "$APPSTORE_ISSUER_ID" \
-    --transport DAV
+# --- macOS Build & Upload ---
+if $BUILD_MACOS; then
+    ARCHIVE_MACOS="$BUILD_DIR/Ideator_macOS.xcarchive"
+    EXPORT_MACOS="$BUILD_DIR/export_macos"
 
-UPLOAD_EXIT=$?
-if [ $UPLOAD_EXIT -ne 0 ]; then
-    echo "❌ Upload failed with exit code $UPLOAD_EXIT"
-    exit $UPLOAD_EXIT
+    echo "📦 Archiving macOS..."
+    xcodebuild archive \
+        -project "$PROJECT" \
+        -scheme "Ideator macOS" \
+        -configuration Release \
+        -destination 'generic/platform=macOS' \
+        -archivePath "$ARCHIVE_MACOS" \
+        -allowProvisioningUpdates \
+        -authenticationKeyPath "$KEY_PATH" \
+        -authenticationKeyID "$APPSTORE_API_KEY_ID" \
+        -authenticationKeyIssuerID "$APPSTORE_ISSUER_ID" \
+        -quiet
+    echo "✅ macOS archive complete"
+
+    cat > "$BUILD_DIR/exportOptions_macos.plist" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>method</key><string>app-store-connect</string>
+  <key>teamID</key><string>$TEAM_ID</string>
+  <key>signingStyle</key><string>automatic</string>
+</dict>
+</plist>
+EOF
+
+    echo "📤 Exporting macOS pkg..."
+    xcodebuild -exportArchive \
+        -archivePath "$ARCHIVE_MACOS" \
+        -exportOptionsPlist "$BUILD_DIR/exportOptions_macos.plist" \
+        -exportPath "$EXPORT_MACOS" \
+        -allowProvisioningUpdates \
+        -authenticationKeyPath "$KEY_PATH" \
+        -authenticationKeyID "$APPSTORE_API_KEY_ID" \
+        -authenticationKeyIssuerID "$APPSTORE_ISSUER_ID" \
+        -quiet
+    echo "✅ macOS pkg exported"
+
+    PKG_PATH=$(find "$EXPORT_MACOS" -name "*.pkg" | head -1)
+    if [ -z "$PKG_PATH" ]; then
+        echo "❌ macOS package not found in $EXPORT_MACOS"
+        ls -la "$EXPORT_MACOS/"
+        exit 1
+    fi
+
+    echo "🚀 Uploading macOS to TestFlight..."
+    if ! xcrun altool --upload-app \
+        --file "$PKG_PATH" \
+        --type macos \
+        --apiKey "$APPSTORE_API_KEY_ID" \
+        --apiIssuer "$APPSTORE_ISSUER_ID"; then
+        echo "❌ macOS upload failed"
+        exit 1
+    fi
+    echo "✅ macOS upload complete!"
 fi
 
-echo "✅ Upload complete! Build $NEW_BUILD submitted to TestFlight."
+echo "✅ Build $NEW_BUILD submitted to TestFlight."
 
 # Commit the build number bump
 git add "$PROJECT/project.pbxproj"
