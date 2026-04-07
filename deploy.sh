@@ -160,12 +160,23 @@ EOF
     fi
 
     echo "🚀 Uploading iOS to TestFlight..."
+    IOS_UPLOAD_LOG="$BUILD_DIR/ios_upload.log"
+    set +e
     xcrun altool --upload-app \
         --file "$IPA_PATH" \
         --type ios \
         --apiKey "$APPSTORE_API_KEY_ID" \
         --apiIssuer "$APPSTORE_ISSUER_ID" \
-        --transport DAV
+        --transport DAV 2>&1 | tee "$IOS_UPLOAD_LOG"
+    IOS_UPLOAD_STATUS=${PIPESTATUS[0]}
+    set -e
+    # Definitive failure markers only — plain "ERROR: " false-positives on
+    # altool's normal multipart retry events ("WILL RETRY PART N. Checksums
+    # do not match." / "The network connection was lost.").
+    if [ "$IOS_UPLOAD_STATUS" -ne 0 ] || grep -qE "UPLOAD FAILED|Validation failed \(|ERROR ITMS-|product-errors" "$IOS_UPLOAD_LOG"; then
+        echo "❌ iOS upload failed — see errors above"
+        exit 1
+    fi
     echo "✅ iOS upload complete!"
 
     if $BUILD_MACOS; then
@@ -226,12 +237,18 @@ EOF
     fi
 
     echo "🚀 Uploading macOS to TestFlight..."
-    if ! xcrun altool --upload-app \
+    MACOS_UPLOAD_LOG="$BUILD_DIR/macos_upload.log"
+    set +e
+    xcrun altool --upload-app \
         --file "$PKG_PATH" \
         --type macos \
         --apiKey "$APPSTORE_API_KEY_ID" \
-        --apiIssuer "$APPSTORE_ISSUER_ID"; then
-        echo "❌ macOS upload failed"
+        --apiIssuer "$APPSTORE_ISSUER_ID" 2>&1 | tee "$MACOS_UPLOAD_LOG"
+    MACOS_UPLOAD_STATUS=${PIPESTATUS[0]}
+    set -e
+    # See iOS section above for why we don't grep plain "ERROR: ".
+    if [ "$MACOS_UPLOAD_STATUS" -ne 0 ] || grep -qE "UPLOAD FAILED|Validation failed \(|ERROR ITMS-|product-errors" "$MACOS_UPLOAD_LOG"; then
+        echo "❌ macOS upload failed — see errors above"
         exit 1
     fi
     echo "✅ macOS upload complete!"
