@@ -20,7 +20,7 @@ struct DraftsView: View {
             .onAppear {
                 loadDrafts()
             }
-            .sheet(item: $selectedDraft) { draft in
+            .sheet(item: $selectedDraft, onDismiss: loadDrafts) { draft in
                 NavigationStack {
                     IdeaInputView(viewModel: ideaListViewModel, promptViewModel: nil)
                         .onAppear {
