@@ -12,6 +12,8 @@ struct HomeView: View {
     @State private var newAchievements: [(id: String, name: String, icon: String)] = []
     @State private var showPurchaseError = false
     @State private var purchaseErrorMessage = ""
+    @State private var searchText = ""
+    @FocusState private var isSearchFocused: Bool
 
     @State private var packManager = PackManager.shared
     @State private var storeManager = StoreManager.shared
@@ -22,6 +24,8 @@ struct HomeView: View {
             ScrollView(.vertical, showsIndicators: true) {
                 VStack(spacing: 24) {
                     heroSection
+
+                    topicSearchSection
 
                     streakSection
 
@@ -99,6 +103,163 @@ struct HomeView: View {
                 .multilineTextAlignment(.center)
         }
         .padding(.vertical, 8)
+    }
+
+    private var topicSearchSection: some View {
+        let trimmedQuery = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let results = promptViewModel.searchAllPrompts(query: trimmedQuery)
+        let hasQuery = !trimmedQuery.isEmpty
+
+        return VStack(spacing: 12) {
+            HStack(spacing: 10) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(.secondary)
+                    .font(.body)
+
+                TextField("Search all topics...", text: $searchText)
+                    .textFieldStyle(.plain)
+                    .focused($isSearchFocused)
+                    .submitLabel(.search)
+
+                if hasQuery {
+                    Button {
+                        searchText = ""
+                        isSearchFocused = false
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.secondary)
+                            .font(.body)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+            .padding(12)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(UIColor.secondarySystemBackground))
+            )
+
+            if hasQuery {
+                VStack(spacing: 0) {
+                    if results.isEmpty {
+                        VStack(spacing: 12) {
+                            Image(systemName: "questionmark.folder")
+                                .font(.title)
+                                .foregroundColor(.secondary)
+
+                            Text("No topics match \"\(trimmedQuery)\"")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+
+                            createCustomTopicLink(label: "Create Custom Topic", prominent: true)
+                        }
+                        .padding(.vertical, 16)
+                    } else {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("\(results.count) topic\(results.count == 1 ? "" : "s") found")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .padding(.horizontal, 4)
+
+                            ForEach(results.prefix(10)) { prompt in
+                                Button {
+                                    ideaListViewModel.startNewList(with: prompt)
+                                    promptViewModel.markPromptAsUsed(prompt)
+                                    searchText = ""
+                                    isSearchFocused = false
+                                    showingIdeaInput = true
+                                } label: {
+                                    HStack(spacing: 12) {
+                                        Image(systemName: prompt.flexibleCategory.icon)
+                                            .foregroundColor(prompt.flexibleCategory.colorValue)
+                                            .font(.body)
+                                            .frame(width: 24)
+
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(prompt.formattedTitle)
+                                                .font(.subheadline)
+                                                .foregroundColor(.primary)
+                                                .lineLimit(2)
+                                                .multilineTextAlignment(.leading)
+
+                                            if let help = prompt.help {
+                                                Text(help)
+                                                    .font(.caption2)
+                                                    .foregroundColor(.secondary)
+                                                    .lineLimit(1)
+                                            }
+                                        }
+
+                                        Spacer()
+
+                                        Text(prompt.flexibleCategory.name)
+                                            .font(.caption2)
+                                            .foregroundColor(.secondary)
+
+                                        Image(systemName: "chevron.right")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary.opacity(0.5))
+                                    }
+                                    .padding(.vertical, 8)
+                                    .padding(.horizontal, 12)
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
+
+                            if results.count > 10 {
+                                Button {
+                                    showingPromptSelection = true
+                                } label: {
+                                    Text("See all \(results.count) results...")
+                                        .font(.caption)
+                                        .foregroundColor(.accentColor)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 4)
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
+
+                            createCustomTopicLink(label: "Don't see what you want? Create a custom topic", prominent: false)
+                        }
+                    }
+                }
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(UIColor.secondarySystemBackground))
+                )
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func createCustomTopicLink(label: String, prominent: Bool) -> some View {
+        Button {
+            showingCustomPrompt = true
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "sparkles")
+                    .font(prominent ? .body : .caption)
+                    .foregroundColor(.purple)
+                Text(label)
+                    .font(prominent ? .subheadline : .caption)
+                    .fontWeight(prominent ? .medium : .regular)
+                    .foregroundColor(.purple)
+            }
+            .padding(.horizontal, prominent ? 16 : 12)
+            .padding(.vertical, prominent ? 10 : 8)
+            .background(
+                prominent
+                    ? AnyShapeStyle(LinearGradient(
+                        colors: [.purple.opacity(0.15), .pink.opacity(0.15)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    ))
+                    : AnyShapeStyle(Color.clear)
+            )
+            .cornerRadius(10)
+        }
+        .buttonStyle(PlainButtonStyle())
     }
 
     private var streakSection: some View {

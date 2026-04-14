@@ -4,21 +4,69 @@ import os.log
 
 private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "net.shadowpuppet.ideator", category: "OnboardingView")
 
+/// The user's stated primary motivation captured during onboarding. Persisted via
+/// `@AppStorage("primaryIdeationGoal")` so later screens (and the first-prompt
+/// reveal at the end of onboarding) can bias their content toward what the user
+/// actually came here for.
+enum IdeationGoal: String, CaseIterable, Codable {
+    case creative
+    case business
+    case journaling
+    case learning
+    case surpriseMe
+
+    var emoji: String {
+        switch self {
+        case .creative:    return "🎨"
+        case .business:    return "💡"
+        case .journaling:  return "🧠"
+        case .learning:    return "📚"
+        case .surpriseMe:  return "🎲"
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .creative:    return "Creative projects (art, writing, music)"
+        case .business:    return "Business and product ideas"
+        case .journaling:  return "Personal reflection and journaling"
+        case .learning:    return "Learning new things"
+        case .surpriseMe:  return "Surprise me daily"
+        }
+    }
+
+    /// Maps the goal to a starter Category for the first-prompt reveal at the end
+    /// of onboarding. Returns nil for `surpriseMe` so the reveal pulls a random
+    /// prompt from the user's full enabled-pack pool.
+    var seedCategory: Category? {
+        switch self {
+        case .creative:    return .creative
+        case .business:    return .professional
+        case .journaling:  return .gratitude
+        case .learning:    return .learning
+        case .surpriseMe:  return nil
+        }
+    }
+}
+
 struct OnboardingView: View {
     @Binding var isPresented: Bool
     @State private var currentPage = 0
-    @State private var enableNotifications = true
+    @State private var enableNotifications = false
     @State private var selectedTime = Date()
+    @State private var selectedGoal: IdeationGoal?
+    @State private var firstPrompt: Prompt?
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @AppStorage("enableNotifications") private var notificationsEnabled = false
     @AppStorage("notificationHour") private var notificationHour = 9
     @AppStorage("notificationMinute") private var notificationMinute = 0
+    @AppStorage("primaryIdeationGoal") private var primaryIdeationGoalRaw = ""
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ScaledMetric(relativeTo: .largeTitle) private var heroIconSize: CGFloat = 80
-    @ScaledMetric(relativeTo: .largeTitle) private var packsIconSize: CGFloat = 50
     @ScaledMetric(relativeTo: .largeTitle) private var notificationIconSize: CGFloat = 60
+    @ScaledMetric(relativeTo: .largeTitle) private var firstPromptIconSize: CGFloat = 60
 
-    private let packManager = PackManager.shared
+    private let totalPages = 5
 
     init(isPresented: Binding<Bool>) {
         self._isPresented = isPresented
@@ -34,14 +82,17 @@ struct OnboardingView: View {
                 welcomePage
                     .tag(0)
 
-                benefitsPage
+                goalPage
                     .tag(1)
 
-                packsPage
+                benefitsPage
                     .tag(2)
 
                 notificationPage
                     .tag(3)
+
+                firstPromptPage
+                    .tag(4)
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             .animation(.easeInOut, value: currentPage)
@@ -59,9 +110,11 @@ struct OnboardingView: View {
         )
     }
 
+    // MARK: - Page 0: Welcome with privacy bullets
+
     private var welcomePage: some View {
-        VStack(spacing: 30) {
-            Spacer()
+        VStack(spacing: 24) {
+            Spacer(minLength: 20)
 
             Image(systemName: "lightbulb.fill")
                 .font(.system(size: heroIconSize))
@@ -74,7 +127,7 @@ struct OnboardingView: View {
                 )
                 .symbolEffect(.pulse, isActive: !reduceMotion)
 
-            VStack(spacing: 16) {
+            VStack(spacing: 12) {
                 Text("Welcome to Idea Loom")
                     .font(.largeTitle)
                     .fontWeight(.bold)
@@ -86,17 +139,132 @@ struct OnboardingView: View {
                     .multilineTextAlignment(.center)
             }
 
-            VStack(spacing: 12) {
-                Text("Transform your creative potential through daily ideation exercises")
-                    .font(.body)
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(.secondary)
-                    .padding(.horizontal, 40)
-            }
+            Text("10 prompts a day. Yours alone. Export wherever you keep notes.")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
 
-            Spacer()
+            VStack(alignment: .leading, spacing: 14) {
+                privacyBullet(
+                    icon: "lock.shield.fill",
+                    title: "Private by design",
+                    detail: "No accounts, no servers, no telemetry. Your ideas stay on your device."
+                )
+                privacyBullet(
+                    icon: "icloud.fill",
+                    title: "Synced through your iCloud",
+                    detail: "Your prompts and history sync across your iPhone, iPad, and Mac via your own iCloud."
+                )
+                privacyBullet(
+                    icon: "square.and.arrow.up",
+                    title: "Export anytime",
+                    detail: "Send any session straight to Apple Notes — or export the lot whenever you like."
+                )
+            }
+            .padding(.horizontal, 24)
+
+            Spacer(minLength: 20)
         }
     }
+
+    @ViewBuilder
+    private func privacyBullet(icon: String, title: String, detail: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 20))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [.blue, .purple],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: 28, alignment: .center)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.subheadline).fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                Text(detail)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    // MARK: - Page 1: Goal question
+
+    private var goalPage: some View {
+        VStack(spacing: 16) {
+            Spacer(minLength: 30)
+
+            Text("What kind of ideas do you most want to grow?")
+                .font(.title2)
+                .fontWeight(.bold)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+
+            Text("Pick one. We'll lean your prompts in that direction. You can change it later.")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 40)
+
+            VStack(spacing: 10) {
+                ForEach(IdeationGoal.allCases, id: \.self) { goal in
+                    goalCard(goal)
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 8)
+
+            Spacer(minLength: 20)
+        }
+    }
+
+    @ViewBuilder
+    private func goalCard(_ goal: IdeationGoal) -> some View {
+        Button {
+            selectedGoal = goal
+            primaryIdeationGoalRaw = goal.rawValue
+        } label: {
+            HStack(spacing: 14) {
+                Text(goal.emoji)
+                    .font(.title)
+                    .frame(width: 36)
+                Text(goal.label)
+                    .font(.subheadline).fontWeight(.medium)
+                    .foregroundColor(selectedGoal == goal ? .white : .primary)
+                    .multilineTextAlignment(.leading)
+                Spacer(minLength: 0)
+                if selectedGoal == goal {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.white)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(selectedGoal == goal
+                          ? LinearGradient(colors: [.blue, .purple], startPoint: .topLeading, endPoint: .bottomTrailing)
+                          : LinearGradient(colors: [Color.gray.opacity(0.08), Color.gray.opacity(0.08)], startPoint: .top, endPoint: .bottom))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(selectedGoal == goal ? Color.clear : Color.gray.opacity(0.25), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(goal.label)
+        .accessibilityAddTraits(selectedGoal == goal ? .isSelected : [])
+    }
+
+    // MARK: - Page 2: Benefits
 
     private var benefitsPage: some View {
         VStack(spacing: 20) {
@@ -159,55 +327,7 @@ struct OnboardingView: View {
         }
     }
 
-    private var packsPage: some View {
-        VStack(spacing: 20) {
-            Spacer(minLength: 20)
-
-            Image(systemName: "square.stack.3d.up.fill")
-                .font(.system(size: packsIconSize))
-                .foregroundColor(.purple)
-                .symbolEffect(.pulse, isActive: !reduceMotion)
-
-            VStack(spacing: 12) {
-                Text("Expand Your Horizons")
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .multilineTextAlignment(.center)
-
-                let corePack = packManager.allPacks.first { $0.id == "core" }
-                let corePromptCount = corePack?.totalPrompts ?? 200
-                let coreCategoryCount = corePack?.categories.count ?? 14
-
-                Text("Start with our Core pack of \(corePromptCount)+ prompts across \(coreCategoryCount) categories")
-                    .font(.body)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 40)
-
-                Text("Plus \(packManager.allPacks.count - 1) premium packs available:")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .padding(.top, 8)
-            }
-
-            ScrollView {
-                VStack(spacing: 12) {
-                    ForEach(packManager.allPacks.filter { $0.id != "core" }) { pack in
-                        PackPreviewRow(pack: pack)
-                    }
-                }
-                .padding(.horizontal, 20)
-            }
-            .frame(maxHeight: 400)
-
-            Text("You can purchase packs anytime in Settings")
-                .font(.caption)
-                .foregroundColor(.secondary.opacity(0.8))
-                .italic()
-
-            Spacer(minLength: 10)
-        }
-    }
+    // MARK: - Page 3: Notification priming
 
     private var notificationPage: some View {
         VStack(spacing: 30) {
@@ -224,7 +344,7 @@ struct OnboardingView: View {
                     .fontWeight(.bold)
                     .multilineTextAlignment(.center)
 
-                Text("Get a gentle reminder to brainstorm each day")
+                Text("Get a gentle reminder to brainstorm each day. Off by default — turn it on if you want one.")
                     .font(.body)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -256,10 +376,91 @@ struct OnboardingView: View {
         }
     }
 
+    // MARK: - Page 4: First-prompt reveal (value delivery)
+
+    private var firstPromptPage: some View {
+        VStack(spacing: 24) {
+            Spacer(minLength: 20)
+
+            Image(systemName: "sparkles")
+                .font(.system(size: firstPromptIconSize))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [.blue, .purple],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .symbolEffect(.pulse, isActive: !reduceMotion)
+
+            Text("Your first prompt")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+                .multilineTextAlignment(.center)
+
+            if let prompt = firstPrompt {
+                VStack(spacing: 12) {
+                    Text(prompt.text)
+                        .font(.title3)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 28)
+                        .padding(.vertical, 24)
+                        .frame(maxWidth: .infinity)
+                        .background(
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(Color.white.opacity(0.85))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [.blue.opacity(0.4), .purple.opacity(0.4)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 1.5
+                                )
+                        )
+                        .padding(.horizontal, 24)
+
+                    if let suggestion = goalSuggestionLine {
+                        Text(suggestion)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 32)
+                    }
+                }
+            } else {
+                ProgressView()
+                    .padding(.vertical, 40)
+            }
+
+            Spacer()
+        }
+        .onAppear { loadFirstPromptIfNeeded() }
+    }
+
+    private var goalSuggestionLine: String? {
+        guard let goal = selectedGoal, goal != .surpriseMe else { return nil }
+        return "Tuned to your goal: \(goal.label.lowercased())"
+    }
+
+    private func loadFirstPromptIfNeeded() {
+        guard firstPrompt == nil else { return }
+        let category = selectedGoal?.seedCategory
+        firstPrompt = PromptService.shared.getRandomPrompt(from: category)
+            ?? PromptService.shared.getRandomPrompt(from: nil)
+    }
+
+    // MARK: - Bottom Controls
+
     private var bottomControls: some View {
         VStack(spacing: 16) {
             HStack(spacing: 8) {
-                ForEach(0..<4) { index in
+                ForEach(0..<totalPages, id: \.self) { index in
                     Circle()
                         .fill(currentPage == index ? Color.blue : Color.gray.opacity(0.3))
                         .frame(width: 8, height: 8)
@@ -279,22 +480,29 @@ struct OnboardingView: View {
 
                 Spacer()
 
-                if currentPage < 3 {
+                if currentPage < totalPages - 1 {
                     Button("Next") {
                         withAnimation {
                             currentPage += 1
                         }
                     }
                     .fontWeight(.semibold)
+                    .disabled(currentPage == 1 && selectedGoal == nil)
                 } else {
-                    Button("Get Started") {
+                    Button("Start brainstorming") {
                         completeOnboarding()
                     }
                     .fontWeight(.bold)
                     .foregroundColor(.white)
-                    .padding(.horizontal, 30)
+                    .padding(.horizontal, 24)
                     .padding(.vertical, 12)
-                    .background(Color.blue)
+                    .background(
+                        LinearGradient(
+                            colors: [.blue, .purple],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
                     .cornerRadius(25)
                 }
             }
@@ -387,51 +595,6 @@ struct BenefitCard: View {
         .overlay(
             RoundedRectangle(cornerRadius: 16)
                 .stroke(color.opacity(0.3), lineWidth: 1)
-        )
-    }
-}
-
-struct PackPreviewRow: View {
-    let pack: PromptPack
-
-    var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(pack.name)
-                    .font(.headline)
-                    .foregroundColor(.primary)
-
-                Text(pack.description)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .lineLimit(2)
-
-                HStack(spacing: 12) {
-                    Label("\(pack.totalPrompts) prompts", systemImage: "doc.text")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-
-                    Label("\(pack.categories.count) categories", systemImage: "folder")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                }
-            }
-
-            Spacer()
-
-            Text("$0.99")
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundColor(.blue)
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.gray.opacity(0.05))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
         )
     }
 }

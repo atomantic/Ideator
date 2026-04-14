@@ -131,6 +131,12 @@ class PromptViewModel {
         promptService.getFavoritePrompts()
     }
 
+    func searchAllPrompts(query: String) -> [Prompt] {
+        guard !query.isEmpty else { return [] }
+        let servicePrompts = promptService.getPrompts(for: nil)
+        return servicePrompts.filter { $0.text.localizedCaseInsensitiveContains(query) }
+    }
+
     func selectFlexibleCategory(_ category: FlexibleCategory) {
         // Set the flexible category
         selectedFlexibleCategory = category
