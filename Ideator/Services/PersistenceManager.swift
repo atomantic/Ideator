@@ -16,47 +16,62 @@ final class PersistenceManager {
     
     func saveDraft(_ ideaList: IdeaList) {
         var drafts = loadDrafts()
-        
+
         if let index = drafts.firstIndex(where: { $0.id == ideaList.id }) {
             drafts[index] = ideaList
         } else {
             drafts.append(ideaList)
         }
-        
+
         save(drafts, forKey: draftsKey)
+        ObsidianSyncManager.shared.syncIdeaList(ideaList)
     }
     
     func loadDrafts() -> [IdeaList] {
-        load(forKey: draftsKey) ?? []
+        ObsidianSyncManager.shared.importExternalChangesIfNeeded()
+        return load(forKey: draftsKey) ?? []
     }
     
     func deleteDraft(withId id: UUID) {
         var drafts = loadDrafts()
+        let removed = drafts.first { $0.id == id }
         drafts.removeAll { $0.id == id }
         save(drafts, forKey: draftsKey)
+
+        // Only delete from Obsidian if not also saved as completed
+        if let removed, !loadCompleted().contains(where: { $0.id == id }) {
+            ObsidianSyncManager.shared.deleteFile(for: removed)
+        }
     }
     
     func saveCompleted(_ ideaList: IdeaList) {
         var completed = loadCompleted()
-        
+
         if let index = completed.firstIndex(where: { $0.id == ideaList.id }) {
             completed[index] = ideaList
         } else {
             completed.append(ideaList)
         }
-        
+
         save(completed, forKey: completedKey)
+        ObsidianSyncManager.shared.syncIdeaList(ideaList)
         deleteDraft(withId: ideaList.id)
     }
     
     func loadCompleted() -> [IdeaList] {
-        load(forKey: completedKey) ?? []
+        ObsidianSyncManager.shared.importExternalChangesIfNeeded()
+        return load(forKey: completedKey) ?? []
     }
     
     func deleteCompleted(withId id: UUID) {
         var completed = loadCompleted()
+        let removed = completed.first { $0.id == id }
         completed.removeAll { $0.id == id }
         save(completed, forKey: completedKey)
+
+        if let removed {
+            ObsidianSyncManager.shared.deleteFile(for: removed)
+        }
     }
     
     func getDraft(for prompt: Prompt) -> IdeaList? {
