@@ -257,6 +257,8 @@ struct SyncSettingsView: View {
     @State private var showFolderPicker = false
     @State private var obsidianFolderName: String? = ObsidianSyncManager.shared.folderDisplayName
     @State private var syncResultMessage: String?
+    @State private var showDisableConfirmation = false
+    @State private var isRestoringToggle = false
 
     // Hint the file picker to open in iCloud Drive, where most Obsidian
     // vaults live. The document picker runs in a separate process and can
@@ -269,7 +271,17 @@ struct SyncSettingsView: View {
         Form {
             Section {
                 Toggle("Sync to Obsidian Vault", isOn: $obsidianSyncEnabled)
-                    .onChange(of: obsidianSyncEnabled) { _, newValue in
+                    .onChange(of: obsidianSyncEnabled) { oldValue, newValue in
+                        if isRestoringToggle {
+                            isRestoringToggle = false
+                            return
+                        }
+                        // Disabling with a folder bookmarked — confirm intent first
+                        // so users understand their existing vault files aren't touched.
+                        if oldValue && !newValue && ObsidianSyncManager.shared.hasFolder {
+                            showDisableConfirmation = true
+                            return
+                        }
                         ObsidianSyncManager.shared.isEnabled = newValue
                         if newValue && !ObsidianSyncManager.shared.hasFolder {
                             showFolderPicker = true
@@ -311,8 +323,10 @@ struct SyncSettingsView: View {
             } footer: {
                 if obsidianSyncEnabled {
                     Text("Drafts and completed lists are saved as Markdown files in an \"Idea Loom\" subfolder with YAML frontmatter and tags for Dataview queries. Edits made in Obsidian are imported back when you next open the app.")
+                } else if let name = obsidianFolderName {
+                    Text("Your idea lists live on this device. Existing files at \(name)/Idea Loom are untouched — turn sync back on to resume mirroring.")
                 } else {
-                    Text("Save your idea lists as Markdown files to any folder — perfect for your Obsidian vault in iCloud Drive.")
+                    Text("Your idea lists live on this device. Turn on sync to also save them as Markdown files in your Obsidian vault (great for iCloud Drive vaults that sync across devices).")
                 }
             }
         }
@@ -343,6 +357,25 @@ struct SyncSettingsView: View {
             Button("OK", role: .cancel) {}
         } message: { message in
             Text(message)
+        }
+        .alert("Turn off Obsidian Sync?", isPresented: $showDisableConfirmation) {
+            Button("Cancel", role: .cancel) {
+                isRestoringToggle = true
+                obsidianSyncEnabled = true
+            }
+            Button("Turn Off") {
+                ObsidianSyncManager.shared.isEnabled = false
+            }
+            Button("Turn Off & Delete Vault Files", role: .destructive) {
+                ObsidianSyncManager.shared.deleteAllVaultFiles()
+                ObsidianSyncManager.shared.isEnabled = false
+            }
+        } message: {
+            if let name = obsidianFolderName {
+                Text("Your idea lists will remain on this device. Existing Markdown files at \(name)/Idea Loom will stay where they are unless you choose to delete them.")
+            } else {
+                Text("Your idea lists will remain on this device. New lists will stop being mirrored to your vault.")
+            }
         }
     }
 }

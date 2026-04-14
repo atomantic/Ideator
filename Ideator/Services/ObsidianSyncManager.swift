@@ -117,6 +117,23 @@ final class ObsidianSyncManager {
         }
     }
 
+    /// Deletes the entire "Idea Loom" subfolder from the vault. Bypasses the
+    /// `isEnabled` gate in `withFolder` so it can run after the user has
+    /// already toggled sync off but still wants to clean up the mirror.
+    func deleteAllVaultFiles() {
+        guard let folderURL = resolveBookmark() else { return }
+        guard folderURL.startAccessingSecurityScopedResource() else {
+            logger.error("📁 Security-scoped access denied for cleanup")
+            return
+        }
+        defer { folderURL.stopAccessingSecurityScopedResource() }
+
+        let subfolder = folderURL.appendingPathComponent(subfolderName)
+        try? FileManager.default.removeItem(at: subfolder)
+        UserDefaults.standard.removeObject(forKey: writeTimestampsKey)
+        logger.info("📁 Deleted all vault files")
+    }
+
     func deleteFile(for ideaList: IdeaList) {
         withFolder { folderURL in
             let name = fileName(for: ideaList)
