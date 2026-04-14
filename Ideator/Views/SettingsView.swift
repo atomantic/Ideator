@@ -256,6 +256,14 @@ struct SyncSettingsView: View {
     @AppStorage("obsidian_sync_enabled") private var obsidianSyncEnabled = false
     @State private var showFolderPicker = false
     @State private var obsidianFolderName: String? = ObsidianSyncManager.shared.folderDisplayName
+    @State private var syncResultMessage: String?
+
+    // Hint the file picker to open in iCloud Drive, where most Obsidian
+    // vaults live. The document picker runs in a separate process and can
+    // navigate here even though the app itself is sandboxed.
+    private var iCloudDriveHint: URL {
+        URL(fileURLWithPath: "/private/var/mobile/Library/Mobile Documents/com~apple~CloudDocs", isDirectory: true)
+    }
 
     var body: some View {
         Form {
@@ -283,7 +291,10 @@ struct SyncSettingsView: View {
                         }
 
                         Button {
-                            ObsidianSyncManager.shared.syncAll()
+                            let count = ObsidianSyncManager.shared.syncAll()
+                            syncResultMessage = count == 0
+                                ? "No idea lists to sync yet. Create some drafts or completed lists first."
+                                : "Synced \(count) idea list\(count == 1 ? "" : "s") to your vault."
                         } label: {
                             HStack {
                                 Image(systemName: "arrow.triangle.2.circlepath")
@@ -307,13 +318,9 @@ struct SyncSettingsView: View {
         }
         .navigationTitle("Obsidian Sync")
         .navigationBarTitleDisplayMode(.inline)
-        .fileImporter(
-            isPresented: $showFolderPicker,
-            allowedContentTypes: [.folder]
-        ) { result in
-            switch result {
-            case .success(let url):
-                if ObsidianSyncManager.shared.saveBookmark(for: url) {
+        .sheet(isPresented: $showFolderPicker) {
+            FolderPicker(startDirectory: iCloudDriveHint) { url in
+                if let url, ObsidianSyncManager.shared.saveBookmark(for: url) {
                     obsidianFolderName = url.lastPathComponent
                     obsidianSyncEnabled = true
                     ObsidianSyncManager.shared.isEnabled = true
@@ -322,12 +329,50 @@ struct SyncSettingsView: View {
                     obsidianSyncEnabled = false
                     ObsidianSyncManager.shared.isEnabled = false
                 }
-            case .failure:
-                if !ObsidianSyncManager.shared.hasFolder {
-                    obsidianSyncEnabled = false
-                    ObsidianSyncManager.shared.isEnabled = false
-                }
             }
+            .ignoresSafeArea()
+        }
+        .alert(
+            "Obsidian Sync",
+            isPresented: Binding(
+                get: { syncResultMessage != nil },
+                set: { if !$0 { syncResultMessage = nil } }
+            ),
+            presenting: syncResultMessage
+        ) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { message in
+            Text(message)
+        }
+    }
+}
+
+private struct FolderPicker: UIViewControllerRepresentable {
+    let startDirectory: URL?
+    let onPick: (URL?) -> Void
+
+    func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.folder], asCopy: false)
+        picker.allowsMultipleSelection = false
+        picker.directoryURL = startDirectory
+        picker.delegate = context.coordinator
+        return picker
+    }
+
+    func updateUIViewController(_: UIDocumentPickerViewController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator { Coordinator(onPick: onPick) }
+
+    final class Coordinator: NSObject, UIDocumentPickerDelegate {
+        let onPick: (URL?) -> Void
+        init(onPick: @escaping (URL?) -> Void) { self.onPick = onPick }
+
+        func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+            onPick(urls.first)
+        }
+
+        func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+            onPick(nil)
         }
     }
 }

@@ -129,13 +129,15 @@ final class ObsidianSyncManager {
         }
     }
 
-    func syncAll() {
+    @discardableResult
+    func syncAll() -> Int {
         let persistence = PersistenceManager.shared
         let allLists = persistence.loadDrafts() + persistence.loadCompleted()
         for list in allLists {
             syncIdeaList(list)
         }
         logger.info("📁 Full sync complete: \(allLists.count) lists")
+        return allLists.count
     }
 
     // MARK: - Import External Changes
