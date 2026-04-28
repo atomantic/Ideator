@@ -2,7 +2,30 @@
 
 Completed items archived from PLAN.md.
 
+## 2026-04-21
+
+- deploy.sh universalized to match PortOS canonical template
+
+## 2026-04-14
+
+- Refresh drafts list after completion sheet dismisses
+- Sync manager copy refinements
+
+## 2026-04-13
+
+- Obsidian sync — new ObsidianSyncManager service with manual + auto sync of completed lists; surfaces sync result and an iCloud Drive folder picker
+- Settings split into sub-pages — broke monolithic SettingsView into navigable sub-pages
+- Onboarding revamp — goal selection during onboarding, plus topic search on Home
+- Joy-themed prompts — added to Core/gratitude and wellness/selfcare categories
+- Released v1.3.2 build 13
+
+## 2026-04-07
+
+- deploy.sh — definitive failure markers for altool upload check (no more silent zero-exit success)
+
 ## 2026-03-28
+
+- Inline navigation titles instead of large headers across the app
 
 - Insights tab — new tab with activity heatmap (12-week grid), weekly trend bar chart, top categories breakdown, most productive day visualization, and summary stat cards (total ideas, lists completed, avg ideas/list, best ideas count)
 - Idea Remix Challenge — after completing a list, the export screen offers to combine 2 random ideas into a new creative prompt; shuffle for new combos, "Try This Remix" starts a fresh ideation session with the mashup prompt
