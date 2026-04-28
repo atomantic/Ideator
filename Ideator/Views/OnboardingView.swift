@@ -409,11 +409,11 @@ struct OnboardingView: View {
                         .padding(.vertical, 24)
                         .frame(maxWidth: .infinity)
                         .background(
-                            RoundedRectangle(cornerRadius: 20)
+                            RoundedRectangle(cornerRadius: Theme.Radius.xl)
                                 .fill(Color.white.opacity(0.85))
                         )
                         .overlay(
-                            RoundedRectangle(cornerRadius: 20)
+                            RoundedRectangle(cornerRadius: Theme.Radius.xl)
                                 .stroke(
                                     LinearGradient(
                                         colors: [.blue.opacity(0.4), .purple.opacity(0.4)],
@@ -589,11 +589,11 @@ struct BenefitCard: View {
         .padding(12)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: Theme.Radius.large)
                 .fill(color.opacity(0.1))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: Theme.Radius.large)
                 .stroke(color.opacity(0.3), lineWidth: 1)
         )
     }

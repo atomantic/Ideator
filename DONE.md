@@ -2,6 +2,10 @@
 
 Completed items archived from PLAN.md.
 
+## 2026-04-28
+
+- Design tokens system — `Ideator/Theme/Theme.swift` namespace exposes `Theme.Radius` (xs through pill), `Theme.Spacing` (t-shirt scale), `Theme.Surface` (semantic backgrounds), and `Theme.Hit.min` (44pt accessibility floor); refactored 8 views (Home, IdeaInput, Insights, History, CustomPrompt, Milestone, Onboarding, Confetti) to drop ~73 magic-number literals; 9 new tests pin scale invariants
+
 ## 2026-04-21
 
 - deploy.sh universalized to match PortOS canonical template

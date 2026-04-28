@@ -42,7 +42,7 @@ struct CustomPromptView: View {
                             .padding()
                             .background(Color.blue)
                             .foregroundColor(.white)
-                            .cornerRadius(12)
+                            .cornerRadius(Theme.Radius.card)
                     }
                     .disabled(promptText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     
@@ -53,7 +53,7 @@ struct CustomPromptView: View {
                     .foregroundColor(.secondary)
                 }
                 .padding()
-                .background(Color(UIColor.systemGroupedBackground))
+                .background(Theme.Surface.grouped)
             }
             .navigationTitle("Custom Prompt")
             .navigationBarTitleDisplayMode(.inline)

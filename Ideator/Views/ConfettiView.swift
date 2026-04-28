@@ -32,7 +32,7 @@ struct ConfettiView: View {
         GeometryReader { geo in
             ZStack {
                 ForEach(pieces) { piece in
-                    RoundedRectangle(cornerRadius: 2)
+                    RoundedRectangle(cornerRadius: Theme.Radius.xs)
                         .fill(piece.color)
                         .frame(width: piece.size, height: piece.size * 1.5)
                         .rotationEffect(.degrees(animate ? piece.rotation + 360 : piece.rotation))

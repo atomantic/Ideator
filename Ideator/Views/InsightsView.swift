@@ -144,11 +144,11 @@ struct InsightsView: View {
                                    let date = calendar.date(byAdding: .day, value: dayOffset, to: startDate) {
                                     let count = countsByDay[date] ?? 0
                                     let isFuture = date > today
-                                    RoundedRectangle(cornerRadius: 2)
+                                    RoundedRectangle(cornerRadius: Theme.Radius.xs)
                                         .fill(isFuture ? Color.clear : heatmapColor(count: count, max: maxCount))
                                         .frame(width: 14, height: 14)
                                         .overlay(
-                                            isFuture ? RoundedRectangle(cornerRadius: 2).stroke(Color.clear) : nil
+                                            isFuture ? RoundedRectangle(cornerRadius: Theme.Radius.xs).stroke(Color.clear) : nil
                                         )
                                         .accessibilityLabel(count > 0 ? "\(date.formatted(.dateTime.month().day())): \(count) lists" : "")
                                 } else {
@@ -168,7 +168,7 @@ struct InsightsView: View {
                     .foregroundColor(.secondary)
 
                 ForEach(0..<5, id: \.self) { level in
-                    RoundedRectangle(cornerRadius: 2)
+                    RoundedRectangle(cornerRadius: Theme.Radius.xs)
                         .fill(heatmapColorForLevel(level))
                         .frame(width: 12, height: 12)
                 }
@@ -180,8 +180,8 @@ struct InsightsView: View {
         }
         .padding()
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(UIColor.secondarySystemBackground))
+            RoundedRectangle(cornerRadius: Theme.Radius.card)
+                .fill(Theme.Surface.card)
         )
     }
 
@@ -242,7 +242,7 @@ struct InsightsView: View {
                             .font(.system(size: 10))
                             .foregroundColor(.secondary)
 
-                        RoundedRectangle(cornerRadius: 4)
+                        RoundedRectangle(cornerRadius: Theme.Radius.chip)
                             .fill(
                                 LinearGradient(
                                     colors: [.blue.opacity(0.6), .blue],
@@ -266,8 +266,8 @@ struct InsightsView: View {
         }
         .padding()
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(UIColor.secondarySystemBackground))
+            RoundedRectangle(cornerRadius: Theme.Radius.card)
+                .fill(Theme.Surface.card)
         )
     }
 
@@ -301,7 +301,7 @@ struct InsightsView: View {
                         .lineLimit(1)
 
                     GeometryReader { geo in
-                        RoundedRectangle(cornerRadius: 4)
+                        RoundedRectangle(cornerRadius: Theme.Radius.chip)
                             .fill(Color.from(name: data.color).opacity(0.6))
                             .frame(width: max(4, geo.size.width * CGFloat(data.count) / CGFloat(maxCatCount)))
                     }
@@ -316,8 +316,8 @@ struct InsightsView: View {
         }
         .padding()
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(UIColor.secondarySystemBackground))
+            RoundedRectangle(cornerRadius: Theme.Radius.card)
+                .fill(Theme.Surface.card)
         )
     }
 
@@ -351,7 +351,7 @@ struct InsightsView: View {
             HStack(alignment: .bottom, spacing: 8) {
                 ForEach(0..<7, id: \.self) { day in
                     VStack(spacing: 4) {
-                        RoundedRectangle(cornerRadius: 4)
+                        RoundedRectangle(cornerRadius: Theme.Radius.chip)
                             .fill(day == bestDayIndex ? Color.orange : Color.blue.opacity(0.5))
                             .frame(height: max(4, CGFloat(dayCounts[day]) / CGFloat(maxDay) * 60))
 
@@ -366,8 +366,8 @@ struct InsightsView: View {
         }
         .padding()
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(UIColor.secondarySystemBackground))
+            RoundedRectangle(cornerRadius: Theme.Radius.card)
+                .fill(Theme.Surface.card)
         )
     }
 }
@@ -398,8 +398,8 @@ private struct StatCard: View {
         .frame(maxWidth: .infinity)
         .padding()
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(UIColor.secondarySystemBackground))
+            RoundedRectangle(cornerRadius: Theme.Radius.card)
+                .fill(Theme.Surface.card)
         )
     }
 }

@@ -146,10 +146,10 @@ struct HistoryView: View {
                             Image(systemName: "chevron.down")
                                 .font(.caption2)
                         }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
+                        .padding(.horizontal, Theme.Spacing.sm)
+                        .padding(.vertical, Theme.Spacing.xs)
                         .background(Color(UIColor.systemGray5))
-                        .cornerRadius(8)
+                        .cornerRadius(Theme.Radius.inset)
                     }
                 }
             }
