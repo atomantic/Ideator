@@ -10,9 +10,10 @@ For completed work, see [DONE.md](./DONE.md).
 ## Backlog
 
 - [ ] XCUITests for navigation flows — placeholder tests exist, real tests not implemented
+- [ ] HomeView decomposition — file has grown to 956 lines; extract sections (Best Ideas, Seasonal, Prompt of the Day, Streaks) like the prior HistoryView split
 
 ## Future / Ideas
 
 - Design tokens system — shared cornerRadius, colors, padding constants
-- Extract reusable empty-state component — DraftsView and HistoryView duplicate the same icon+title+subtitle layout
+- Extract reusable empty-state component — DraftsView, HistoryView, and InsightsView duplicate the same icon+title+subtitle layout
 - New pack themes — professional-development, humor/comedy-writing, cooking/food
