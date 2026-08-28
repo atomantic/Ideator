@@ -10,6 +10,8 @@ import SwiftUI
 @main
 struct IdeatorApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    @Environment(\.scenePhase) private var scenePhase
+
     var body: some Scene {
         WindowGroup {
             ContentView()
@@ -19,6 +21,12 @@ struct IdeatorApp: App {
                 }
                 .task {
                     syncWidgetData()
+                }
+                // Becoming active is when vault edits made elsewhere show up, and
+                // it keeps the scan off every storage read.
+                .onChange(of: scenePhase, initial: true) { _, phase in
+                    guard phase == .active else { return }
+                    ObsidianSyncManager.shared.importExternalChangesIfNeeded()
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .streakUpdated)) { _ in
                     syncWidgetData()

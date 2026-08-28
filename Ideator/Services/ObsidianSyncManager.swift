@@ -3,6 +3,14 @@ import os.log
 
 private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "net.shadowpuppet.ideator", category: "ObsidianSyncManager")
 
+/// Mirrors idea lists to a user-selected Obsidian vault as Markdown files.
+///
+/// Every filesystem touch — and the Markdown rendering that feeds it — runs on
+/// `queue`. Vaults typically live in iCloud Drive, where resolving a
+/// security-scoped bookmark, enumerating the folder or writing a file can each
+/// stall for seconds while the file provider does its work, so none of it may
+/// happen on the main thread. Writes are coalesced per file, so a burst of
+/// edits produces one render and one file write instead of one per keystroke.
 final class ObsidianSyncManager {
     static let shared = ObsidianSyncManager()
 
@@ -10,8 +18,26 @@ final class ObsidianSyncManager {
     private let enabledKey = "obsidian_sync_enabled"
     private let writeTimestampsKey = "obsidian_write_timestamps"
     private let subfolderName = "Idea Loom"
+
+    /// Serial so bookmark resolution, writes and imports never overlap.
+    private let queue = DispatchQueue(label: "net.shadowpuppet.ideator.obsidian-sync", qos: .utility)
+
+    /// How long to wait for further edits before writing to the vault.
+    private let writeDebounce: DispatchTimeInterval = .milliseconds(750)
+    private let importThrottle: TimeInterval = 30
+
+    /// Formatters are expensive to build and thread-safe to format with.
+    private static let fileDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }()
+    private static let isoFormatter = ISO8601DateFormatter()
+
+    // All queue-confined.
+    private var pendingWrites: [String: String] = [:]
+    private var flushScheduled = false
     private var lastImportCheck: Date = .distantPast
-    private var isImporting = false
 
     private init() {}
 
@@ -89,8 +115,11 @@ final class ObsidianSyncManager {
 
     // MARK: - File Operations
 
-    private func withFolder(_ action: (URL) -> Void) {
-        guard isEnabled, let folderURL = resolveBookmark() else { return }
+    /// Runs `action` with security-scoped access to the vault folder.
+    /// `requireEnabled: false` lets cleanup run after the user has already
+    /// toggled sync off but still wants the mirror removed.
+    private func withFolder(requireEnabled: Bool = true, _ action: (URL) -> Void) {
+        guard !requireEnabled || isEnabled, let folderURL = resolveBookmark() else { return }
         guard folderURL.startAccessingSecurityScopedResource() else {
             logger.error("📁 Security-scoped access denied")
             return
@@ -99,143 +128,180 @@ final class ObsidianSyncManager {
         action(folderURL)
     }
 
+    /// Queues `ideaList` to be mirrored. Returns immediately — the Markdown is
+    /// rendered on the queue, so a burst of edits renders once, not once each.
     func syncIdeaList(_ ideaList: IdeaList) {
-        guard !isImporting else { return }
-        withFolder { folderURL in
-            let subfolder = folderURL.appendingPathComponent(subfolderName)
+        guard isEnabled else { return }
 
-            do {
-                try FileManager.default.createDirectory(at: subfolder, withIntermediateDirectories: true)
-                let name = fileName(for: ideaList)
-                let fileURL = subfolder.appendingPathComponent(name)
-                try formatMarkdown(ideaList).write(to: fileURL, atomically: true, encoding: .utf8)
-                recordWriteTimestamp(for: name, at: fileURL)
-                logger.info("📁 Synced: \(name)")
-            } catch {
-                logger.error("📁 Sync failed: \(error.localizedDescription)")
+        queue.async { [self] in
+            pendingWrites[fileName(for: ideaList)] = formatMarkdown(ideaList)
+            scheduleFlush()
+        }
+    }
+
+    /// Deletes the entire "Idea Loom" subfolder from the vault.
+    func deleteAllVaultFiles() {
+        queue.async { [self] in
+            pendingWrites.removeAll()
+            withFolder(requireEnabled: false) { folderURL in
+                let subfolder = folderURL.appendingPathComponent(subfolderName)
+                try? FileManager.default.removeItem(at: subfolder)
+                UserDefaults.standard.removeObject(forKey: writeTimestampsKey)
+                logger.info("📁 Deleted all vault files")
             }
         }
     }
 
-    /// Deletes the entire "Idea Loom" subfolder from the vault. Bypasses the
-    /// `isEnabled` gate in `withFolder` so it can run after the user has
-    /// already toggled sync off but still wants to clean up the mirror.
-    func deleteAllVaultFiles() {
-        guard let folderURL = resolveBookmark() else { return }
-        guard folderURL.startAccessingSecurityScopedResource() else {
-            logger.error("📁 Security-scoped access denied for cleanup")
-            return
-        }
-        defer { folderURL.stopAccessingSecurityScopedResource() }
-
-        let subfolder = folderURL.appendingPathComponent(subfolderName)
-        try? FileManager.default.removeItem(at: subfolder)
-        UserDefaults.standard.removeObject(forKey: writeTimestampsKey)
-        logger.info("📁 Deleted all vault files")
-    }
-
     func deleteFile(for ideaList: IdeaList) {
-        withFolder { folderURL in
+        queue.async { [self] in
             let name = fileName(for: ideaList)
-            let fileURL = folderURL
-                .appendingPathComponent(subfolderName)
-                .appendingPathComponent(name)
-            try? FileManager.default.removeItem(at: fileURL)
-            removeWriteTimestamp(for: name)
-            logger.info("📁 Deleted: \(name)")
+            pendingWrites.removeValue(forKey: name)
+            withFolder { folderURL in
+                let fileURL = folderURL
+                    .appendingPathComponent(subfolderName)
+                    .appendingPathComponent(name)
+                try? FileManager.default.removeItem(at: fileURL)
+
+                var timestamps = writeTimestamps()
+                timestamps.removeValue(forKey: name)
+                saveWriteTimestamps(timestamps)
+                logger.info("📁 Deleted: \(name)")
+            }
         }
     }
 
-    @discardableResult
-    func syncAll() -> Int {
+    /// Mirrors every stored list, bypassing the write debounce. `completion`
+    /// reports the count on the main queue once the vault writes have finished.
+    func syncAll(completion: ((Int) -> Void)? = nil) {
         let persistence = PersistenceManager.shared
         let allLists = persistence.loadDrafts() + persistence.loadCompleted()
-        for list in allLists {
-            syncIdeaList(list)
+        let count = allLists.count
+        allLists.forEach(syncIdeaList)
+
+        queue.async { [self] in
+            flushPendingWrites()
+            logger.info("📁 Full sync complete: \(count) lists")
+            if let completion {
+                DispatchQueue.main.async { completion(count) }
+            }
         }
-        logger.info("📁 Full sync complete: \(allLists.count) lists")
-        return allLists.count
+    }
+
+    // MARK: - Debounced Writes (queue-confined)
+
+    private func scheduleFlush() {
+        guard !flushScheduled else { return }
+        flushScheduled = true
+        queue.asyncAfter(deadline: .now() + writeDebounce) { [self] in
+            flushScheduled = false
+            flushPendingWrites()
+        }
+    }
+
+    private func flushPendingWrites() {
+        guard !pendingWrites.isEmpty else { return }
+        let batch = pendingWrites
+        pendingWrites.removeAll()
+
+        withFolder { folderURL in
+            let subfolder = folderURL.appendingPathComponent(subfolderName)
+            do {
+                try FileManager.default.createDirectory(at: subfolder, withIntermediateDirectories: true)
+            } catch {
+                logger.error("📁 Sync failed: \(error.localizedDescription)")
+                return
+            }
+
+            var timestamps = writeTimestamps()
+            for (name, markdown) in batch {
+                let fileURL = subfolder.appendingPathComponent(name)
+                do {
+                    try markdown.write(to: fileURL, atomically: true, encoding: .utf8)
+                    timestamps[name] = (modificationDate(of: fileURL) ?? Date()).timeIntervalSince1970
+                    logger.info("📁 Synced: \(name)")
+                } catch {
+                    logger.error("📁 Sync failed: \(error.localizedDescription)")
+                }
+            }
+            saveWriteTimestamps(timestamps)
+        }
     }
 
     // MARK: - Import External Changes
 
+    /// Scans the vault for edits made outside the app, at most once every
+    /// `importThrottle` seconds. Returns immediately; imported ideas are merged
+    /// on the main queue and announced via `.externalIdeasImported`.
     func importExternalChangesIfNeeded() {
-        guard isEnabled,
-              !isImporting,
-              Date().timeIntervalSince(lastImportCheck) > 30 else { return }
-        lastImportCheck = Date()
-        isImporting = true
-        defer { isImporting = false }
-        importExternalChanges()
+        guard isEnabled else { return }
+
+        queue.async { [self] in
+            guard Date().timeIntervalSince(lastImportCheck) > importThrottle else { return }
+            lastImportCheck = Date()
+
+            let imported = readExternalChanges()
+            guard !imported.isEmpty else { return }
+
+            DispatchQueue.main.async {
+                PersistenceManager.shared.applyImportedIdeas(imported)
+            }
+        }
     }
 
-    private func importExternalChanges() {
-        guard let folderURL = resolveBookmark() else { return }
-        guard folderURL.startAccessingSecurityScopedResource() else { return }
-        defer { folderURL.stopAccessingSecurityScopedResource() }
+    /// Reads vault files modified since the app last wrote them. Queue-confined;
+    /// touches no shared storage beyond its own write-timestamp bookkeeping, so
+    /// the merge can happen on the main queue without racing a draft save.
+    private func readExternalChanges() -> [UUID: [String]] {
+        var imported: [UUID: [String]] = [:]
 
-        let subfolder = folderURL.appendingPathComponent(subfolderName)
-        guard let files = try? FileManager.default.contentsOfDirectory(
-            at: subfolder,
-            includingPropertiesForKeys: [.contentModificationDateKey]
-        ) else { return }
+        withFolder { folderURL in
+            let subfolder = folderURL.appendingPathComponent(subfolderName)
+            guard let files = try? FileManager.default.contentsOfDirectory(
+                at: subfolder,
+                includingPropertiesForKeys: [.contentModificationDateKey]
+            ) else { return }
 
-        var drafts: [IdeaList] = loadDirectly(forKey: "ideator_drafts") ?? []
-        var completed: [IdeaList] = loadDirectly(forKey: "ideator_completed") ?? []
-        var changed = false
+            var timestamps = writeTimestamps()
+            var timestampsChanged = false
 
-        for file in files where file.pathExtension == "md" {
-            let name = file.lastPathComponent
-            guard wasExternallyModified(fileName: name, at: file) else { continue }
+            for file in files where file.pathExtension == "md" {
+                let name = file.lastPathComponent
+                guard let modDate = modificationDate(of: file) else { continue }
 
-            guard let content = try? String(contentsOf: file, encoding: .utf8),
-                  let imported = parseMarkdown(content) else { continue }
+                // Anything newer than our own last write (past a second of
+                // filesystem timestamp slop) was edited outside the app.
+                if let lastWrite = timestamps[name],
+                   modDate.timeIntervalSince1970 <= lastWrite + 1.0 { continue }
 
-            if let idx = drafts.firstIndex(where: { $0.id == imported.id }) {
-                drafts[idx].ideas = imported.ideas
-                drafts[idx].modifiedDate = Date()
-                changed = true
-                logger.info("📁 Imported changes to draft: \(name)")
-            } else if let idx = completed.firstIndex(where: { $0.id == imported.id }) {
-                completed[idx].ideas = imported.ideas
-                completed[idx].modifiedDate = Date()
-                changed = true
-                logger.info("📁 Imported changes to completed: \(name)")
+                guard let content = try? String(contentsOf: file, encoding: .utf8),
+                      let parsed = parseMarkdown(content) else { continue }
+
+                imported[parsed.id] = parsed.ideas
+                timestamps[name] = modDate.timeIntervalSince1970
+                timestampsChanged = true
+                logger.info("📁 Imported changes from: \(name)")
             }
 
-            recordWriteTimestamp(for: name, at: file)
+            if timestampsChanged {
+                saveWriteTimestamps(timestamps)
+            }
         }
 
-        if changed {
-            saveDirectly(drafts, forKey: "ideator_drafts")
-            saveDirectly(completed, forKey: "ideator_completed")
-            logger.info("📁 External changes imported")
-        }
+        return imported
     }
 
     // MARK: - Write Timestamp Tracking
 
-    private func recordWriteTimestamp(for fileName: String, at fileURL: URL) {
-        let modDate = (try? FileManager.default.attributesOfItem(atPath: fileURL.path))?[.modificationDate] as? Date
-        var timestamps = UserDefaults.standard.dictionary(forKey: writeTimestampsKey) as? [String: Double] ?? [:]
-        timestamps[fileName] = modDate?.timeIntervalSince1970 ?? Date().timeIntervalSince1970
+    private func writeTimestamps() -> [String: Double] {
+        UserDefaults.standard.dictionary(forKey: writeTimestampsKey) as? [String: Double] ?? [:]
+    }
+
+    private func saveWriteTimestamps(_ timestamps: [String: Double]) {
         UserDefaults.standard.set(timestamps, forKey: writeTimestampsKey)
     }
 
-    private func removeWriteTimestamp(for fileName: String) {
-        var timestamps = UserDefaults.standard.dictionary(forKey: writeTimestampsKey) as? [String: Double] ?? [:]
-        timestamps.removeValue(forKey: fileName)
-        UserDefaults.standard.set(timestamps, forKey: writeTimestampsKey)
-    }
-
-    private func wasExternallyModified(fileName: String, at fileURL: URL) -> Bool {
-        guard let attrs = try? FileManager.default.attributesOfItem(atPath: fileURL.path),
-              let fileModDate = attrs[.modificationDate] as? Date else { return false }
-
-        let timestamps = UserDefaults.standard.dictionary(forKey: writeTimestampsKey) as? [String: Double] ?? [:]
-        guard let lastWrite = timestamps[fileName] else { return true }
-
-        return fileModDate.timeIntervalSince1970 > lastWrite + 1.0
+    private func modificationDate(of fileURL: URL) -> Date? {
+        (try? fileURL.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate
     }
 
     // MARK: - Markdown Parsing
@@ -281,24 +347,10 @@ final class ObsidianSyncManager {
         return ImportedIdeaList(id: id, ideas: ideas)
     }
 
-    // MARK: - Direct UserDefaults Access (bypasses PersistenceManager to avoid sync loops)
-
-    private func loadDirectly<T: Codable>(forKey key: String) -> T? {
-        guard let data = UserDefaults.standard.data(forKey: key) else { return nil }
-        return try? JSONDecoder().decode(T.self, from: data)
-    }
-
-    private func saveDirectly<T: Codable>(_ object: T, forKey key: String) {
-        guard let data = try? JSONEncoder().encode(object) else { return }
-        UserDefaults.standard.set(data, forKey: key)
-    }
-
     // MARK: - Markdown Formatting
 
     private func fileName(for ideaList: IdeaList) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        let dateStr = formatter.string(from: ideaList.createdDate)
+        let dateStr = Self.fileDateFormatter.string(from: ideaList.createdDate)
         let title = sanitize(ideaList.prompt.formattedTitle)
         return "\(dateStr) \(title).md"
     }
@@ -309,7 +361,7 @@ final class ObsidianSyncManager {
     }
 
     private func formatMarkdown(_ ideaList: IdeaList) -> String {
-        let iso = ISO8601DateFormatter()
+        let iso = Self.isoFormatter
         let status = ideaList.isComplete ? "completed" : "draft"
         let category = ideaList.prompt.flexibleCategory.name
         let tag = category.lowercased()

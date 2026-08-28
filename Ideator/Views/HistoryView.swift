@@ -156,6 +156,10 @@ struct HistoryView: View {
             .onAppear {
                 loadHistory()
             }
+            // Vault edits are imported in the background, so refresh when they land
+            .onReceive(NotificationCenter.default.publisher(for: .externalIdeasImported)) { _ in
+                loadHistory()
+            }
             .onChange(of: searchText) { newValue in
                 if newValue.isEmpty {
                     if let prev = lastViewModeBeforeSearch {
