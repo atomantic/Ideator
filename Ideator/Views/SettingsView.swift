@@ -303,10 +303,11 @@ struct SyncSettingsView: View {
                         }
 
                         Button {
-                            let count = ObsidianSyncManager.shared.syncAll()
-                            syncResultMessage = count == 0
-                                ? "No idea lists to sync yet. Create some drafts or completed lists first."
-                                : "Synced \(count) idea list\(count == 1 ? "" : "s") to your vault."
+                            ObsidianSyncManager.shared.syncAll { count in
+                                syncResultMessage = count == 0
+                                    ? "No idea lists to sync yet. Create some drafts or completed lists first."
+                                    : "Synced \(count) idea list\(count == 1 ? "" : "s") to your vault."
+                            }
                         } label: {
                             HStack {
                                 Image(systemName: "arrow.triangle.2.circlepath")

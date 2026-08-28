@@ -20,6 +20,10 @@ struct DraftsView: View {
             .onAppear {
                 loadDrafts()
             }
+            // Vault edits are imported in the background, so refresh when they land
+            .onReceive(NotificationCenter.default.publisher(for: .externalIdeasImported)) { _ in
+                loadDrafts()
+            }
             .sheet(item: $selectedDraft, onDismiss: loadDrafts) { draft in
                 NavigationStack {
                     IdeaInputView(viewModel: ideaListViewModel, promptViewModel: nil)

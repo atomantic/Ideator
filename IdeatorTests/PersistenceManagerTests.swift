@@ -129,6 +129,48 @@ final class PersistenceManagerTests: XCTestCase {
         XCTAssertEqual(loaded.count, 2)
     }
 
+    // MARK: - Imported Vault Changes
+
+    func testApplyImportedIdeas_updatesDraftAndCompleted() {
+        let draft = makeIdeaList(promptText: "Draft prompt", ideas: ["Old draft"])
+        let completed = makeIdeaList(promptText: "Completed prompt", ideas: ["Old done"], isComplete: true)
+        manager.saveDraft(draft)
+        manager.saveCompleted(completed)
+
+        manager.applyImportedIdeas([
+            draft.id: ["New draft idea"],
+            completed.id: ["New done idea"]
+        ])
+
+        XCTAssertEqual(manager.loadDrafts().first { $0.id == draft.id }?.ideas, ["New draft idea"])
+        XCTAssertEqual(manager.loadCompleted().first { $0.id == completed.id }?.ideas, ["New done idea"])
+    }
+
+    func testApplyImportedIdeas_ignoresUnknownIds() {
+        let draft = makeIdeaList(promptText: "Draft prompt", ideas: ["Kept"])
+        manager.saveDraft(draft)
+
+        manager.applyImportedIdeas([UUID(): ["Orphan"]])
+
+        let drafts = manager.loadDrafts()
+        XCTAssertEqual(drafts.count, 1)
+        XCTAssertEqual(drafts.first?.ideas, ["Kept"])
+    }
+
+    func testApplyImportedIdeas_postsNotificationOnlyWhenChanged() {
+        let draft = makeIdeaList(promptText: "Draft prompt", ideas: ["Old"])
+        manager.saveDraft(draft)
+
+        let posted = expectation(forNotification: .externalIdeasImported, object: nil)
+        manager.applyImportedIdeas([draft.id: ["New"]])
+        wait(for: [posted], timeout: 1)
+
+        let unexpected = expectation(forNotification: .externalIdeasImported, object: nil)
+        unexpected.isInverted = true
+        manager.applyImportedIdeas([:])
+        wait(for: [unexpected], timeout: 0.2)
+    }
+
     // MARK: - clearAll
 
     func testClearAll_removesEverything() {
