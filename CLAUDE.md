@@ -8,16 +8,24 @@ Idea Loom (formerly Ideator) is an iOS SwiftUI app for daily creative brainstorm
 
 ## Build Commands
 
-```bash
-# Build
-xcodebuild build -project Ideator.xcodeproj -scheme Ideator \
-  -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.6' CODE_SIGNING_ALLOWED=NO
+Do not pin a simulator name or OS version — installed runtimes drift, and a
+stale pin fails with "Unable to find a device matching the provided destination
+specifier". Let `xcodebuild` pick, the way CI does.
 
-# Run tests
+```bash
+# Build — no simulator needed
+xcodebuild build -project Ideator.xcodeproj -scheme Ideator \
+  -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO
+
+# Run tests — resolve whatever iPhone simulator is actually installed
+DEST="platform=iOS Simulator,name=$(xcrun simctl list devices available \
+  | grep -o 'iPhone [^(]*' | tail -1 | sed 's/ *$//')"
 xcodebuild test -project Ideator.xcodeproj -scheme Ideator \
   -only-testing:IdeatorTests \
-  -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.6' CODE_SIGNING_ALLOWED=NO
+  -destination "$DEST" CODE_SIGNING_ALLOWED=NO
 ```
+
+Check what is installed with `xcrun simctl list devices available`.
 
 ## Git Workflow
 
