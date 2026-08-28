@@ -19,10 +19,61 @@ jobs:
   ci:
     runs-on: macos-latest
     name: Build & Test
+    outputs:
+      version_changed: ${{ steps.version_gate.outputs.version_changed }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          # Full history so the version gate below can diff against the
+          # commit this push started from.
+          fetch-depth: 0
+
+      # App Store Connect rejects a re-upload of a version+build pair it has
+      # already seen (90062 / 90186), so deploying on every push guarantees a
+      # red run. Only deploy when project.pbxproj actually declares a new
+      # version, which is what the "release:" / "build:" commits do.
+      - name: Check whether the app version changed
+        id: version_gate
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          version_changed_between() {
+            git diff "$1" "$2" -- Ideator.xcodeproj/project.pbxproj \
+              | grep -qE '^\+[[:space:]]*(MARKETING_VERSION|CURRENT_PROJECT_VERSION) = '
+          }
+
+          RESULT=false
+          if [ "$EVENT_NAME" != "push" ]; then
+            echo "Not a push event — no deploy."
+          else
+            BASE=""
+            if [ -n "${BEFORE:-}" ] \
+               && [ "$BEFORE" != "0000000000000000000000000000000000000000" ] \
+               && git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+              BASE="$BEFORE"
+            elif git cat-file -e 'HEAD^{commit}' 2>/dev/null; then
+              # Branch creation, or a base commit this clone cannot reach.
+              BASE="HEAD^"
+            fi
+
+            if [ -z "$BASE" ]; then
+              echo "No usable base commit — treating as a version change."
+              RESULT=true
+            elif version_changed_between "$BASE" "$AFTER"; then
+              echo "Version changed between $BASE and $AFTER."
+              RESULT=true
+            else
+              echo "No version change between $BASE and $AFTER — skipping TestFlight."
+            fi
+          fi
+
+          echo "version_changed=$RESULT" >> "$GITHUB_OUTPUT"
 
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
@@ -73,7 +124,7 @@ jobs:
     runs-on: macos-latest
     name: Build and Deploy to TestFlight
     needs: ci
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/testflight' || startsWith(github.ref, 'refs/heads/release/'))
+    if: github.event_name == 'push' && needs.ci.outputs.version_changed == 'true' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/testflight' || startsWith(github.ref, 'refs/heads/release/'))
     
     steps:
       - uses: actions/checkout@v4
