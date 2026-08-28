@@ -48,7 +48,7 @@ struct MilestoneCelebrationView: View {
                 }
                 .padding(32)
                 .background(
-                    RoundedRectangle(cornerRadius: 24)
+                    RoundedRectangle(cornerRadius: Theme.Radius.pill)
                         .fill(.ultraThinMaterial)
                 )
                 .padding(.horizontal, 32)
@@ -66,7 +66,7 @@ struct MilestoneCelebrationView: View {
                             )
                         )
                         .foregroundColor(.white)
-                        .cornerRadius(16)
+                        .cornerRadius(Theme.Radius.large)
                 }
                 .padding(.horizontal, 48)
 

@@ -135,8 +135,8 @@ struct HomeView: View {
             }
             .padding(12)
             .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(UIColor.secondarySystemBackground))
+                RoundedRectangle(cornerRadius: Theme.Radius.card)
+                    .fill(Theme.Surface.card)
             )
 
             if hasQuery {
@@ -225,8 +225,8 @@ struct HomeView: View {
                 }
                 .padding(12)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(UIColor.secondarySystemBackground))
+                    RoundedRectangle(cornerRadius: Theme.Radius.card)
+                        .fill(Theme.Surface.card)
                 )
             }
         }
@@ -257,7 +257,7 @@ struct HomeView: View {
                     ))
                     : AnyShapeStyle(Color.clear)
             )
-            .cornerRadius(10)
+            .cornerRadius(Theme.Radius.button)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -291,8 +291,8 @@ struct HomeView: View {
             .frame(maxWidth: .infinity)
             .padding()
             .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(UIColor.secondarySystemBackground))
+                RoundedRectangle(cornerRadius: Theme.Radius.card)
+                    .fill(Theme.Surface.card)
             )
 
             VStack(spacing: 8) {
@@ -318,8 +318,8 @@ struct HomeView: View {
             .frame(maxWidth: .infinity)
             .padding()
             .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(UIColor.secondarySystemBackground))
+                RoundedRectangle(cornerRadius: Theme.Radius.card)
+                    .fill(Theme.Surface.card)
             )
         }
     }
@@ -389,10 +389,10 @@ struct HomeView: View {
                 }
                 .padding()
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(UIColor.secondarySystemBackground))
+                    RoundedRectangle(cornerRadius: Theme.Radius.card)
+                        .fill(Theme.Surface.card)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 12)
+                            RoundedRectangle(cornerRadius: Theme.Radius.card)
                                 .stroke(
                                     LinearGradient(
                                         colors: [.orange.opacity(0.4), .yellow.opacity(0.3)],
@@ -471,10 +471,10 @@ struct HomeView: View {
         }
         .padding()
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(UIColor.secondarySystemBackground))
+            RoundedRectangle(cornerRadius: Theme.Radius.card)
+                .fill(Theme.Surface.card)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: Theme.Radius.card)
                         .stroke(
                             Color.from(name: seasonal.color).opacity(0.3),
                             lineWidth: 1
@@ -517,7 +517,7 @@ struct HomeView: View {
                         endPoint: .trailing
                     )
                 )
-                .cornerRadius(12)
+                .cornerRadius(Theme.Radius.card)
             }
             .buttonStyle(PlainButtonStyle())
 
@@ -551,7 +551,7 @@ struct HomeView: View {
                         endPoint: .trailing
                     )
                 )
-                .cornerRadius(12)
+                .cornerRadius(Theme.Radius.card)
             }
             .buttonStyle(PlainButtonStyle())
         }
@@ -611,8 +611,8 @@ struct HomeView: View {
             }
             .padding()
             .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(UIColor.secondarySystemBackground))
+                RoundedRectangle(cornerRadius: Theme.Radius.card)
+                    .fill(Theme.Surface.card)
             )
         }
     }
@@ -672,8 +672,8 @@ struct HomeView: View {
                 }
                 .padding()
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(UIColor.secondarySystemBackground))
+                    RoundedRectangle(cornerRadius: Theme.Radius.card)
+                        .fill(Theme.Surface.card)
                 )
             }
         }
@@ -833,8 +833,8 @@ struct CategoryCard: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding()
-            .background(Color(UIColor.secondarySystemBackground))
-            .cornerRadius(12)
+            .background(Theme.Surface.card)
+            .cornerRadius(Theme.Radius.card)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -870,8 +870,8 @@ struct FlexibleCategoryCard: View {
             .frame(maxWidth: .infinity, minHeight: 100)
             .padding(.vertical, 12)
             .padding(.horizontal, 8)
-            .background(Color(UIColor.secondarySystemBackground))
-            .cornerRadius(12)
+            .background(Theme.Surface.card)
+            .cornerRadius(Theme.Radius.card)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -938,10 +938,10 @@ struct AvailablePackCard: View {
             .padding()
         }
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(UIColor.secondarySystemBackground))
+            RoundedRectangle(cornerRadius: Theme.Radius.card)
+                .fill(Theme.Surface.card)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: Theme.Radius.card)
                         .stroke(
                             LinearGradient(
                                 colors: [.blue.opacity(0.3), .purple.opacity(0.3)],

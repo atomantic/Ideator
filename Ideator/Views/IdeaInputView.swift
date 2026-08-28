@@ -61,9 +61,9 @@ struct IdeaInputView: View {
                             .textFieldStyle(PlainTextFieldStyle())
                             .padding(12)
                             .background(Color(UIColor.systemBackground))
-                            .cornerRadius(8)
+                            .cornerRadius(Theme.Radius.inset)
                             .overlay(
-                                RoundedRectangle(cornerRadius: 8)
+                                RoundedRectangle(cornerRadius: Theme.Radius.inset)
                                     .stroke(
                                         isInputFocused ? Color.blue : Color(UIColor.separator),
                                         lineWidth: isInputFocused ? 2 : 1
@@ -228,7 +228,7 @@ struct IdeaInputView: View {
                 .foregroundColor(.secondary)
         }
         .padding()
-        .background(Color(UIColor.systemGroupedBackground))
+        .background(Theme.Surface.grouped)
     }
     
     private var promptCard: some View {
@@ -265,8 +265,8 @@ struct IdeaInputView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(Color(UIColor.secondarySystemBackground))
-        .cornerRadius(12)
+        .background(Theme.Surface.card)
+        .cornerRadius(Theme.Radius.card)
     }
     
     
@@ -321,9 +321,9 @@ struct IdeaRow: View {
                     .textFieldStyle(PlainTextFieldStyle())
                     .padding(12)
                     .background(Color(UIColor.systemBackground))
-                    .cornerRadius(8)
+                    .cornerRadius(Theme.Radius.inset)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedRectangle(cornerRadius: Theme.Radius.inset)
                             .stroke(Color.blue, lineWidth: 2)
                     )
                     .onChange(of: isEditFocused) { _, focused in
@@ -334,8 +334,8 @@ struct IdeaRow: View {
                     .font(.body)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(12)
-                    .background(Color(UIColor.secondarySystemBackground))
-                    .cornerRadius(8)
+                    .background(Theme.Surface.card)
+                    .cornerRadius(Theme.Radius.inset)
                     .onTapGesture {
                         editText = text
                         isEditing = true
@@ -436,8 +436,8 @@ struct ExportView: View {
                         .toggleStyle(SwitchToggleStyle(tint: .blue))
                     }
                     .padding()
-                    .background(Color(UIColor.secondarySystemBackground))
-                    .cornerRadius(12)
+                    .background(Theme.Surface.card)
+                    .cornerRadius(Theme.Radius.card)
                     .padding(.horizontal)
 
                     Button(action: {
@@ -449,7 +449,7 @@ struct ExportView: View {
                             .padding()
                             .background(Color.blue)
                             .foregroundColor(.white)
-                            .cornerRadius(12)
+                            .cornerRadius(Theme.Radius.card)
                     }
                     .padding(.horizontal)
 
@@ -519,8 +519,8 @@ struct ExportView: View {
                         .font(.subheadline)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
-                        .background(Color(UIColor.tertiarySystemBackground))
-                        .cornerRadius(8)
+                        .background(Theme.Surface.tertiary)
+                        .cornerRadius(Theme.Radius.inset)
                 }
 
                 Button {
@@ -543,16 +543,16 @@ struct ExportView: View {
                         .padding(.vertical, 8)
                         .background(Color.purple)
                         .foregroundColor(.white)
-                        .cornerRadius(8)
+                        .cornerRadius(Theme.Radius.inset)
                 }
             }
         }
         .padding()
         .background(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: Theme.Radius.card)
                 .fill(Color.purple.opacity(0.08))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: Theme.Radius.card)
                         .stroke(Color.purple.opacity(0.2), lineWidth: 1)
                 )
         )

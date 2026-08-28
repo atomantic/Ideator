@@ -14,6 +14,5 @@ For completed work, see [DONE.md](./DONE.md).
 
 ## Future / Ideas
 
-- Design tokens system — shared cornerRadius, colors, padding constants
 - Extract reusable empty-state component — DraftsView, HistoryView, and InsightsView duplicate the same icon+title+subtitle layout
 - New pack themes — professional-development, humor/comedy-writing, cooking/food
