@@ -48,7 +48,10 @@ Local deploy via `./deploy.sh` (used when CI build credits are exhausted):
 
 Requires `.env` file with App Store Connect API credentials (see `.env.example`).
 
-CI/CD via GitHub Actions (`.github/workflows/ci.yml`) deploys automatically on push to `main`, `testflight`, or `release/*` branches.
+CI/CD via GitHub Actions (`.github/workflows/ci.yml`) builds and tests every push. It uploads to
+TestFlight only when a push to `main`, `testflight`, or `release/**` also changes
+`MARKETING_VERSION` or `CURRENT_PROJECT_VERSION` in `project.pbxproj` — App Store Connect rejects a
+version+build pair it has already accepted, so re-uploading an unchanged version always fails.
 
 ### Pack Sync
 - **Sync script**: `./sync-packs.sh` - Syncs all packs from IdeatorPromptPacks repo
@@ -134,8 +137,8 @@ Prompt files use tab-separated values:
 
 - **Branches**: main, testflight, release/**
 - **iOS target**: 18.2
-- **Xcode version**: 16.2 (CI), latest-stable (CD)
-- **TestFlight**: Automatic deployment on main/testflight push
+- **Xcode version**: latest-stable (both CI and CD)
+- **TestFlight**: Deploys on a main/testflight push that bumps the version (see above)
 - **Required Secrets**:
   - TEAM_ID
   - APPSTORE_API_KEY_ID
