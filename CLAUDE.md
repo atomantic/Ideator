@@ -10,7 +10,9 @@ Idea Loom (formerly Ideator) is an iOS SwiftUI app for daily creative brainstorm
 
 Do not pin a simulator name or OS version — installed runtimes drift, and a
 stale pin fails with "Unable to find a device matching the provided destination
-specifier". Let `xcodebuild` pick, the way CI does.
+specifier". Resolve a device that is actually installed instead. (CI solves the
+same problem differently: `ci.yml` probes a hardcoded iPhone 16 → 15 → 14
+preference list.)
 
 ```bash
 # Build — no simulator needed
@@ -48,10 +50,11 @@ Local deploy via `./deploy.sh` (used when CI build credits are exhausted):
 
 Requires `.env` file with App Store Connect API credentials (see `.env.example`).
 
-CI/CD via GitHub Actions (`.github/workflows/ci.yml`) builds and tests every push. It uploads to
-TestFlight only when a push to `main`, `testflight`, or `release/**` also changes
-`MARKETING_VERSION` or `CURRENT_PROJECT_VERSION` in `project.pbxproj` — App Store Connect rejects a
-version+build pair it has already accepted, so re-uploading an unchanged version always fails.
+CI/CD via GitHub Actions (`.github/workflows/ci.yml`) builds and tests every pull request, plus
+every push to `main`, `testflight`, or `release/**`. It uploads to TestFlight only when such a push
+also changes `MARKETING_VERSION` or `CURRENT_PROJECT_VERSION` in `project.pbxproj` — App Store
+Connect rejects a version+build pair it has already accepted. A new build under an unchanged
+marketing version is fine (that is what `./deploy.sh` does); re-sending the same pair is not.
 
 ### Pack Sync
 - **Sync script**: `./sync-packs.sh` - Syncs all packs from IdeatorPromptPacks repo
@@ -138,7 +141,7 @@ Prompt files use tab-separated values:
 - **Branches**: main, testflight, release/**
 - **iOS target**: 18.2
 - **Xcode version**: latest-stable (both CI and CD)
-- **TestFlight**: Deploys on a main/testflight push that bumps the version (see above)
+- **TestFlight**: Deploys on a main/testflight/release push that bumps the version (see above)
 - **Required Secrets**:
   - TEAM_ID
   - APPSTORE_API_KEY_ID
