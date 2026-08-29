@@ -1,7 +1,5 @@
 # Development Plan
 
-For completed work, see [DONE.md](./DONE.md).
-
 ## Next Up
 
 1. **ObsidianSyncManager tests** — new sync service has no unit tests; cover sync result, folder picker fallback, and auto-sync gating
