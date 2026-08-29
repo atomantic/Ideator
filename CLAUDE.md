@@ -120,7 +120,7 @@ Prompt files use tab-separated values:
 
 - **App Store Name**: Idea Loom
 - **Bundle ID**: net.shadowpuppet.ideator
-- **Version**: 0.1.0
+- **Version**: 1.3.3
 - **Target iOS**: 18.2+
 
 ## Development Notes
